@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparador de Tarifários</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Comparador de Tarifários</h1>
+
+<div style="display: flex; align-items: center; justify-content: space-between; font-size: 18px; gap: 20px; width: 100%;">
+        <div style="display: flex; align-items: center; flex: 1;">
+            <label for="mesSelecionado" style="margin-right: 10px;">Mês:</label>
+            <select id="mesSelecionado" style="flex: 1; font-size: 18px; height: 30px;"></select>
+        </div>
+
+        <div style="display: flex; align-items: center; flex: 1;">
+            <label for="dias" style="margin-right: 10px;">Dias:</label>
+            <input type="number" id="dias" min="0" style="flex: 1; font-size: 18px; height: 10px;">
+        </div>
+    </div>
+
+        
+    
+    <div style="margin-top: 10px; display: flex; align-items: center; font-size: 18px;">
+        <label for="potenciac" style="margin-right: 10px;">Potência Contratada:</label>
+        <select id="potenciac" style="flex: 1; font-size: 18px; height: 30px;">
+            <option value="1,15 kVA">1,15 kVA</option>
+            <option value="2,3 kVA">2,3 kVA</option>
+            <option value="3,45 kVA">3,45 kVA</option>
+            <option value="4,6 kVA">4,6 kVA</option>
+            <option value="5,75 kVA">5,75 kVA</option>
+            <option value="6,9 kVA" selected>6,9 kVA</option>
+            <option value="10,35 kVA">10,35 kVA</option>
+            <option value="13,8 kVA">13,8 kVA</option>
+            <option value="17,25 kVA">17,25 kVA</option>
+            <option value="20,7 kVA">20,7 kVA</option>
+        </select>
+    </div>
+    
+    <div style="margin-top: 10px; display: flex; align-items: center; font-size: 18px;">
+        <label for="consumo" style="margin-right: 10px; font-size: 18px;">Consumo (kWh):</label>
+        <input type="number" id="consumo" value="250" min="0" style="flex: 1; font-size: 18px; height: 10px;">
+    </div>
+
+    <div style="margin-top: 10px; display: flex; align-items: center; font-size: 18px;">
+        <label for="ordenar" style="margin-right: 10px;">Ordenar por:</label>
+        <select id="ordenar" style="flex: 1; font-size: 18px; height: 30px;">
+            <option value="preco">Preço</option>
+            <option value="normal">Normal</option>
+            <option value="tarifario">Tarifário</option>
+        </select>
+    </div>
+
+    <div id="resultado"></div>   
+
+    <div id="listaTarifarios"></div>
+
+    <div style="text-align: center; margin-top: 20px;">
+    <!-- Botão para baixar Excel -->
+    <a href="https://docs.google.com/spreadsheets/d/1PhbpG35wn4aF4XA-FQHKgowr3iCvEprp/export?format=xlsx" class="botao-excel">📥 Baixar Excel</a>
+    
+    <!-- Botão para abrir Google Sheets -->
+    <a href="https://docs.google.com/spreadsheets/d/1PhbpG35wn4aF4XA-FQHKgowr3iCvEprp" target="_blank" class="botao-sheet">📂 Abrir Google Sheet</a>
+</div>
+
+    <footer style="text-align: center; margin-top: 30px; font-size: 14px; color: #666;">
+    <img src="https://ofelgueiras2.github.io/favicon-32x32.png" alt="Ícone de Óscar Felgueiras" style="width: 32px; height: 32px; border-radius: 50%; vertical-align: middle;">
+    <span style="margin-left: 8px;">© 2025 Óscar Felgueiras</span>
+</footer>
+
+    
+    <script src="script.js"></script>
+</body>
+</html>

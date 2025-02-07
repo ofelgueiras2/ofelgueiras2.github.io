@@ -1,0 +1,88 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 10px auto;
+    padding: 10px;
+    background-color: #f4f4f4;
+    border-radius: 8px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Ajuste para telas menores */
+@media screen and (max-width: 800px) {
+    body {
+        max-width: 98%; /* Reduz ainda mais a margem lateral */
+        padding: 8px;
+    }
+}
+
+h1, h2, h3 {
+    text-align: center;
+    color: #333;
+}
+input, button {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+}
+button:hover {
+    background-color: #0056b3;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+}
+th {
+    background-color: #007bff;
+    color: white;
+}
+#listaTarifarios {
+    margin-top: 20px;
+}
+
+.botao-excel, .botao-sheet {
+    display: inline-block;
+    padding: 12px 20px;
+    margin: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+/* Estilo para o botão de download do Excel */
+.botao-excel {
+    background-color: #007bff;
+    color: white;
+}
+
+.botao-excel:hover {
+    background-color: #0056b3;
+}
+
+/* Estilo para o botão de abrir Google Sheets */
+.botao-sheet {
+    background-color: #28a745;
+    color: white;
+}
+
+.botao-sheet:hover {
+    background-color: #1e7e34;
+}
+
