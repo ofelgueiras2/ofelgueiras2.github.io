@@ -467,3 +467,45 @@ if (inputFixoVal !== "" && inputVariavelVal !== "") {
         document.getElementById("resultado").innerHTML = tabelaResultados;
     }
 }
+
+
+
+
+// Eventos para atualização dinâmica
+document.getElementById("mesSelecionado")?.addEventListener("change", atualizarResultados);
+document.getElementById("dias")?.addEventListener("input", atualizarResultados);
+document.getElementById("consumo")?.addEventListener("input", atualizarResultados);
+document.getElementById("potenciac")?.addEventListener("change", atualizarResultados);
+document.getElementById("ordenar")?.addEventListener("change", atualizarResultados);
+// Adicione estes event listeners para os inputs de "Meu tarifário":
+document.getElementById("fixo")?.addEventListener("input", atualizarResultados);
+document.getElementById("variavel")?.addEventListener("input", atualizarResultados);
+
+window.onload = async function () {
+    console.log("🔄 Iniciando carregamento do CSV...");
+    await carregarDadosCSV(); // Aguarda o carregamento completo dos dados
+    preencherSelecaoMeses();
+    console.log("📊 Dados carregados! Atualizando interface...");
+    atualizarResultados(); // Atualiza a interface com os dados carregados
+};
+
+btnDefinicoes.addEventListener("click", function() {
+    // Verifica se a seção está oculta ou visível
+    if (secao.style.display === "none" || secao.style.display === "") {
+      // Se estiver oculta, exibe a seção e muda o ícone para seta para cima
+      secao.style.display = "block";
+      arrowIcon.classList.remove('fa-chevron-down');
+      arrowIcon.classList.add('fa-chevron-up');
+    } else {
+      // Se estiver visível, oculta a seção e muda o ícone para seta para baixo
+      secao.style.display = "none";
+      arrowIcon.classList.remove('fa-chevron-up');
+      arrowIcon.classList.add('fa-chevron-down');
+    }
+  });
+
+  document.getElementById("btnLimpar").addEventListener("click", function() {
+    document.getElementById("fixo").value = "";
+    document.getElementById("variavel").value = "";
+    atualizarResultados(); // Atualiza a tabela após limpar os inputs
+});
