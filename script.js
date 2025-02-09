@@ -453,7 +453,7 @@ if (inputFixoVal !== "" && inputVariavelVal !== "") {
             // Se for "Meu tarifário", definimos um estilo específico para a célula do nome
             let nomeStyle = "";
             if (tarifa.nome === "Meu tarifário") {
-            nomeStyle = "background-color:#FFC000; color:black;";
+            nomeStyle = "background-color:#FFC000; font-weight:bold; color:black;";
             }
             tabelaResultados += `<tr>
                                     <td style='${nomeStyle}'>${tarifa.nome}</td>
