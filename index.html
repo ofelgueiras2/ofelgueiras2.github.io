@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-MNLD39E8FB"></script>
 <script>
@@ -53,14 +54,86 @@
         <input type="number" id="consumo" value="250" min="0" style="flex: 1; font-size: 18px; height: 10px;">
     </div>
 
-    <div style="margin-top: 10px; display: flex; align-items: center; font-size: 18px;">
-        <label for="ordenar" style="margin-right: 10px;">Ordenar por:</label>
+    <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px; font-size: 18px; width: 100%;">
+        <label for="ordenar">Ordenar por:</label>
         <select id="ordenar" style="flex: 1; font-size: 18px; height: 30px;">
             <option value="preco">Preço</option>
             <option value="tarifario">Tarifário</option>
             <option value="normal">Padrão</option>
         </select>
+        <!-- Botão de definições com ícones -->
+        <button id="btnDefinicoes" style="width: 50px; height: 30px; 
+        border: 1px solid #bbb; display: flex; justify-content: space-between;
+         align-items: center; padding: 0 5px; background: #fff; cursor: pointer;
+         margin-left: 10px;">
+            <i id="arrowIcon" class="fa-solid fa-chevron-down" style="font-size: 18px;"></i>
+            <i id="hamburgerIcon" class="fa-solid fa-bars" style="font-size: 18px;"></i>
+        </button>  
+      </div>
+      
+<!-- Secção recolhível para as definições -->
+<div id="secaoDefinicoes" style="display: none;">
+    <div style="
+        position: relative;
+        margin-top: 40px; 
+        background-color: #e0e0e0;
+        border: 1px solid #bbb;
+        border-bottom-left-radius: 4px;
+        border-bottom-right-radius: 4px;
+        border-top-right-radius: 4px;
+        /* Aumentamos o padding direito para reservar espaço para o ícone */
+        padding: 10px 50px 10px 10px;">
+        
+        <!-- Aba superior esquerda com sua própria borda -->
+        <div style="
+            position: absolute;
+            top: -24px;
+            left: -.5px;
+            background-color: #e0e0e0;
+            padding: 5px 40px 2px 10px;
+            font-size: 14px;
+            font-weight: bold;
+            border: 1px solid #bbb;
+            border-bottom: none;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;">
+          Meu tarifário
+        </div>
+        
+        <!-- Campo Fixo (€/dia) -->
+        <div style="display: flex; align-items: center; margin-bottom: 5px;">
+          <label for="fixo" style="margin-right: 10px;">Potência (€/dia):</label>
+          <input type="number" id="fixo" min="0" step="0.01" style="flex: 1; font-size: 18px; height: 10px;">
+        </div>
+        
+        <!-- Campo Variável (€/kWh) -->
+        <div style="display: flex; align-items: center;">
+          <label for="variavel" style="margin-right: 10px;">Simples (€/kWh):</label>
+          <input type="number" id="variavel" min="0" step="0.01" style="flex: 1; font-size: 18px; height: 10px;">
+        </div>
+        
+        <!-- Botão de limpeza com ícone de vassoura -->
+        <button id="btnLimpar" style="
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        width: 30px;
+        height: 30px;
+        border: 1px solid #bbb;
+        border-radius: 4px;
+        background-color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;">
+        <!-- Ícone de vassoura com um toque diferenciado -->
+        <i class="fa-solid fa-broom" style="font-size: 20px; color: #333; transform: rotate(-10deg);"></i>
+        </button>
     </div>
+  </div>
+  
+      
+
 
     <div id="resultado"></div>   
 
