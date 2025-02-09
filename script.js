@@ -74,6 +74,11 @@ const variaveis = {
     TARNaoVazio: "Z19"
 };
 
+// Obter referências aos elementos do botão e da seção
+const btnDefinicoes = document.getElementById('btnDefinicoes');
+const arrowIcon = document.getElementById('arrowIcon');
+const secao = document.getElementById("secaoDefinicoes");
+
 // 🔹 Função para converter referência A1 para índices numéricos (linha e coluna)
 // Função para converter referência A1 para índices de linha e coluna
 function converterReferencia(ref) {
@@ -212,285 +217,253 @@ function preencherSelecaoMeses() {
 }
 
 
-
-
-
-
 function atualizarResultados() {
+    // Obter valores dos inputs
     let consumo = parseFloat(document.getElementById("consumo").value);
     let potenciaSelecionada = document.getElementById("potenciac").value;
     let ordenarPor = document.getElementById("ordenar")?.value || "preco";
     if (isNaN(consumo)) consumo = 0;
     if (!potenciaSelecionada) potenciaSelecionada = "6,9 kVA";
     
-    // Obtém o valor do mês selecionado
-let mesSelecionadoIndex = document.getElementById("mesSelecionado").selectedIndex;
-
-    // Obtém o valor de dias introduzido pelo utilizador
-let diasInput = document.getElementById("dias").value.trim(); // Evita espaços vazios
-diasInput = diasInput === "" ? NaN : parseInt(diasInput, 10); // Converte apenas se houver entrada
-
-    // Obtém a tabela de dias por mês
-const diasMesesTabela = obterTabela("diasMeses")?.flat() || [];
-
-    // Definir diasS conforme a lógica desejada
-let diasS = !isNaN(diasInput) 
-    ? diasInput  // Se for um número válido (incluindo zero), usa o valor introduzido
-    : parseInt(diasMesesTabela[mesSelecionadoIndex]) || 30; // Se não houver entrada, obtém da tabela
-
-console.log(`🔎 diasS determinado:`, diasS);    
-    // Obter dados carregados da Google Sheets
-
-    const potencias = obterTabela("kVAs")?.map(row => row[0]) || [];
-
+    // Obter o índice do mês selecionado
+    const mesSelecionadoIndex = document.getElementById("mesSelecionado").selectedIndex;
     
- // Extrai o primeiro item de cada subarray
-console.log("🔍 Conteúdo de potencias:", potencias);
+    // Obter o valor de dias (convertendo se necessário)
+    let diasInput = document.getElementById("dias").value.trim();
+    diasInput = diasInput === "" ? NaN : parseInt(diasInput, 10);
+    const diasMesesTabela = obterTabela("diasMeses")?.flat() || [];
+    let diasS = !isNaN(diasInput) ? diasInput : (parseInt(diasMesesTabela[mesSelecionadoIndex]) || 30);
+    console.log(`🔎 diasS determinado: ${diasS}`);
+    
+    // Obter dados das tabelas necessárias
+    const potencias = obterTabela("kVAs")?.map(row => row[0]) || [];
     console.log("🔍 Conteúdo de potencias:", potencias);
     const nomesTarifarios = obterTabela("empresasSimples")?.flat().map(nome => nome.replace(/\*+$/, "").trim()) || [];
-    const tarifariosDados = obterTabela("preçosSimples"); // Tabela de preços simples
-    const OMIES = obterTabela("OMIE"); // Tabela de OMIE
-    const PerdasS = obterTabela("Perdas"); // Tabela de OMIE
-    console.log(`🔎 OMIES:`, OMIES);
+    const tarifariosDados = obterTabela("preçosSimples");
+    const OMIES = obterTabela("OMIE");
+    const PerdasS = obterTabela("Perdas");
+    console.log("🔎 OMIES:", OMIES);
     
-    if (!potencias || !nomesTarifarios || !tarifariosDados ||
-        potencias.length === 0 || nomesTarifarios.length === 0 || tarifariosDados.length === 0) {
+    if (!potencias.length || !nomesTarifarios.length || !tarifariosDados.length) {
         console.error("Erro ao carregar tarifários.");
         return;
     }
-
-    // Obter variáveis adicionais e converter valores corretamente
-let IVABaseSimples = parseFloat(obterVariavel("IVABase").replace("%", "")) / 100 || 0;
-let AudiovisualS = parseFloat(obterVariavel("Audiovisual").replace("€", "").replace(",", ".").trim()) || 0;
-let DGEGS = obterVariavel("DGEG").replace("€", "").replace(",", ".").trim();
-DGEGS = parseFloat(DGEGS) || 0;
-let IESS = parseFloat(obterVariavel("IES").replace("€", "").replace(",", ".").trim()) || 0;
-let IVA_AudiovisualSimples = parseFloat(obterVariavel("IVA_Audiovisual").replace("%", "")) / 100 || 0;
-let IVA_DGEGSimples = parseFloat(obterVariavel("IVA_DGEG").replace("%", "")) / 100 || 0;
-let IVA_IESS = parseFloat(obterVariavel("IVA_IES").replace("%", "")) / 100 || 0;    
-let kWhIVAPromocionalS = parseFloat(obterVariavel("kWhIVAPromocional")) || 0;
-kWhIVAPromocionalS = Math.round((kWhIVAPromocionalS * diasS) / 30);
-let IVAPromocionalS = parseFloat(obterVariavel("IVAPromocional").replace("%", "")) / 100 || 0;
-let FTSS = parseFloat(obterVariavel("FTS").replace("€", "").replace(",", ".").trim()) || 0;
-let TARSimplesS = parseFloat(obterVariavel("TARSimples").replace("€", "").replace(",", ".").trim()) || 0;
-let luzboaCGSS = parseFloat(obterVariavel("luzboaCGS")) || 0;
-let luzboaFAS = parseFloat(obterVariavel("luzboaFA")) || 0;
-let luzboaKS = parseFloat(obterVariavel("luzboaK")) || 0;
-let ibelectraCSS = parseFloat(obterVariavel("ibelectraCS")) || 0;
-let ibelectraKS = parseFloat(obterVariavel("ibelectraK")) || 0;
-let perdas2024S = parseFloat(obterVariavel("perdas2024")) || 0;
-let precoACPS = parseFloat(obterVariavel("precoACP").replace("€", "").replace(",", ".").trim()) || 0;
-let luzigasCSS = parseFloat(obterVariavel("luzigasCS")) || 0;
-let luzigasKS = parseFloat(obterVariavel("luzigasK")) || 0;
-let repsolQTarifaS = parseFloat(obterVariavel("repsolQTarifa")) || 0;
-let repsolFAS = parseFloat(obterVariavel("repsolFA")) || 0;
-let coopernicoCGSS = parseFloat(obterVariavel("coopernicoCGS")) || 0;
-let coopernicoKS = parseFloat(obterVariavel("coopernicoK")) || 0;
-let plenitudeCGSS = parseFloat(obterVariavel("plenitudeCGS")) || 0;
-let plenitudeGDOSS = parseFloat(obterVariavel("plenitudeGDOS")) || 0;
-let plenitudeFeeS = parseFloat(obterVariavel("plenitudeFee")) || 0;
-let EDPK1S = parseFloat(obterVariavel("EDPK1")) || 0;
-let EDPK2S = parseFloat(obterVariavel("EDPK2")) || 0;
-let OMIESSelecionadoS = OMIES[mesSelecionadoIndex]?.[0] || 0; // Obter valor OMIE do mês selecionado
-let PerdasSelecionadoS = PerdasS[mesSelecionadoIndex]?.[0] || 0; // Obter valor OMIE do mês selecionado
-
-
-
     
+    // Converter variáveis (usando obterVariavel) para números
+    let IVABaseSimples = parseFloat(obterVariavel("IVABase").replace("%", "")) / 100 || 0;
+    let AudiovisualS = parseFloat(obterVariavel("Audiovisual").replace("€", "").replace(",", ".").trim()) || 0;
+    let DGEGS = parseFloat(obterVariavel("DGEG").replace("€", "").replace(",", ".").trim()) || 0;
+    let IESS = parseFloat(obterVariavel("IES").replace("€", "").replace(",", ".").trim()) || 0;
+    let IVA_AudiovisualSimples = parseFloat(obterVariavel("IVA_Audiovisual").replace("%", "")) / 100 || 0;
+    let IVA_DGEGSimples = parseFloat(obterVariavel("IVA_DGEG").replace("%", "")) / 100 || 0;
+    let IVA_IESS = parseFloat(obterVariavel("IVA_IES").replace("%", "")) / 100 || 0;
+    let kWhIVAPromocionalS = parseFloat(obterVariavel("kWhIVAPromocional")) || 0;
+    kWhIVAPromocionalS = Math.round((kWhIVAPromocionalS * diasS) / 30);
+    let IVAPromocionalS = parseFloat(obterVariavel("IVAPromocional").replace("%", "")) / 100 || 0;
+    let FTSS = parseFloat(obterVariavel("FTS").replace("€", "").replace(",", ".").trim()) || 0;
+    let TARSimplesS = parseFloat(obterVariavel("TARSimples").replace("€", "").replace(",", ".").trim()) || 0;
+    let luzboaCGSS = parseFloat(obterVariavel("luzboaCGS")) || 0;
+    let luzboaFAS = parseFloat(obterVariavel("luzboaFA")) || 0;
+    let luzboaKS = parseFloat(obterVariavel("luzboaK")) || 0;
+    let ibelectraCSS = parseFloat(obterVariavel("ibelectraCS")) || 0;
+    let ibelectraKS = parseFloat(obterVariavel("ibelectraK")) || 0;
+    let perdas2024S = parseFloat(obterVariavel("perdas2024")) || 0;
+    let precoACPS = parseFloat(obterVariavel("precoACP").replace("€", "").replace(",", ".").trim()) || 0;
+    let luzigasCSS = parseFloat(obterVariavel("luzigasCS")) || 0;
+    let luzigasKS = parseFloat(obterVariavel("luzigasK")) || 0;
+    let repsolQTarifaS = parseFloat(obterVariavel("repsolQTarifa")) || 0;
+    let repsolFAS = parseFloat(obterVariavel("repsolFA")) || 0;
+    let coopernicoCGSS = parseFloat(obterVariavel("coopernicoCGS")) || 0;
+    let coopernicoKS = parseFloat(obterVariavel("coopernicoK")) || 0;
+    let plenitudeCGSS = parseFloat(obterVariavel("plenitudeCGS")) || 0;
+    let plenitudeGDOSS = parseFloat(obterVariavel("plenitudeGDOS")) || 0;
+    let plenitudeFeeS = parseFloat(obterVariavel("plenitudeFee")) || 0;
+    let EDPK1S = parseFloat(obterVariavel("EDPK1")) || 0;
+    let EDPK2S = parseFloat(obterVariavel("EDPK2")) || 0;
+    
+    // Obter valor do OMIE e Perdas para o mês selecionado
+    let OMIESSelecionadoS = OMIES[mesSelecionadoIndex]?.[0] || 0;
+    let PerdasSelecionadoS = PerdasS[mesSelecionadoIndex]?.[0] || 0;
+    
+    // Antes de criar o array, obtenha o índice da potência selecionada
+    const colIndex = potencias.indexOf(potenciaSelecionada);
+    if (colIndex === -1) {
+        throw new Error("Potência selecionada inválida.");
+    }
+    const colPotencia = colIndex * 2; // Ex.: 0, 2, 4...
+    const colSimples = colPotencia + 1;  // Ex.: 1, 3, 5...
+    
+    // Obter valor da tabela LuzigazFee correspondente à potência selecionada
+    const luzigasFeeTabela = obterTabela("LuzigazFee")?.flat() || [];
+    let luzigasFeeS = luzigasFeeTabela[colIndex] || "0";
+    luzigasFeeS = parseFloat(luzigasFeeS.replace("€", "").replace(",", ".").trim()) || 0;
+    luzigasFeeS = parseFloat((luzigasFeeS * (1 + IVABaseSimples)).toFixed(2));
+    
+    // --- Criação do array de tarifários a partir dos dados CSV ---
+    let tarifarios = nomesTarifarios.map((nome, i) => {
+        let potencia = parseFloat(tarifariosDados[i]?.[colPotencia]) || 0;
+        let simples;
+    
+        if (nome === "Luzboa indexado") {
+            simples = (OMIESSelecionadoS + luzboaCGSS) * (1 + PerdasSelecionadoS) * luzboaFAS + luzboaKS + TARSimplesS + FTSS;
+        } else if (nome === "Ibelectra indexado") {
+            simples = (OMIESSelecionadoS + ibelectraCSS) * (1 + perdas2024S) + ibelectraKS + TARSimplesS + FTSS;
+        } else if (nome.startsWith("Luzigás Energy 8.8")) {
+            simples = (OMIESSelecionadoS + luzigasCSS) * (1 + PerdasSelecionadoS) + luzigasKS + TARSimplesS + FTSS;
+        } else if (nome === "EDP indexado") {
+            simples = OMIESSelecionadoS * EDPK1S + EDPK2S + TARSimplesS;
+        } else if (nome === "Repsol indexado") {
+            simples = OMIESSelecionadoS * (1 + PerdasSelecionadoS) * repsolFAS + repsolQTarifaS + TARSimplesS + FTSS;
+        } else if (nome === "Coopérnico") {
+            simples = (OMIESSelecionadoS + coopernicoCGSS + coopernicoKS) * (1 + PerdasSelecionadoS) + TARSimplesS + FTSS;
+        } else if (nome === "Plenitude indexado") {
+            simples = (OMIESSelecionadoS + plenitudeCGSS + plenitudeGDOSS) * (1 + PerdasSelecionadoS) + plenitudeFeeS + TARSimplesS;
+        } else {                            
+            simples = parseFloat(tarifariosDados[i]?.[colSimples]) || 0;
+        }
+    
+        let custo = (potencia * diasS * (1 + IVABaseSimples)) +
+                    simples * (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
+                               Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAPromocionalS)) +
+                    (AudiovisualS * (1 + IVA_AudiovisualSimples)) +
+                    (DGEGS * (1 + IVA_DGEGSimples)) +
+                    consumo * (IESS * (1 + IVA_IESS));
+    
+        if (nome.startsWith("Luzigás Energy 8.8") && diasS > 0) {
+            potencia += luzigasFeeS / diasS / (1 + IVABaseSimples);
+            custo += luzigasFeeS;
+        }
+    
+        if (nome.startsWith("Goldenergy ACP")) {
+            custo += precoACPS;
+        }
+    
+        return {
+            nome,
+            potencia,
+            simples,
+            custo: parseFloat(custo.toFixed(2))
+        };
+    });
+    
+// --- Inserir "Meu tarifário" se os campos fixo e variavel estiverem preenchidos ---
+const inputFixoVal = document.getElementById("fixo").value.trim();
+const inputVariavelVal = document.getElementById("variavel").value.trim();
 
-    console.log(`🔎 luzigasCSS: ${luzigasCSS}`);   
-
-
-// Log para depuração
-console.log(`🔎 IVABaseSimples:`, IVABaseSimples);
-console.log(`🔎 AudiovisualS:`, AudiovisualS);
-console.log(`🔎 DGEGS:`, DGEGS);
-console.log(`🔎 IVA_AudiovisualSimples:`, IVA_AudiovisualSimples);
-console.log(`🔎 IVA_DGEGSimples:`, IVA_DGEGSimples);
-console.log(`🔎 kWhPromocionalS:`, kWhIVAPromocionalS);
-console.log(`🔎 IVAPromocionalS:`, IVAPromocionalS);
-
-// Identificar a coluna correspondente à potência selecionada
-const colIndex = potencias.indexOf(potenciaSelecionada);
-if (colIndex === -1) {
-    throw new Error("Potência selecionada inválida.");
+if (inputFixoVal !== "" && inputVariavelVal !== "") {
+    // Substituir vírgula por ponto, caso o usuário digite números com vírgula
+    const potenciaMeu = parseFloat(inputFixoVal.replace(",", "."));
+    const simplesMeu = parseFloat(inputVariavelVal.replace(",", "."));
+    
+    if (!isNaN(potenciaMeu) && !isNaN(simplesMeu)) {
+        const custoMeu = (potenciaMeu * diasS * (1 + IVABaseSimples)) +
+                         (simplesMeu * (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
+                                        Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAPromocionalS))) +
+                         (AudiovisualS * (1 + IVA_AudiovisualSimples)) +
+                         (DGEGS * (1 + IVA_DGEGSimples)) +
+                         (consumo * (IESS * (1 + IVA_IESS)));
+                         
+        const meuTarifario = {
+            nome: "Meu tarifário",
+            potencia: potenciaMeu,
+            simples: simplesMeu,
+            custo: parseFloat(custoMeu.toFixed(2))
+        };
+        console.log("Inserindo Meu tarifário:", meuTarifario);
+        tarifarios.push(meuTarifario);
+    } else {
+        console.error("Erro ao converter os valores dos inputs de 'Meu tarifário' para número.");
+    }
+} else {
+    console.log("Inputs de 'Meu tarifário' não preenchidos.");
 }
 
-// Determinar os índices das colunas de potência e simples
-const colPotencia = colIndex * 2; // C, E, G...
-const colSimples = colPotencia + 1;   // D, F, H...
-
-// Obter valor da tabela LuzigazFee correspondente à potência selecionada
-const luzigasFeeTabela = obterTabela("LuzigazFee")?.flat() || [];
-let luzigasFeeS = luzigasFeeTabela[colIndex] || "0";
-console.log(`🔎 luzigasFeeS convertido: ${luzigasFeeS}`);    
-
-// Converter de "1,50 €" para 1.50
-luzigasFeeS = parseFloat(luzigasFeeS.replace("€", "").replace(",", ".").trim()) || 0;
-console.log(`🔎 luzigasFeeS convertido: ${luzigasFeeS}`);    
-luzigasFeeS =  parseFloat((luzigasFeeS * (1 + IVABaseSimples)).toFixed(2));
-console.log(`🔎 luzigasFeeS convertido: ${luzigasFeeS}`);    
-
-// Criar array de tarifários corrigido
-let tarifarios = nomesTarifarios.map((nome, i) => {
-    let potencia = parseFloat(tarifariosDados[i]?.[colPotencia]) || 0;
-    let simples;
-
-    // Se for "Luzboa indexado", substituir "simples" por OMIE[mesSelecionadoIndex] + FTS + ...
-    if (nome === "Luzboa indexado") {
-        simples = (OMIESSelecionadoS + luzboaCGSS) * (1 + PerdasSelecionadoS) * luzboaFAS + luzboaKS + TARSimplesS + FTSS;
-        console.log(`🔎 Tarifário "Luzboa indexado": ${mesSelecionadoIndex} ${luzboaCGSS} ${luzboaFAS} ${luzboaKS} ${PerdasS} ${TARSimplesS} OMIE(${OMIESSelecionadoS}) + FTS(${FTSS}) = ${simples}`);
-    } else {
-        // Se for "Ibelectra indexado", substituir "simples" por OMIE[mesSelecionadoIndex] + FTS + ...
-        if (nome === "Ibelectra indexado") {
-            simples = (OMIESSelecionadoS + ibelectraCSS) * (1 + perdas2024S) + ibelectraKS + TARSimplesS + FTSS;
-            console.log(`🔎 Tarifário "Luzboa indexado": ${mesSelecionadoIndex} ${ibelectraCSS} ${perdas2024S} ${ibelectraKS} OMIE(${OMIESSelecionadoS}) + FTS(${FTSS}) = ${simples}`);
-        } else {
-            if (nome.startsWith("Luzigás Energy 8.8")) {
-                simples = (OMIESSelecionadoS + luzigasCSS) * (1 + PerdasSelecionadoS) + luzigasKS + TARSimplesS + FTSS;
-            } else {
-                if (nome === "EDP indexado") {
-                    simples = OMIESSelecionadoS * EDPK1S + EDPK2S + TARSimplesS;
-                } else {
-                    if (nome === "Repsol indexado") {
-                        simples = OMIESSelecionadoS *(1 + PerdasSelecionadoS) * repsolFAS + repsolQTarifaS  + TARSimplesS + FTSS;
-                        console.log(`🔎 Tarifário "Luzboa indexado": ${OMIESSelecionadoS} ${PerdasSelecionadoS} ${repsolFAS} OMIE(${repsolQTarifaS})`);
-                    } else {
-                        if (nome === "Coopérnico") {
-                            simples = (OMIESSelecionadoS + coopernicoCGSS + coopernicoKS) * (1 + PerdasSelecionadoS) + TARSimplesS + FTSS;
-                        } else {
-                            if (nome === "Plenitude indexado") {
-                                simples =  (OMIESSelecionadoS + plenitudeCGSS + plenitudeGDOSS) * (1 + PerdasSelecionadoS) + plenitudeFeeS + TARSimplesS;
-                            } else {                            
-                                simples = parseFloat(tarifariosDados[i]?.[colSimples]) || 0;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-       
-    // Calcular o custo correto
-    let custo = (potencia * diasS * (1 + IVABaseSimples)) + 
-                simples * (Math.max(consumo - kWhIVAPromocionalS, 0) * (1+ IVABaseSimples) +
-                Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAPromocionalS) ) +
-                (AudiovisualS * (1 + IVA_AudiovisualSimples)) +
-                (DGEGS * (1 + IVA_DGEGSimples)) +
-                consumo * (IESS * (1 + IVA_IESS));
-    console.log(`🔎 Valores ${potencia} ${diasS} ${IVABaseSimples} ${simples} ${consumo} ${kWhIVAPromocionalS} ${IVAPromocionalS} ${AudiovisualS}
-    ${IVA_AudiovisualSimples} ${DGEGS} ${IVA_DGEGSimples} ${IESS} ${IVA_IESS}`);
-
-    // Se o tarifário for "Luzigás Energy 8.8 ***", ajustar a potência e o custo
-            if (nome.startsWith("Luzigás Energy 8.8") && diasS > 0) {
-                potencia += luzigasFeeS / diasS / (1+ IVABaseSimples);
-                custo += luzigasFeeS
-                console.log(`🔎 Ajuste para ${nome}: potência ajustada para ${potencia.toFixed(4)}`);
-            }
     
-    // Se o tarifário for "Goldenergy ACP *", adicionar precoACPS ao custo
-    if (nome.startsWith("Goldenergy ACP")) {
-        custo += precoACPS;
-        console.log(`🔎 Ajuste para ${nome}: custo atualizado para ${custo.toFixed(2)}€`);
-    }
-    
-    return {
-        nome,
-        potencia,
-        simples,
-        custo: parseFloat(custo.toFixed(2))
-    };
-});
-
-   
-
-    // Ordenação conforme a opção selecionada
+    // --- Ordenar o array de tarifários conforme a opção selecionada ---
     if (ordenarPor === "preco") {
         tarifarios.sort((a, b) => a.custo - b.custo);
     } else if (ordenarPor === "tarifario") {
         tarifarios.sort((a, b) => a.nome.localeCompare(b.nome));
     }
-
-    preencherLista(tarifarios);
-    calcularPreco(tarifarios, consumo, potenciaSelecionada);
-}
-
-function preencherLista(tarifarios) {
-    const lista = document.getElementById("listaTarifarios");
-    lista.innerHTML = "";
-}
-
-function calcularPreco(tarifarios, consumo, potenciaSelecionada) {
-    const minPotencia = Math.min(...tarifarios.map(t => t.potencia));
-    const maxPotencia = Math.max(...tarifarios.map(t => t.potencia));
-    const minSimples = Math.min(...tarifarios.map(t => t.simples));
-    const maxSimples = Math.max(...tarifarios.map(t => t.simples));
-    const minCusto = Math.min(...tarifarios.map(t => t.custo));
-    const maxCusto = Math.max(...tarifarios.map(t => t.custo));
     
-    function calcularCor(valor, min, max) {
-        const corMin = [90, 138, 198]; // #5A8AC6
-        const corMed = [252, 252, 255]; // #FCFCFF
-        const corMax = [248, 105, 107]; // #F8696B
-        let corFinal;
-        if (valor <= (min + max) / 2) {
-            const percent = (valor - min) / ((min + max) / 2 - min || 1);
-            corFinal = corMin.map((c, i) => Math.round(c + percent * (corMed[i] - c)));
-        } else {
-            const percent = (valor - (min + max) / 2) / (max - (min + max) / 2 || 1);
-            corFinal = corMed.map((c, i) => Math.round(c + percent * (corMax[i] - c)));
-        }
-        return `rgb(${corFinal[0]}, ${corFinal[1]}, ${corFinal[2]})`;
+    // --- Garantir que "Meu tarifário" esteja sempre na primeira posição ---
+    const indexMeu = tarifarios.findIndex(t => t.nome === "Meu tarifário");
+    if (indexMeu > 0) {
+        const [meu] = tarifarios.splice(indexMeu, 1);
+        tarifarios.unshift(meu);
     }
     
-    let tabelaResultados = `<table>
-                                <tr>
-                                    <th colspan="3" rowspan="2" style="background-color:#375623; color:white; text-align:center; vertical-align:middle;">Potência contratada ${potenciaSelecionada}</th>
-                                    <th style="background-color:#375623; color:white;">Consumo (kWh)</th>
-                                </tr>
-                                <tr>
-                                    <td style="background-color:#FFC000; font-weight:bold; color:black; text-align:center;">${consumo || 0}</td>
-                                </tr>
-                                <tr>
-                                    <td style="background-color:#00B050; font-weight:bold; color:white;">Tarifário</td>
-                                    <td style="background-color:#00B050; font-weight:bold; color:white;">Potência (€/dia)</td>
-                                    <td style="background-color:#00B050; font-weight:bold; color:white;">Simples (€/kWh)</td>
-                                    <td style="background-color:#00B050; font-weight:bold; color:white;">Preço (€)</td>
-                                </tr>`;
+    preencherLista(tarifarios);
+    calcularPreco(tarifarios, consumo, potenciaSelecionada);
     
-    tarifarios.forEach(tarifa => {
-        const corPotencia = calcularCor(tarifa.potencia, minPotencia, maxPotencia);
-        const corSimples = calcularCor(tarifa.simples, minSimples, maxSimples);
-        const corCusto = calcularCor(tarifa.custo, minCusto, maxCusto);
-
-        const isMinPotencia = tarifa.potencia === minPotencia ? "font-weight:bold;" : "";
-        const isMinSimples = tarifa.simples === minSimples ? "font-weight:bold;" : "";
-        const isMinCusto = tarifa.custo === minCusto ? "font-weight:bold;" : "";
-        
-        tabelaResultados += `<tr>
-                                <td>${tarifa.nome}</td>
-                                <td style='${isMinPotencia} background-color:${corPotencia}; color:black;'>${tarifa.potencia.toFixed(4)}</td>
-                                <td style='${isMinSimples} background-color:${corSimples}; color:black;'>${tarifa.simples.toFixed(4)}</td>
-                                <td style='${isMinCusto} background-color:${corCusto}; color:black;'>${tarifa.custo.toFixed(2)}</td>
-                             </tr>`;
-    });
+    // Função para limpar a área de lista (pode ser expandida se necessário)
+    function preencherLista(tarifarios) {
+        const lista = document.getElementById("listaTarifarios");
+        lista.innerHTML = "";
+    }
     
-    tabelaResultados += "</table>";
-    document.getElementById("resultado").innerHTML = tabelaResultados;
+    // Função para calcular preços e construir a tabela de resultados
+    function calcularPreco(tarifarios, consumo, potenciaSelecionada) {
+        const minPotencia = Math.min(...tarifarios.map(t => t.potencia));
+        const maxPotencia = Math.max(...tarifarios.map(t => t.potencia));
+        const minSimples = Math.min(...tarifarios.map(t => t.simples));
+        const maxSimples = Math.max(...tarifarios.map(t => t.simples));
+        const minCusto = Math.min(...tarifarios.map(t => t.custo));
+        const maxCusto = Math.max(...tarifarios.map(t => t.custo));
+    
+        function calcularCor(valor, min, max) {
+            const corMin = [90, 138, 198]; // Ex: #5A8AC6
+            const corMed = [252, 252, 255]; // Ex: #FCFCFF
+            const corMax = [248, 105, 107]; // Ex: #F8696B
+            let corFinal;
+            if (valor <= (min + max) / 2) {
+                const percent = (valor - min) / (((min + max) / 2) - min || 1);
+                corFinal = corMin.map((c, i) => Math.round(c + percent * (corMed[i] - c)));
+            } else {
+                const percent = (valor - ((min + max) / 2)) / (max - ((min + max) / 2) || 1);
+                corFinal = corMed.map((c, i) => Math.round(c + percent * (corMax[i] - c)));
+            }
+            return `rgb(${corFinal[0]}, ${corFinal[1]}, ${corFinal[2]})`;
+        }
+    
+        let tabelaResultados = `<table>
+                                    <tr>
+                                        <th colspan="3" rowspan="2" style="background-color:#375623; color:white; text-align:center; vertical-align:middle;">Potência contratada ${potenciaSelecionada}</th>
+                                        <th style="background-color:#375623; color:white;">Consumo (kWh)</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="background-color:#FFC000; font-weight:bold; color:black; text-align:center;">${consumo || 0}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="background-color:#00B050; font-weight:bold; color:white;">Tarifário</td>
+                                        <td style="background-color:#00B050; font-weight:bold; color:white;">Potência (€/dia)</td>
+                                        <td style="background-color:#00B050; font-weight:bold; color:white;">Simples (€/kWh)</td>
+                                        <td style="background-color:#00B050; font-weight:bold; color:white;">Preço (€)</td>
+                                    </tr>`;
+    
+        tarifarios.forEach(tarifa => {
+            const corPotencia = calcularCor(tarifa.potencia, minPotencia, maxPotencia);
+            const corSimples = calcularCor(tarifa.simples, minSimples, maxSimples);
+            const corCusto = calcularCor(tarifa.custo, minCusto, maxCusto);
+    
+            const isMinPotencia = tarifa.potencia === minPotencia ? "font-weight:bold;" : "";
+            const isMinSimples = tarifa.simples === minSimples ? "font-weight:bold;" : "";
+            const isMinCusto = tarifa.custo === minCusto ? "font-weight:bold;" : "";
+            
+            // Se for "Meu tarifário", definimos um estilo específico para a célula do nome
+            let nomeStyle = "";
+            if (tarifa.nome === "Meu tarifário") {
+            nomeStyle = "background-color:#FFC000; font-weight:bold; color:black;";
+            }
+            tabelaResultados += `<tr>
+                                    <td style='${nomeStyle}'>${tarifa.nome}</td>
+                                    <td style='${isMinPotencia} background-color:${corPotencia}; color:black;'>${tarifa.potencia.toFixed(4)}</td>
+                                    <td style='${isMinSimples} background-color:${corSimples}; color:black;'>${tarifa.simples.toFixed(4)}</td>
+                                    <td style='${isMinCusto} background-color:${corCusto}; color:black;'>${tarifa.custo.toFixed(2)}</td>
+                                 </tr>`;
+        });
+    
+        tabelaResultados += "</table>";
+        document.getElementById("resultado").innerHTML = tabelaResultados;
+    }
 }
-
-// Eventos para atualização dinâmica
-document.getElementById("mesSelecionado")?.addEventListener("change", atualizarResultados);
-document.getElementById("dias")?.addEventListener("input", atualizarResultados);
-document.getElementById("consumo")?.addEventListener("input", atualizarResultados);
-document.getElementById("potenciac")?.addEventListener("change", atualizarResultados);
-document.getElementById("ordenar")?.addEventListener("change", atualizarResultados);
-
-
-window.onload = async function () {
-    console.log("🔄 Iniciando carregamento do CSV...");
-    await carregarDadosCSV(); // Aguarda o carregamento completo dos dados
-    preencherSelecaoMeses();
-    console.log("📊 Dados carregados! Atualizando interface...");
-    atualizarResultados(); // Atualiza a interface com os dados carregados
-};
