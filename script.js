@@ -1,4 +1,4 @@
-const urlCSV = "https://raw.githubusercontent.com/ofelgueiras2/gs/main/SimuladorEletricidade_OF_MN_2025.csv";
+const urlCSV = "https://raw.githubusercontent.com/ofelgueiras2/gs/refs/heads/main/SimuladorEletricidade_OF_MN_2025.csv";
 let dadosCSV = [];
 
 const tabelas = {
