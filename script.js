@@ -242,6 +242,7 @@ function atualizarResultados() {
     const tarifariosDados = obterTabela("preçosSimples");
     const OMIES = obterTabela("OMIE");
     const PerdasS = obterTabela("Perdas");
+    const kVAsTarSocialS = obterTabela("kVAsTarSocial")?.map(row => row[0]) || [];
     console.log("🔎 OMIES:", OMIES);
     
     if (!potencias.length || !nomesTarifarios.length || !tarifariosDados.length) {
