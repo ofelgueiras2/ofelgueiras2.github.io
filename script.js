@@ -305,19 +305,21 @@ function atualizarResultados() {
         let simples;
     
         if (nome === "Luzboa indexado") {
-            simples = (OMIESSelecionadoS + luzboaCGSS) * (1 + PerdasSelecionadoS) * luzboaFAS + luzboaKS + TARSimplesS + FTSS;
+            simples = parseFloat(((OMIESSelecionadoS + luzboaCGSS) * (1 + PerdasSelecionadoS) * luzboaFAS + luzboaKS + TARSimplesS).toFixed(4)) + FTSS;
         } else if (nome === "Ibelectra indexado") {
-            simples = (OMIESSelecionadoS + ibelectraCSS) * (1 + perdas2024S) + ibelectraKS + TARSimplesS + FTSS;
+            simples = parseFloat(((OMIESSelecionadoS + ibelectraCSS) * (1 + perdas2024S) + ibelectraKS + TARSimplesS).toFixed(5)) + FTSS;
         } else if (nome.startsWith("Luzigás Energy 8.8")) {
-            simples = (OMIESSelecionadoS + luzigasCSS) * (1 + PerdasSelecionadoS) + luzigasKS + TARSimplesS + FTSS;
+            simples = parseFloat(((OMIESSelecionadoS + luzigasCSS) * (1 + PerdasSelecionadoS) + luzigasKS + TARSimplesS).toFixed(4)) + FTSS;
         } else if (nome === "EDP indexado") {
-            simples = OMIESSelecionadoS * EDPK1S + EDPK2S + TARSimplesS;
+            simples = parseFloat((OMIESSelecionadoS * EDPK1S + EDPK2S + TARSimplesS).toFixed(4));
         } else if (nome === "Repsol indexado") {
-            simples = OMIESSelecionadoS * (1 + PerdasSelecionadoS) * repsolFAS + repsolQTarifaS + TARSimplesS + FTSS;
+            simples = parseFloat((OMIESSelecionadoS * (1 + PerdasSelecionadoS) * repsolFAS + repsolQTarifaS + TARSimplesS).toFixed(6)) + FTSS;
         } else if (nome === "Coopérnico") {
-            simples = (OMIESSelecionadoS + coopernicoCGSS + coopernicoKS) * (1 + PerdasSelecionadoS) + TARSimplesS + FTSS;
+            simples = parseFloat(((OMIESSelecionadoS + coopernicoCGSS + coopernicoKS) * (1 + PerdasSelecionadoS) + TARSimplesS).toFixed(6)) + FTSS;
         } else if (nome === "Plenitude indexado") {
-            simples = (OMIESSelecionadoS + plenitudeCGSS + plenitudeGDOSS) * (1 + PerdasSelecionadoS) + plenitudeFeeS + TARSimplesS;
+            simples = parseFloat(((OMIESSelecionadoS + plenitudeCGSS + plenitudeGDOSS) * (1 + PerdasSelecionadoS) 
+            + plenitudeFeeS + TARSimplesS).toFixed(4));
+            console.log("Plenitude indexado:", simples);
         } else {                            
             simples = parseFloat(tarifariosDados[i]?.[colSimples]) || 0;
         }
