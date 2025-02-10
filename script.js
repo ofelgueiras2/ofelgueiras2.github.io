@@ -298,6 +298,15 @@ function atualizarResultados() {
     let luzigasFeeS = luzigasFeeTabela[colIndex] || "0";
     luzigasFeeS = parseFloat(luzigasFeeS.replace("€", "").replace(",", ".").trim()) || 0;
     luzigasFeeS = parseFloat((luzigasFeeS * (1 + IVABaseSimples)).toFixed(2));
+
+    let IVAFixoS;
+    console.log("Potência:", potenciaSelecionada, IVAFixoS, kVAsTarSocialS)
+    if (kVAsTarSocialS.includes(potenciaSelecionada)) {
+        IVAFixoS = IVAPromocionalS;
+      } else {
+        IVAFixoS = IVABaseSimples;
+      }
+      console.log("IVAFixoS:", IVAFixoS)
     
     // --- Criação do array de tarifários a partir dos dados CSV ---
     let tarifarios = nomesTarifarios.map((nome, i) => {
@@ -326,7 +335,7 @@ function atualizarResultados() {
     
         let custo = (potencia * diasS * (1 + IVABaseSimples)) +
                     simples * (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
-                               Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAPromocionalS)) +
+                               Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS)) +
                     (AudiovisualS * (1 + IVA_AudiovisualSimples)) +
                     (DGEGS * (1 + IVA_DGEGSimples)) +
                     consumo * (IESS * (1 + IVA_IESS));
@@ -360,7 +369,7 @@ if (inputFixoVal !== "" && inputVariavelVal !== "") {
     if (!isNaN(potenciaMeu) && !isNaN(simplesMeu)) {
         const custoMeu = (potenciaMeu * diasS * (1 + IVABaseSimples)) +
                          (simplesMeu * (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
-                                        Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAPromocionalS))) +
+                                        Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS))) +
                          (AudiovisualS * (1 + IVA_AudiovisualSimples)) +
                          (DGEGS * (1 + IVA_DGEGSimples)) +
                          (consumo * (IESS * (1 + IVA_IESS)));
