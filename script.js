@@ -226,7 +226,8 @@ function atualizarResultados() {
     if (isNaN(consumo)) consumo = 0;
     if (!potenciaSelecionada) potenciaSelecionada = "6,9 kVA";
     let mostrarNomesAlternativos = document.getElementById("mostrarNomes").checked;
-    
+    let incluirACP = document.getElementById("incluirACP").checked;
+
     // Obter o índice do mês selecionado
     const mesSelecionadoIndex = document.getElementById("mesSelecionado").selectedIndex;
     
@@ -274,6 +275,9 @@ function atualizarResultados() {
     let ibelectraKS = parseFloat(obterVariavel("ibelectraK")) || 0;
     let perdas2024S = parseFloat(obterVariavel("perdas2024")) || 0;
     let precoACPS = parseFloat(obterVariavel("precoACP").replace("€", "").replace(",", ".").trim()) || 0;
+    if (!incluirACP) {
+        precoACPS = 0;
+    }
     let luzigasCSS = parseFloat(obterVariavel("luzigasCS")) || 0;
     let luzigasKS = parseFloat(obterVariavel("luzigasK")) || 0;
     let repsolQTarifaS = parseFloat(obterVariavel("repsolQTarifa")) || 0;
@@ -498,6 +502,7 @@ document.getElementById("ordenar")?.addEventListener("change", atualizarResultad
 document.getElementById("fixo")?.addEventListener("input", atualizarResultados);
 document.getElementById("variavel")?.addEventListener("input", atualizarResultados);
 document.getElementById("mostrarNomes")?.addEventListener("change", atualizarResultados);
+document.getElementById("incluirACP")?.addEventListener("change", atualizarResultados);
 
 
 window.onload = async function () {
@@ -506,6 +511,8 @@ window.onload = async function () {
     preencherSelecaoMeses();
     console.log("📊 Dados carregados! Atualizando interface...");
     atualizarResultados(); // Atualiza a interface com os dados carregados
+    document.getElementById("incluirACP").checked = true; // Definir selecionado por padrão
+    atualizarResultados()
 };
 
 btnDefinicoes.addEventListener("click", function() {
