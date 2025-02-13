@@ -30,7 +30,10 @@ const tabelas = {
     kVAs: { inicio: "Y6", fim: "Y15" },
     LuzigazFee: { inicio: "Z27", fim: "Z36" },
     TARPotencias: { inicio: "Z6", fim: "Z15" },
-    detalheTarifarios: { inicio: "AM5", fim: "AM25"}
+    detalheTarifarios: { inicio: "AM5", fim: "AM25"},
+    tarifariosExtra: { inicio: "C68", fim: "C77"},
+    detalheTarifariosExtra: { inicio: "B68", fim: "B77"},
+    preçosSimplesExtra: { inicio: "D68", fim: "W77"},
 };
 
 const variaveis = {
@@ -227,6 +230,8 @@ function atualizarResultados() {
     if (!potenciaSelecionada) potenciaSelecionada = "6,9 kVA";
     let mostrarNomesAlternativos = document.getElementById("mostrarNomes").checked;
     let incluirACP = document.getElementById("incluirACP").checked;
+    let incluirContinente = document.getElementById("incluirContinente").checked;
+    let restringir = document.getElementById("restringir").checked;
 
     // Obter o índice do mês selecionado
     const mesSelecionadoIndex = document.getElementById("mesSelecionado").selectedIndex;
@@ -321,7 +326,7 @@ function atualizarResultados() {
     let tarifarios = nomesTarifarios.map((nome, i) => {
         let potencia = parseFloat(tarifariosDados[i]?.[colPotencia]) || 0;
         let simples;
-    
+
         if (nome === "Luzboa indexado") {
             simples = parseFloat(((OMIESSelecionadoS + luzboaCGSS) * (1 + PerdasSelecionadoS) * luzboaFAS + luzboaKS + TARSimplesS).toFixed(4)) + FTSS;
         } else if (nome === "Ibelectra indexado") {
@@ -366,6 +371,38 @@ function atualizarResultados() {
             custo: parseFloat(custo.toFixed(2))
         };
     });
+    
+    if (!restringir) {
+        const nomesTarifariosExtra = obterTabela("tarifariosExtra")?.flat() || [];
+        const nomesTarifariosDetalhadosExtra = obterTabela("detalheTarifariosExtra")?.flat() || [];
+        const tarifariosDadosExtra = obterTabela("preçosSimplesExtra");
+
+        nomesTarifariosExtra.forEach((nome, i) => {
+            let potencia = parseFloat(tarifariosDadosExtra[i]?.[colPotencia]) || 0;
+            let simples = parseFloat(tarifariosDadosExtra[i]?.[colSimples]) || 0;
+
+            if (nome === "Galp Continente" && incluirContinente) {
+                potencia *= 0.9;
+                simples *= 0.9;
+            }
+
+            const nomeExibido = mostrarNomesAlternativos && nomesTarifariosDetalhadosExtra[i] ? nomesTarifariosDetalhadosExtra[i] : nome;
+
+            let custo = (potencia * diasS * (1 + IVABaseSimples)) +
+                    simples * (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
+                               Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS)) +
+                    (AudiovisualS * (1 + IVA_AudiovisualSimples)) +
+                    (DGEGS * (1 + IVA_DGEGSimples)) +
+                    consumo * (IESS * (1 + IVA_IESS));
+
+            tarifarios.push({
+                nome: nomeExibido,
+                potencia,
+                simples,
+                custo: parseFloat(custo.toFixed(2))
+            });
+        });
+    }
     
 // --- Inserir "Meu tarifário" se os campos fixo e variavel estiverem preenchidos ---
 const inputFixoVal = document.getElementById("fixo").value.trim();
@@ -503,6 +540,8 @@ document.getElementById("fixo")?.addEventListener("input", atualizarResultados);
 document.getElementById("variavel")?.addEventListener("input", atualizarResultados);
 document.getElementById("mostrarNomes")?.addEventListener("change", atualizarResultados);
 document.getElementById("incluirACP")?.addEventListener("change", atualizarResultados);
+document.getElementById("incluirContinente")?.addEventListener("change", atualizarResultados);
+document.getElementById("restringir")?.addEventListener("change", atualizarResultados);
 
 
 window.onload = async function () {
