@@ -29,7 +29,8 @@ const tabelas = {
     descKVAsTarSocial: { inicio: "V30", fim: "V35" },
     kVAs: { inicio: "Y6", fim: "Y15" },
     LuzigazFee: { inicio: "Z27", fim: "Z36" },
-    TARPotencias: { inicio: "Z6", fim: "Z15" }
+    TARPotencias: { inicio: "Z6", fim: "Z15" },
+    detalheTarifarios: { inicio: "AM5", fim: "AM25"}
 };
 
 const variaveis = {
@@ -224,6 +225,7 @@ function atualizarResultados() {
     let ordenarPor = document.getElementById("ordenar")?.value || "preco";
     if (isNaN(consumo)) consumo = 0;
     if (!potenciaSelecionada) potenciaSelecionada = "6,9 kVA";
+    let mostrarNomesAlternativos = document.getElementById("mostrarNomes").checked;
     
     // Obter o índice do mês selecionado
     const mesSelecionadoIndex = document.getElementById("mesSelecionado").selectedIndex;
@@ -239,6 +241,8 @@ function atualizarResultados() {
     const potencias = obterTabela("kVAs")?.map(row => row[0]) || [];
     console.log("🔍 Conteúdo de potencias:", potencias);
     const nomesTarifarios = obterTabela("empresasSimples")?.flat().map(nome => nome.replace(/\*+$/, "").trim()) || [];
+    const nomesTarifariosDetalhados = obterTabela("detalheTarifarios")?.flat().map(nome => nome.replace(/\*+$/, "").trim()) || [];
+    console.log("Tabela detalheTarifarios:", nomesTarifariosDetalhados);
     const tarifariosDados = obterTabela("preçosSimples");
     const OMIES = obterTabela("OMIE");
     const PerdasS = obterTabela("Perdas");
@@ -333,6 +337,7 @@ function atualizarResultados() {
         } else {                            
             simples = parseFloat(tarifariosDados[i]?.[colSimples]) || 0;
         }
+        const nomeExibido = mostrarNomesAlternativos && nomesTarifariosDetalhados[i] ? nomesTarifariosDetalhados[i] : nome;
     
         let custo = (potencia * diasS * (1 + IVABaseSimples)) +
                     simples * (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
@@ -351,7 +356,7 @@ function atualizarResultados() {
         }
     
         return {
-            nome,
+            nome: nomeExibido,
             potencia,
             simples,
             custo: parseFloat(custo.toFixed(2))
@@ -492,6 +497,8 @@ document.getElementById("ordenar")?.addEventListener("change", atualizarResultad
 // Adicione estes event listeners para os inputs de "Meu tarifário":
 document.getElementById("fixo")?.addEventListener("input", atualizarResultados);
 document.getElementById("variavel")?.addEventListener("input", atualizarResultados);
+document.getElementById("mostrarNomes")?.addEventListener("change", atualizarResultados);
+
 
 window.onload = async function () {
     console.log("🔄 Iniciando carregamento do CSV...");
@@ -521,3 +528,26 @@ btnDefinicoes.addEventListener("click", function() {
     document.getElementById("variavel").value = "";
     atualizarResultados(); // Atualiza a tabela após limpar os inputs
 });
+
+  document.getElementById("btnLimpar").addEventListener("click", function() {
+    document.getElementById("fixo").value = "";
+    document.getElementById("variavel").value = "";
+    atualizarResultados(); // Atualiza a tabela após limpar os inputs
+});
+
+document.getElementById("abaMeuTarifario").addEventListener("click", function() {
+    alternarAba("MeuTarifario");
+});
+
+document.getElementById("abaOutrasOpcoes").addEventListener("click", function() {
+    alternarAba("OutrasOpcoes");
+});
+
+function alternarAba(abaSelecionada) {
+    const abas = ["MeuTarifario", "OutrasOpcoes"];
+    
+    abas.forEach(aba => {
+        document.getElementById("aba" + aba).classList.toggle("ativa", aba === abaSelecionada);
+        document.getElementById("conteudo" + aba).classList.toggle("ativa", aba === abaSelecionada);
+    });
+}

@@ -139,4 +139,47 @@ th {
     color: #333;
     transform: rotate(-10deg);
   }
+.aba {
+    padding: 10px;
+    color: #aaa;
+    cursor: pointer;
+    border: 1px solid #bbb;
+    border-bottom: none;
+    background-color: #e0e0e0;
+    font-weight: bold;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    transition: background-color 0.3s;
+}
 
+.aba:hover {
+    background-color: #d0d0d0;
+}
+
+
+.conteudo-aba {
+    display: none;
+    padding: 10px;
+    border: 1px solid #bbb;
+    background-color: white;
+}
+
+
+.aba.ativa {
+    background-color: white;
+    color: black;
+    border-bottom: 2px solid white;
+}
+
+.conteudo-aba.ativa {
+    display: block;
+    background-color: #f4f4f4; /* Igual ao fundo do <body> */
+    border: 1px solid #bbb;
+    padding: 10px;
+}
+
+#opcoesOutras {
+    margin-top: 15px;
+    font-size: 16px;
+    color: #555;
+}
