@@ -183,3 +183,25 @@ th {
     font-size: 16px;
     color: #555;
 }
+
+.sort-container {
+    position: absolute;
+    right: 5px;           /* distância da borda direita da célula */
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column; /* empilha verticalmente */
+    align-items: center;    /* centraliza horizontalmente dentro do container */
+}
+
+.sort-arrow {
+    cursor: pointer;
+    margin: 0px 0;     /* espaço vertical reduzido entre as setas */
+    font-size: 14px;
+}
+
+.sort-arrow.selected {
+    color: #bbb;
+}
+
+

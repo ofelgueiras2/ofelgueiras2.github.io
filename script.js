@@ -78,6 +78,17 @@ const variaveis = {
     TARNaoVazio: "Z19"
 };
 
+let sortField = "price";   // Valores possíveis: "default", "price", "tariff", "power", "simple"
+let sortDirection = "asc";     // "asc" ou "desc"
+
+function setSort(field, direction) {
+    sortField = field;
+    sortDirection = direction;
+    atualizarResultados();
+}
+
+
+
 // Obter referências aos elementos do botão e da seção
 const btnDefinicoes = document.getElementById('btnDefinicoes');
 const arrowIcon = document.getElementById('arrowIcon');
@@ -200,7 +211,6 @@ function preencherSelecaoMeses() {
 function atualizarResultados() {
     let consumo = parseFloat(document.getElementById("consumo").value);
     let potenciaSelecionada = document.getElementById("potenciac").value;
-    let ordenarPor = document.getElementById("ordenar")?.value || "preco";
     if (isNaN(consumo)) consumo = 0;
     if (!potenciaSelecionada) potenciaSelecionada = "6,9 kVA";
     let mostrarNomesAlternativos = document.getElementById("mostrarNomes").checked;
@@ -415,12 +425,23 @@ function atualizarResultados() {
         console.log("Inputs de 'Meu tarifário' não preenchidos.");
     }
 
-    if (ordenarPor === "preco") {
-        tarifarios.sort((a, b) => a.custo - b.custo);
-    } else if (ordenarPor === "tarifario") {
-        tarifarios.sort((a, b) => a.nome.localeCompare(b.nome));
+   
+    if (sortField === "default") {
+        // A ordem padrão é a ordem de criação; se 'desc', inverte o array
+        if (sortDirection === "desc") {
+            tarifarios.reverse();
+        }
+    } else if (sortField === "price") {
+        tarifarios.sort((a, b) => sortDirection === "asc" ? a.custo - b.custo : b.custo - a.custo);
+    } else if (sortField === "tariff") {
+        tarifarios.sort((a, b) => sortDirection === "asc" ? a.nome.localeCompare(b.nome) : b.nome.localeCompare(a.nome));
+    } else if (sortField === "power") {
+        tarifarios.sort((a, b) => sortDirection === "asc" ? a.potencia - b.potencia : b.potencia - a.potencia);
+    } else if (sortField === "simple") {
+        tarifarios.sort((a, b) => sortDirection === "asc" ? a.simples - b.simples : b.simples - a.simples);
     }
     
+
     const indexMeu = tarifarios.findIndex(t => t.nome === "Meu tarifário");
     if (indexMeu > 0) {
         const [meu] = tarifarios.splice(indexMeu, 1);
@@ -459,20 +480,59 @@ function atualizarResultados() {
             return `rgb(${corFinal[0]}, ${corFinal[1]}, ${corFinal[2]})`;
         }
     
+        
         let tabelaResultados = `<table>
-                                    <tr>
-                                        <th colspan="3" rowspan="2" style="background-color:#375623; color:white; text-align:center; vertical-align:middle;">Potência contratada ${potenciaSelecionada}</th>
-                                        <th style="background-color:#375623; color:white;">Consumo (kWh)</th>
-                                    </tr>
-                                    <tr>
-                                        <td style="background-color:#FFC000; font-weight:bold; color:black; text-align:center;">${consumo || 0}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="background-color:#00B050; font-weight:bold; color:white;">Tarifário</td>
-                                        <td style="background-color:#00B050; font-weight:bold; color:white;">Potência (€/dia)</td>
-                                        <td style="background-color:#00B050; font-weight:bold; color:white;">Simples (€/kWh)</td>
-                                        <td style="background-color:#00B050; font-weight:bold; color:white;">Preço (€)</td>
-                                    </tr>`;
+        <tr>
+          <th colspan="3" rowspan="2" style="background-color:#375623; color:white; text-align:center; vertical-align:middle; position:relative;">
+            Potência contratada ${potenciaSelecionada}
+            <span class="sort-container">
+              <span class="sort-arrow ${sortField==='default' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('default','asc')">&#9650;</span>
+              <span class="sort-arrow ${sortField==='default' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('default','desc')">&#9660;</span>
+            </span>
+          </th>
+          <th style="background-color:#375623; color:white; text-align:center;">
+            Consumo (kWh)
+          </th>
+        </tr>
+        <tr>
+          <td style="background-color:#FFC000; font-weight:bold; color:black; text-align:center;">
+            ${consumo || 0}
+          </td>
+        </tr>
+        <tr>
+          <th style="background-color:#00B050; font-weight:bold; color:white; text-align:center; position:relative;">
+            Tarifário
+            <span class="sort-container">
+              <span class="sort-arrow ${sortField==='tariff' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('tariff','asc')">&#9650;</span>
+              <span class="sort-arrow ${sortField==='tariff' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('tariff','desc')">&#9660;</span>
+            </span>
+          </th>
+          <th style="background-color:#00B050; font-weight:bold; color:white; text-align:center; position:relative;">
+            Potência (€/dia)
+            <span class="sort-container">
+              <span class="sort-arrow ${sortField==='power' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('power','asc')">&#9650;</span>
+              <span class="sort-arrow ${sortField==='power' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('power','desc')">&#9660;</span>
+            </span>
+          </th>
+          <th style="background-color:#00B050; font-weight:bold; color:white; text-align:center; position:relative;">
+            Simples (€/kWh)
+            <span class="sort-container">
+              <span class="sort-arrow ${sortField==='simple' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('simple','asc')">&#9650;</span>
+              <span class="sort-arrow ${sortField==='simple' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('simple','desc')">&#9660;</span>
+            </span>
+          </th>
+          <th style="background-color:#00B050; font-weight:bold; color:white; text-align:center; position:relative;">
+            Preço (€)
+            <span class="sort-container">
+              <span class="sort-arrow ${sortField==='price' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('price','asc')">&#9650;</span>
+              <span class="sort-arrow ${sortField==='price' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('price','desc')">&#9660;</span>
+            </span>
+          </th>
+        </tr>`;
+      
+
+
+
     
         tarifarios.forEach(tarifa => {
             const corPotencia = calcularCor(tarifa.potencia, minPotencia, maxPotencia);
@@ -515,7 +575,6 @@ document.getElementById("mesSelecionado")?.addEventListener("change", atualizarR
 document.getElementById("dias")?.addEventListener("input", atualizarResultados);
 document.getElementById("consumo")?.addEventListener("input", atualizarResultados);
 document.getElementById("potenciac")?.addEventListener("change", atualizarResultados);
-document.getElementById("ordenar")?.addEventListener("change", atualizarResultados);
 document.getElementById("fixo")?.addEventListener("input", atualizarResultados);
 document.getElementById("variavel")?.addEventListener("input", atualizarResultados);
 document.getElementById("mostrarNomes")?.addEventListener("change", atualizarResultados);
