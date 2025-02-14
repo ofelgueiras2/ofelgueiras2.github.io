@@ -84,7 +84,6 @@ const arrowIcon = document.getElementById('arrowIcon');
 const secao = document.getElementById("secaoDefinicoes");
 
 // 🔹 Função para converter referência A1 para índices numéricos (linha e coluna)
-// Função para converter referência A1 para índices de linha e coluna
 function converterReferencia(ref) {
     const match = ref.match(/^([A-Z]+)(\d+)$/);
     if (!match) {
@@ -105,7 +104,6 @@ function converterReferencia(ref) {
     console.log(`🔍 Conversão: ${ref} → Linha ${row}, Coluna ${colIndex}`);
     return { col: colIndex, row };
 }
-
 
 // 🔹 Função para obter uma tabela pelo nome
 function obterTabela(nome) {
@@ -142,7 +140,6 @@ function obterVariavel(nome) {
     return valor;
 }
 
-
 // 🔹 Função para carregar os dados do CSV
 async function carregarDadosCSV() {
     console.log("📥 Carregando dados do CSV...");
@@ -152,24 +149,16 @@ async function carregarDadosCSV() {
             throw new Error(`Erro HTTP: ${resposta.status}`);
         }
 
-        // Converter para UTF-8 corretamente  
-        const texto = await resposta.text(); // ⚠️ Lê a resposta apenas uma vez
+        const texto = await resposta.text();
 
-        // 1. Dividir o CSV em linhas e colunas (separador ";")
         dadosCSV = texto.split("\n").map(linha =>
             linha.split(";").map(valor => {
-                // 2. Remover espaços extras
                 valor = valor.trim();
-
-                // 3. Converter valores numéricos corretamente
-                if (valor.match(/^-?\d+,\d+$/)) {  
-                    // Se for um número decimal, trocar "," por "." e converter para float
+                if (valor.match(/^-?\d+,\d+$/)) {
                     return parseFloat(valor.replace(",", "."));
                 } else if (valor.match(/^-?\d+$/)) {
-                    // Se for número inteiro, converter para int
                     return parseInt(valor, 10);
                 } else {
-                    // Se for texto, manter como string
                     return valor;
                 }
             })
@@ -179,7 +168,6 @@ async function carregarDadosCSV() {
         console.log("📌 Tamanho do CSV:", dadosCSV.length, "linhas x", (dadosCSV[0]?.length || 0), "colunas");
         console.log("📌 Primeiras 5 linhas do CSV:", dadosCSV.slice(0, 5));
 
-        // Teste para ver se as funções estão a funcionar corretamente:
         console.log("🔎 Teste tabela preçosSimples:", obterTabela("preçosSimples"));
         console.log("🔎 Teste variável aano:", obterVariavel("aano"));
 
@@ -188,41 +176,28 @@ async function carregarDadosCSV() {
     }
 }
 
-    // Testar a extração de tabelas e variáveis
-    console.log("🔍 Testando extração de tabelas...");
-    console.log("📌 Tabela kVAs:", obterTabela("kVAs"));
-    console.log("📌 Variável perdas2024:", obterVariavel("perdas2024"));
-
+console.log("🔍 Testando extração de tabelas...");
+console.log("📌 Tabela kVAs:", obterTabela("kVAs"));
+console.log("📌 Variável perdas2024:", obterVariavel("perdas2024"));
 
 function preencherSelecaoMeses() {
-    const meses = obterTabela("Meses")?.flat() || []; // Obtém os Meses da tabela
+    const meses = obterTabela("Meses")?.flat() || [];
     const selectMes = document.getElementById("mesSelecionado");
-
-    // Limpar opções anteriores (se existirem)
     selectMes.innerHTML = "";
-
-// Adicionar os meses como opções no <select>
     meses.forEach((mes, index) => {
         let option = document.createElement("option");
-        option.value = index; // Índice base zero
+        option.value = index;
         option.textContent = mes;
         selectMes.appendChild(option);
     });
-
-    // Obter o índice do mês atual
-    const mesAtualIndex = new Date().getMonth(); // Retorna de 0 (Janeiro) a 11 (Dezembro)
-
-    // Garantir que o índice está dentro da lista e definir o mês por defeito
+    const mesAtualIndex = new Date().getMonth();
     if (meses[mesAtualIndex]) {
         selectMes.value = mesAtualIndex;
     }
-
     console.log(`🔎 Mês atual selecionado: ${meses[mesAtualIndex]}`);
 }
 
-
 function atualizarResultados() {
-    // Obter valores dos inputs
     let consumo = parseFloat(document.getElementById("consumo").value);
     let potenciaSelecionada = document.getElementById("potenciac").value;
     let ordenarPor = document.getElementById("ordenar")?.value || "preco";
@@ -233,17 +208,14 @@ function atualizarResultados() {
     let incluirContinente = document.getElementById("incluirContinente").checked;
     let restringir = document.getElementById("restringir").checked;
 
-    // Obter o índice do mês selecionado
     const mesSelecionadoIndex = document.getElementById("mesSelecionado").selectedIndex;
     
-    // Obter o valor de dias (convertendo se necessário)
     let diasInput = document.getElementById("dias").value.trim();
     diasInput = diasInput === "" ? NaN : parseInt(diasInput, 10);
     const diasMesesTabela = obterTabela("diasMeses")?.flat() || [];
     let diasS = !isNaN(diasInput) ? diasInput : (parseInt(diasMesesTabela[mesSelecionadoIndex]) || 30);
     console.log(`🔎 diasS determinado: ${diasS}`);
     
-    // Obter dados das tabelas necessárias
     const potencias = obterTabela("kVAs")?.map(row => row[0]) || [];
     console.log("🔍 Conteúdo de potencias:", potencias);
     const nomesTarifarios = obterTabela("empresasSimples")?.flat().map(nome => nome.replace(/\*+$/, "").trim()) || [];
@@ -260,7 +232,6 @@ function atualizarResultados() {
         return;
     }
     
-    // Converter variáveis (usando obterVariavel) para números
     let IVABaseSimples = parseFloat(obterVariavel("IVABase").replace("%", "")) / 100 || 0;
     let AudiovisualS = parseFloat(obterVariavel("Audiovisual").replace("€", "").replace(",", ".").trim()) || 0;
     let DGEGS = parseFloat(obterVariavel("DGEG").replace("€", "").replace(",", ".").trim()) || 0;
@@ -295,19 +266,16 @@ function atualizarResultados() {
     let EDPK1S = parseFloat(obterVariavel("EDPK1")) || 0;
     let EDPK2S = parseFloat(obterVariavel("EDPK2")) || 0;
     
-    // Obter valor do OMIE e Perdas para o mês selecionado
     let OMIESSelecionadoS = OMIES[mesSelecionadoIndex]?.[0] || 0;
     let PerdasSelecionadoS = PerdasS[mesSelecionadoIndex]?.[0] || 0;
     
-    // Antes de criar o array, obtenha o índice da potência selecionada
     const colIndex = potencias.indexOf(potenciaSelecionada);
     if (colIndex === -1) {
         throw new Error("Potência selecionada inválida.");
     }
-    const colPotencia = colIndex * 2; // Ex.: 0, 2, 4...
-    const colSimples = colPotencia + 1;  // Ex.: 1, 3, 5...
+    const colPotencia = colIndex * 2;
+    const colSimples = colPotencia + 1;
     
-    // Obter valor da tabela LuzigazFee correspondente à potência selecionada
     const luzigasFeeTabela = obterTabela("LuzigazFee")?.flat() || [];
     let luzigasFeeS = luzigasFeeTabela[colIndex] || "0";
     luzigasFeeS = parseFloat(luzigasFeeS.replace("€", "").replace(",", ".").trim()) || 0;
@@ -317,13 +285,19 @@ function atualizarResultados() {
     console.log("Potência:", potenciaSelecionada, IVAFixoS, kVAsTarSocialS)
     if (kVAsTarSocialS.includes(potenciaSelecionada)) {
         IVAFixoS = IVAPromocionalS;
-      } else {
+    } else {
         IVAFixoS = IVABaseSimples;
-      }
-      console.log("IVAFixoS:", IVAFixoS)
+    }
+    console.log("IVAFixoS:", IVAFixoS)
     
     // --- Criação do array de tarifários a partir dos dados CSV ---
+    // MODIFICAÇÃO 1: Marcação dos tarifários indexados (empresas entre C19 e C25)
     let tarifarios = nomesTarifarios.map((nome, i) => {
+        let isIndexado = false;
+        if (i + 5 >= 19 && i + 5 <= 25) { // Como a tabela começa em C5
+            isIndexado = true;
+        }
+        
         let potencia = parseFloat(tarifariosDados[i]?.[colPotencia]) || 0;
         let simples;
 
@@ -368,7 +342,8 @@ function atualizarResultados() {
             nome: nomeExibido,
             potencia,
             simples,
-            custo: parseFloat(custo.toFixed(2))
+            custo: parseFloat(custo.toFixed(2)),
+            isIndexado // Propriedade adicionada para identificar tarifários indexados
         };
     });
     
@@ -404,47 +379,42 @@ function atualizarResultados() {
         });
     }
     
-// --- Inserir "Meu tarifário" se os campos fixo e variavel estiverem preenchidos ---
-const inputFixoVal = document.getElementById("fixo").value.trim();
-const inputVariavelVal = document.getElementById("variavel").value.trim();
+    const inputFixoVal = document.getElementById("fixo").value.trim();
+    const inputVariavelVal = document.getElementById("variavel").value.trim();
 
-if (inputFixoVal !== "" && inputVariavelVal !== "") {
-    // Substituir vírgula por ponto, caso o usuário digite números com vírgula
-    const potenciaMeu = parseFloat(inputFixoVal.replace(",", "."));
-    const simplesMeu = parseFloat(inputVariavelVal.replace(",", "."));
-    
-    if (!isNaN(potenciaMeu) && !isNaN(simplesMeu)) {
-        const custoMeu = (potenciaMeu * diasS * (1 + IVABaseSimples)) +
-                         (simplesMeu * (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
-                                        Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS))) +
-                         (AudiovisualS * (1 + IVA_AudiovisualSimples)) +
-                         (DGEGS * (1 + IVA_DGEGSimples)) +
-                         (consumo * (IESS * (1 + IVA_IESS)));
-                         
-        const meuTarifario = {
-            nome: "Meu tarifário",
-            potencia: potenciaMeu,
-            simples: simplesMeu,
-            custo: parseFloat(custoMeu.toFixed(2))
-        };
-        console.log("Inserindo Meu tarifário:", meuTarifario);
-        tarifarios.push(meuTarifario);
+    if (inputFixoVal !== "" && inputVariavelVal !== "") {
+        const potenciaMeu = parseFloat(inputFixoVal.replace(",", "."));
+        const simplesMeu = parseFloat(inputVariavelVal.replace(",", "."));
+        
+        if (!isNaN(potenciaMeu) && !isNaN(simplesMeu)) {
+            const custoMeu = (potenciaMeu * diasS * (1 + IVABaseSimples)) +
+                             (simplesMeu * (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
+                                            Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS))) +
+                             (AudiovisualS * (1 + IVA_AudiovisualSimples)) +
+                             (DGEGS * (1 + IVA_DGEGSimples)) +
+                             (consumo * (IESS * (1 + IVA_IESS)));
+                             
+            const meuTarifario = {
+                nome: "Meu tarifário",
+                potencia: potenciaMeu,
+                simples: simplesMeu,
+                custo: parseFloat(custoMeu.toFixed(2))
+            };
+            console.log("Inserindo Meu tarifário:", meuTarifario);
+            tarifarios.push(meuTarifario);
+        } else {
+            console.error("Erro ao converter os valores dos inputs de 'Meu tarifário' para número.");
+        }
     } else {
-        console.error("Erro ao converter os valores dos inputs de 'Meu tarifário' para número.");
+        console.log("Inputs de 'Meu tarifário' não preenchidos.");
     }
-} else {
-    console.log("Inputs de 'Meu tarifário' não preenchidos.");
-}
 
-    
-    // --- Ordenar o array de tarifários conforme a opção selecionada ---
     if (ordenarPor === "preco") {
         tarifarios.sort((a, b) => a.custo - b.custo);
     } else if (ordenarPor === "tarifario") {
         tarifarios.sort((a, b) => a.nome.localeCompare(b.nome));
     }
     
-    // --- Garantir que "Meu tarifário" esteja sempre na primeira posição ---
     const indexMeu = tarifarios.findIndex(t => t.nome === "Meu tarifário");
     if (indexMeu > 0) {
         const [meu] = tarifarios.splice(indexMeu, 1);
@@ -454,13 +424,12 @@ if (inputFixoVal !== "" && inputVariavelVal !== "") {
     preencherLista(tarifarios);
     calcularPreco(tarifarios, consumo, potenciaSelecionada);
     
-    // Função para limpar a área de lista (pode ser expandida se necessário)
     function preencherLista(tarifarios) {
         const lista = document.getElementById("listaTarifarios");
         lista.innerHTML = "";
     }
     
-    // Função para calcular preços e construir a tabela de resultados
+    // MODIFICAÇÃO 2: Aplicar fundo amarelo (mesmo do "Meu tarifário") para tarifários indexados
     function calcularPreco(tarifarios, consumo, potenciaSelecionada) {
         const minPotencia = Math.min(...tarifarios.map(t => t.potencia));
         const maxPotencia = Math.max(...tarifarios.map(t => t.potencia));
@@ -470,9 +439,9 @@ if (inputFixoVal !== "" && inputVariavelVal !== "") {
         const maxCusto = Math.max(...tarifarios.map(t => t.custo));
     
         function calcularCor(valor, min, max) {
-            const corMin = [90, 138, 198]; // Ex: #5A8AC6
-            const corMed = [252, 252, 255]; // Ex: #FCFCFF
-            const corMax = [248, 105, 107]; // Ex: #F8696B
+            const corMin = [90, 138, 198];
+            const corMed = [252, 252, 255];
+            const corMax = [248, 105, 107];
             let corFinal;
             if (valor <= (min + max) / 2) {
                 const percent = (valor - min) / (((min + max) / 2) - min || 1);
@@ -508,10 +477,20 @@ if (inputFixoVal !== "" && inputVariavelVal !== "") {
             const isMinSimples = tarifa.simples === minSimples ? "font-weight:bold;" : "";
             const isMinCusto = tarifa.custo === minCusto ? "font-weight:bold;" : "";
             
-            // Se for "Meu tarifário", definimos um estilo específico para a célula do nome
+            // MODIFICAÇÃO 2: Se for "Meu tarifário" ou tarifário indexado, aplicar fundo amarelo
             let nomeStyle = "";
             if (tarifa.nome === "Meu tarifário") {
-            nomeStyle = "background-color:#FFC000; font-weight:bold; color:black;";
+                nomeStyle = "background-color:#FFC000; font-weight:bold; color:black;";
+                }
+            if (tarifa.isIndexado) {
+                nomeStyle = "background-color:#FFF2CC;";
+                if (tarifa.nome === "Repsol indexado" || tarifa.nome === "Coopérnico" || tarifa.nome === "Plenitude indexado" ||
+                    tarifa.nome === "Coopérnico: Base 2.0" || tarifa.nome === "Repsol: Tarifa Leve Sem Mais" || tarifa.nome === "Plenitude: Tarifa Tendência"
+                ) {
+                    nomeStyle += "color:#0070C0;";
+                } else {
+                    nomeStyle += "color:black;";
+                }
             }
             tabelaResultados += `<tr>
                                     <td style='${nomeStyle}'>${tarifa.nome}</td>
@@ -526,16 +505,11 @@ if (inputFixoVal !== "" && inputVariavelVal !== "") {
     }
 }
 
-
-
-
-// Eventos para atualização dinâmica
 document.getElementById("mesSelecionado")?.addEventListener("change", atualizarResultados);
 document.getElementById("dias")?.addEventListener("input", atualizarResultados);
 document.getElementById("consumo")?.addEventListener("input", atualizarResultados);
 document.getElementById("potenciac")?.addEventListener("change", atualizarResultados);
 document.getElementById("ordenar")?.addEventListener("change", atualizarResultados);
-// Adicione estes event listeners para os inputs de "Meu tarifário":
 document.getElementById("fixo")?.addEventListener("input", atualizarResultados);
 document.getElementById("variavel")?.addEventListener("input", atualizarResultados);
 document.getElementById("mostrarNomes")?.addEventListener("change", atualizarResultados);
@@ -543,42 +517,38 @@ document.getElementById("incluirACP")?.addEventListener("change", atualizarResul
 document.getElementById("incluirContinente")?.addEventListener("change", atualizarResultados);
 document.getElementById("restringir")?.addEventListener("change", atualizarResultados);
 
-
 window.onload = async function () {
     console.log("🔄 Iniciando carregamento do CSV...");
-    await carregarDadosCSV(); // Aguarda o carregamento completo dos dados
+    await carregarDadosCSV();
     preencherSelecaoMeses();
     console.log("📊 Dados carregados! Atualizando interface...");
-    atualizarResultados(); // Atualiza a interface com os dados carregados
-    document.getElementById("incluirACP").checked = true; // Definir selecionado por padrão
+    atualizarResultados();
+    document.getElementById("incluirACP").checked = true;
     atualizarResultados()
 };
 
 btnDefinicoes.addEventListener("click", function() {
-    // Verifica se a seção está oculta ou visível
     if (secao.style.display === "none" || secao.style.display === "") {
-      // Se estiver oculta, exibe a seção e muda o ícone para seta para cima
       secao.style.display = "block";
       arrowIcon.classList.remove('fa-chevron-down');
       arrowIcon.classList.add('fa-chevron-up');
     } else {
-      // Se estiver visível, oculta a seção e muda o ícone para seta para baixo
       secao.style.display = "none";
       arrowIcon.classList.remove('fa-chevron-up');
       arrowIcon.classList.add('fa-chevron-down');
     }
-  });
-
-  document.getElementById("btnLimpar").addEventListener("click", function() {
-    document.getElementById("fixo").value = "";
-    document.getElementById("variavel").value = "";
-    atualizarResultados(); // Atualiza a tabela após limpar os inputs
 });
 
-  document.getElementById("btnLimpar").addEventListener("click", function() {
+document.getElementById("btnLimpar").addEventListener("click", function() {
     document.getElementById("fixo").value = "";
     document.getElementById("variavel").value = "";
-    atualizarResultados(); // Atualiza a tabela após limpar os inputs
+    atualizarResultados();
+});
+
+document.getElementById("btnLimpar").addEventListener("click", function() {
+    document.getElementById("fixo").value = "";
+    document.getElementById("variavel").value = "";
+    atualizarResultados();
 });
 
 document.getElementById("abaMeuTarifario").addEventListener("click", function() {
@@ -597,3 +567,4 @@ function alternarAba(abaSelecionada) {
         document.getElementById("conteudo" + aba).classList.toggle("ativa", aba === abaSelecionada);
     });
 }
+
