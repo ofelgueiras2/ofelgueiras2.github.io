@@ -186,7 +186,7 @@ th {
 
 .sort-container {
     position: absolute;
-    right: 5px;           /* distância da borda direita da célula */
+    right: 2px;           /* distância da borda direita da célula */
     top: 50%;
     transform: translateY(-50%);
     display: flex;
