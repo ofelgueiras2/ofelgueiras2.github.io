@@ -206,6 +206,7 @@ function atualizarResultados() {
     let mostrarNomesAlternativos = document.getElementById("mostrarNomes").checked;
     let incluirACP = document.getElementById("incluirACP").checked;
     let incluirContinente = document.getElementById("incluirContinente").checked;
+    let incluirMeo = document.getElementById("incluirMeo").checked;
     let restringir = document.getElementById("restringir").checked;
 
     const mesSelecionadoIndex = document.getElementById("mesSelecionado").selectedIndex;
@@ -320,8 +321,13 @@ function atualizarResultados() {
         } else {                            
             simples = parseFloat(tarifariosDados[i]?.[colSimples]) || 0;
         }
+
+        if (nome === "Meo" && incluirMeo) {
+            simples -= 0.01;
+        }
+
         const nomeExibido = mostrarNomesAlternativos && nomesTarifariosDetalhados[i] ? nomesTarifariosDetalhados[i] : nome;
-    
+
         let custo = (potencia * diasS * (1 + IVABaseSimples)) +
                     simples * (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
                                Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS)) +
@@ -360,7 +366,7 @@ function atualizarResultados() {
                 potencia *= 0.9;
                 simples *= 0.9;
             }
-
+            
             const nomeExibido = mostrarNomesAlternativos && nomesTarifariosDetalhadosExtra[i] ? nomesTarifariosDetalhadosExtra[i] : nome;
 
             let custo = (potencia * diasS * (1 + IVABaseSimples)) +
@@ -515,6 +521,7 @@ document.getElementById("variavel")?.addEventListener("input", atualizarResultad
 document.getElementById("mostrarNomes")?.addEventListener("change", atualizarResultados);
 document.getElementById("incluirACP")?.addEventListener("change", atualizarResultados);
 document.getElementById("incluirContinente")?.addEventListener("change", atualizarResultados);
+document.getElementById("incluirMeo")?.addEventListener("change", atualizarResultados);
 document.getElementById("restringir")?.addEventListener("change", atualizarResultados);
 
 window.onload = async function () {
