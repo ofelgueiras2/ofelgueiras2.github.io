@@ -1,0 +1,25 @@
+name: Atualizar CSV
+
+# Executa o workflow duas vezes por dia: às 08:00 e às 20:00 UTC (ajuste o horário conforme necessário)
+on:
+  schedule:
+    - cron: '0 8,20 * * *'
+  workflow_dispatch:
+
+jobs:
+  atualizar_csv:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
+
+      - name: Configurar R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Instalar dependências
+        run: |
+          install.packages(c("httr", "rvest", "dplyr", "stringr", "lubridate", "readr", "tidyr", "purrr"))
+
+      - name: Executar o script R
+        run: Rscript gs/rscript.R
