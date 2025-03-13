@@ -1,4 +1,4 @@
-name: Run R Script with Dependencies
+name: Run R Script and Commit CSV
 
 on:
   workflow_dispatch:
@@ -24,12 +24,12 @@ jobs:
 
       - name: Run R script
         run: |
-              cd gs
-              Rscript rscript.R
+          cd gs
+          Rscript rscript.R
 
       - name: Commit new file
         uses: EndBug/add-and-commit@v9
         with:
-        add: "gs/SimuladorEletricidade_OF_MN_2025_2.csv"
-        message: "Adiciona novo arquivo gerado pelo workflow"
+          add: "gs/SimuladorEletricidade_OF_MN_2025_2.csv"
+          commit_message: "Adiciona novo arquivo gerado pelo workflow"
 
