@@ -1,6 +1,8 @@
 name: Run R Script and Commit CSV
 
 on:
+  schedule:
+    - cron: '0 14,20 * * *'
   workflow_dispatch:
 
 jobs:
