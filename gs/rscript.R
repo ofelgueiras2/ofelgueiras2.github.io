@@ -286,6 +286,13 @@ write.table(simulador,
 # Lê o conteúdo e adiciona o BOM
 content <- readLines(temp_file, encoding = "UTF-8")
 bom <- "\ufeff"  # BOM em UTF-8
-writeLines(c(bom, content), "SimuladorEletricidade_OF_MN_2025_2.csv", useBytes = TRUE)
+
+# Se houver pelo menos uma linha, insira o BOM no começo da primeira
+if (length(content) > 0) {
+  content[1] <- paste0(bom, content[1])
+}
+
+# Agora salve normalmente
+writeLines(content, "SimuladorEletricidade_OF_MN_2025_2.csv", useBytes = TRUE)
 
 file.remove(temp_file)
