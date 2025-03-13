@@ -23,5 +23,7 @@ jobs:
           Rscript -e "install.packages(c('httr','rvest','dplyr','stringr','lubridate','readr','tidyr','purrr'), repos='https://cran.rstudio.com/')"
 
       - name: Run R script
-        run: Rscript gs/rscript.R
-
+      - name: Run R script
+        run: |
+              cd gs
+              Rscript rscript.R
