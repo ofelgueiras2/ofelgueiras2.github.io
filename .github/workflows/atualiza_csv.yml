@@ -26,10 +26,12 @@ jobs:
         run: |
           cd gs
           Rscript rscript.R
-
+          
       - name: Commit new file
         uses: EndBug/add-and-commit@v9
         with:
           add: "gs/SimuladorEletricidade_OF_MN_2025_2.csv"
-          commit_message: "Adiciona novo arquivo gerado pelo workflow"
+          message: "Adiciona novo arquivo gerado pelo workflow"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
 
