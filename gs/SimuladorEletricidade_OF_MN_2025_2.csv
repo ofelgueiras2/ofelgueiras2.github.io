@@ -1,5 +1,4 @@
-﻿
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;Data;BD;BS;PT;BTN A;BTN B;BTN C;Preço;;Data;;;;
+﻿;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;Data;BD;BS;PT;BTN A;BTN B;BTN C;Preço;;Data;;;;
 ;;Potência contratada;1,15 kVA;;2,3 kVA;;3,45 kVA;;4,6 kVA;;5,75 kVA;;6,9 kVA;;10,35 kVA;;13,8 kVA;;17,25 kVA;;20,7 kVA;;;;;;;;;;;;;;;;;;;;;;;;;;31/12/2025;V;C;0,1856098;0,0224686;0,0306301;0,0353091;83,5;;;;;;
 ;;Comercializador;Potência (€/dia);Energia (€/kWh);Potência (€/dia);Energia (€/kWh);Potência (€/dia);Energia (€/kWh);Potência (€/dia);Energia (€/kWh);Potência (€/dia);Energia (€/kWh);Potência (€/dia);Energia (€/kWh);Potência (€/dia);Energia (€/kWh);Potência (€/dia);Energia (€/kWh);Potência (€/dia);Energia (€/kWh);Potência (€/dia);Energia (€/kWh);;;;;;;;;;;;;;;;;;;Ultimo Update;Próximo Update;;Luzboa indexado;0,104298127;;31/12/2025;V;C;0,1885066;0,0232319;0,0317023;0,0373713;83,5;;31/12/2025;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;Tarifa de Acesso à Rede;;;Mês;Perdas (PT);OMIE (€/kWh);;;;;;;;;Tarifários;;;07/03/2025;;;Ibelectra indexado;0,10026914;;31/12/2025;V;C;0,194084;0,0240119;0,0328149;0,0394694;83,5;;30/12/2025;;;;
