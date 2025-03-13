@@ -248,8 +248,6 @@ dados_pos <- dados_temp %>%
 Dados <- bind_rows(dados_pre, dados_pos) %>%
   arrange(desc(Data), desc(HoraD), desc(Quarto))
 
-library(readr)
-
 # Ler o CSV preservando as colunas em branco
 
 simulador <- read_delim("SimuladorEletricidade_OF_MN_2025.csv",
@@ -263,6 +261,8 @@ simulador <- read_delim("SimuladorEletricidade_OF_MN_2025.csv",
 # para as linhas de 2 até 35041 com os valores de Dados$Preço
 
 simulador[2:35041, 55] <- formatC(Dados$Preço, format = "g", decimal.mark = ",")
+
+simulador <- as.data.frame(simulador)
 
 write.csv2(simulador, "SimuladorEletricidade_OF_MN_2025_2.csv", row.names = FALSE, na = "")
 
@@ -289,7 +289,3 @@ bom <- "\ufeff"  # BOM em UTF-8
 writeLines(c(bom, content), "SimuladorEletricidade_OF_MN_2025_2.csv", useBytes = TRUE)
 
 file.remove(temp_file)
-
-
-
-
