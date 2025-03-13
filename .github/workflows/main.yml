@@ -1,0 +1,2 @@
+- name: Listar arquivos
+  run: find . -type f
