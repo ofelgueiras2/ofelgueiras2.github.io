@@ -253,11 +253,6 @@ library(readr)
 # Ler o CSV preservando as colunas em branco
 
 simulador <- read_delim("SimuladorEletricidade_OF_MN_2025.csv",
-                        delim = ";",         # ajuste para o delimitador correto, pode ser ";" se for o caso
-                        col_names = FALSE,   # ou TRUE, conforme a estrutura do seu arquivo
-                        locale = locale(encoding = "UTF-8"))
-
-simulador <- read_delim("SimuladorEletricidade_OF_MN_2025.csv",
                         delim = ";",
                         col_names = FALSE,
                         locale = locale(encoding = "UTF-8"),
