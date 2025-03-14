@@ -73,12 +73,14 @@ dados_csv <- dados_csv %>%
   ) %>%
   select(Data = Fecha, HoraD = Hora,
          Preço = `Precio marginal en el sistema portugués (EUR/MWh)`) %>%
-  filter(year(Data) == 2025) %>%
   arrange(desc(Data), desc(HoraD)) %>%
   filter(!is.na(Data) & !is.na(HoraD) & !is.na(Preço)) %>%
   mutate(
-    Preço_Posterior = lead(Preço),
-    Nova_Coluna = if_else(Data == max(Data), Preço_Posterior, Preço)
+    Preço_Posterior = lag(Preço)
+  ) %>% 
+  filter(year(Data) == 2025)  %>%
+  mutate(
+    Nova_Coluna = if_else(Data == max(Data), Preço, Preço_Posterior)
   )
 
 dados_agrupados <- dados_csv %>%
@@ -260,16 +262,55 @@ simulador <- read_delim("SimuladorEletricidade_OF_MN_2025.csv",
 # Atualizar as células da coluna 55 (correspondente à coluna BC)
 # para as linhas de 2 até 35041 com os valores de Dados$Preço
 
-simulador[2:35041, 55] <- formatC(Dados$Preço, format = "g", decimal.mark = ",")
+format_no_trailing <- function(x, decimals = 8) {
+  # Arredonda para "decimals" casas decimais – isso "limpa" imprecisões
+  rx <- round(x, decimals)
+  # Cria uma string com o número fixo de casas decimais
+  s <- sprintf(paste0("%.", decimals, "f"), rx)
+  # Remove zeros à direita (deixa pelo menos um dígito se houver separador)
+  s <- sub("0+$", "", s)
+  # Se o separador ficar sozinho, remove-o também
+  s <- sub("([0-9]),$", "\\1", s)
+  # Substitui ponto por vírgula
+  s <- gsub("\\.", ",", s)
+  s
+}
+
+simulador[2:35041, 55] <- format_no_trailing(Dados$Preço)
+
+# Defina o formato das datas (ajuste se necessário)
+date_format <- "%d/%m/%Y"
+
+# Converter a coluna TData (coluna 48, linhas 2 a 35041) para Date
+TData <- as.Date(unlist(simulador[2:35041, 48]), format = date_format)
+
+# Converter a coluna TPreço (coluna 55, linhas 2 a 35041) para numérico
+# Se os valores têm vírgula como separador decimal, substitua para ponto antes de converter
+TPreco <- as.numeric(gsub(",", ".", unlist(simulador[2:35041, 55])))
+
+# Converter BG9 (linha 9, coluna 59) e BH9 (linha 9, coluna 60) para Date
+BG <- as.Date(unlist(simulador[9:27, 59]), format = date_format)
+BH <- as.Date(unlist(simulador[9:27, 60]), format = date_format)
+
+# Usando sapply para calcular, para cada par BG[i] e BH[i], 
+# a média dos TPreço correspondentes, dividindo por 1000 e arredondando.
+novos_valores <- sapply(seq_along(BG), function(i) {
+  indices <- TData >= BG[i] & TData <= BH[i]
+  round(mean(TPreco[indices], na.rm = TRUE) / 1000, 5)
+})
+
+# Formata os valores para texto, com vírgula como separador decimal
+novos_valores_formatted <- formatC(novos_valores, format = "f", digits = 5, decimal.mark = ",")
+# Atualiza as células de simulador (linhas 6 a 24, coluna 30) com os resultados
+simulador[6:24, 30] <- novos_valores_formatted
 
 simulador <- as.data.frame(simulador)
-
+names(simulador) <- NULL
 write.csv2(simulador, "SimuladorEletricidade_OF_MN_2025_2.csv", row.names = FALSE, na = "")
 
 
 # Salvar o CSV mantendo a estrutura e as colunas em branco
 # Remover os nomes das colunas do dataframe
-names(simulador) <- NULL
 
 # Primeiro, salva o conteúdo em um arquivo temporário
 temp_file <- "temp_Simulador.csv"
