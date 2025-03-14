@@ -19,7 +19,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev libx11-dev
-  
+
       - name: Restore R package cache
         uses: actions/cache@v3
         with:
@@ -31,7 +31,7 @@ jobs:
       - name: Install R packages with renv
         run: |
           Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
-          Rscript -e 'renv::restore()'
+          Rscript -e 'renv::restore(prompt = FALSE)'
 
       - name: Run R script
         run: |
@@ -44,3 +44,4 @@ jobs:
           add: "gs/SimuladorEletricidade_OF_MN_2025_2.csv"
           message: "Adiciona novo arquivo gerado pelo workflow"
           github_token: ${{ secrets.PAT_TOKEN }}
+
