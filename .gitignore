@@ -1,0 +1,11 @@
+# Ignorar a biblioteca do renv (não precisa ser commitada)
+renv/library/
+
+# Ignorar arquivos temporários do R
+*.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# Ignorar logs e arquivos gerados automaticamente
+*.log
