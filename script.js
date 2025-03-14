@@ -1,4 +1,4 @@
-const urlCSV = "https://raw.githubusercontent.com/ofelgueiras2/ofelgueiras2.github.io/refs/heads/main/gs/SimuladorEletricidade_OF_MN_2025.csv";
+const urlCSV = "https://raw.githubusercontent.com/ofelgueiras2/ofelgueiras2.github.io/refs/heads/main/gs/SimuladorEletricidade_OF_MN_2025_2.csv";
 let dadosCSV = [];
 
 const tabelas = {
@@ -31,9 +31,9 @@ const tabelas = {
     LuzigazFee: { inicio: "Z27", fim: "Z36" },
     TARPotencias: { inicio: "Z6", fim: "Z15" },
     detalheTarifarios: { inicio: "AM5", fim: "AM25"},
-    tarifariosExtra: { inicio: "C68", fim: "C76"},
-    detalheTarifariosExtra: { inicio: "B68", fim: "B76"},
-    preçosSimplesExtra: { inicio: "D68", fim: "W76"},
+    tarifariosExtra: { inicio: "C68", fim: "C77"},
+    detalheTarifariosExtra: { inicio: "B68", fim: "B77"},
+    preçosSimplesExtra: { inicio: "D68", fim: "W77"},
 };
 
 const variaveis = {
