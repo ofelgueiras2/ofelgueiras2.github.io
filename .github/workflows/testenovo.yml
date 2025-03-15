@@ -1,40 +1,51 @@
-name: R Package CI
+name: Test renv Cache
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:  # Permite execução manual para testar
 
 jobs:
-  build:
+  test-cache:
     runs-on: ubuntu-latest
-
+    env:
+      RENV_PATHS_CACHE: ~/.cache/R/renv  # Configura o caminho correto do cache
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Set up R
+      - name: Setup R environment
         uses: r-lib/actions/setup-r@v2
+
+      - name: Setup cache for R packages
+        uses: actions/cache@v3
         with:
-          r-version: '4.4.3'
+          path: ~/.cache/R/renv
+          key: renv-cache-${{ runner.os }}-${{ hashFiles('renv.lock') }}
+          restore-keys: |
+            renv-cache-${{ runner.os }}-
 
-      - name: Set up Renv cache path
-        run: echo "RENV_PATHS_CACHE=${{ runner.temp }}/renv/cache" >> $GITHUB_ENV
-
-      - name: Restore R package cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ runner.temp }}/renv/cache
-          key: renv-cache-R-${{ runner.os }}-${{ hashFiles('renv.lock') }}
-          restore-keys: renv-cache-R-${{ runner.os }}-
-
-      - name: Install R dependencies
+      - name: Install renv and restore packages
         run: |
-          Rscript -e 'install.packages("renv")'
-          Rscript -e 'renv::restore()'
+          Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
+          Rscript -e 'renv::restore(prompt = FALSE)'
 
-      - name: Check R package
-        run: R CMD check . --no-manual --as-cran
+      - name: Debug renv cache path
+        run: |
+          echo "### Caminho real do cache do renv:"
+          Rscript -e 'print(renv::paths$cache())'
+
+      - name: Install small package (`cli`)
+        run: |
+          Rscript -e 'renv::activate()'
+          Rscript -e 'renv::install("cli")'
+
+      - name: Verify installation
+        run: |
+          Rscript -e 'library(cli); print("cli package loaded successfully!")'
+          echo "### Lista de pacotes instalados no renv:"
+          Rscript -e 'print(installed.packages()[,1])'
+
+      - name: Check if package exists in cache
+        run: |
+          echo "### Verificando cache do renv para o package cli:"
+          find ~/.cache/R/renv -name "cli"
+
