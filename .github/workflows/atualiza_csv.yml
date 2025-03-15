@@ -35,8 +35,8 @@ jobs:
 
       - name: Run R script
         run: |
-          cd gs
           Rscript -e 'source("renv/activate.R")'
+          cd gs
           Rscript rscript.R
           
       - name: Commit new file
