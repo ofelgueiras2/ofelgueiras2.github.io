@@ -14,6 +14,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libcurl4-openssl-dev libssl-dev
+
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
 
@@ -25,21 +30,9 @@ jobs:
           restore-keys: |
             renv-cache-${{ runner.os }}-
 
-      - name: Install renv
+      - name: Install renv and restore packages
         run: |
           Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
-
-      - name: Install system dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y libcurl4-openssl-dev
-      - name: Reinstall renv
-        run: |
-          Rscript -e "install.packages('renv', repos='https://cran.rstudio.com/')"
-          Rscript -e "renv::restore()"
-
-      - name: Restore R packages
-        run: |
           Rscript -e 'renv::restore()'
 
       - name: Test if renv cache is used
