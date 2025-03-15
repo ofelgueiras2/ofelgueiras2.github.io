@@ -33,14 +33,18 @@ jobs:
           Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
           Rscript -e 'renv::restore(prompt = FALSE)'
 
-      - name: Run R script
+      - name: Setup R environment
         run: |
           Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
-          Rscript -e 'renv::restore(rebuild = TRUE, prompt = FALSE)'  # Garante que os pacotes são reinstalados corretamente
-          Rscript -e 'source("renv/activate.R")'  # Ativar o renv
-          Rscript -e 'library(httr)'  # Testa se o httr pode ser carregado
+          Rscript -e 'source("renv/activate.R")'  # Ativar o renv primeiro
+          Rscript -e 'renv::restore(clean = TRUE, prompt = FALSE)'  # Força reinstalação total
+          Rscript -e 'renv::status()'  # Depuração: Verifica se tudo está sincronizado
+          Rscript -e 'print(.libPaths())'  # Depuração: Verifica onde os pacotes estão instalados
+          Rscript -e 'installed.packages()[,1]'  # Depuração: Lista pacotes instalados
+          Rscript -e 'if(!requireNamespace("httr", quietly = TRUE)) stop("httr ainda não está disponível!")'
           cd gs
           Rscript rscript.R
+
           
       - name: Commit new file
         uses: EndBug/add-and-commit@v9
