@@ -1,0 +1,45 @@
+name: Teste Renv Cache
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test-renv-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Cache do renv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/R/renv
+          key: renv-${{ runner.os }}-${{ hashFiles('renv.lock') }}
+          restore-keys: renv-${{ runner.os }}-
+
+      - name: Instalar R e Dependências Básicas
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.4.3' # Ou a versão que estás a usar
+
+      - name: Instalar renv
+        run: Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
+
+      - name: Criar Projeto renv
+        run: Rscript -e 'renv::init(bare = TRUE)'
+
+      - name: Instalar um único pacote (cli)
+        run: |
+          Rscript -e 'install.packages("cli", repos="https://cran.rstudio.com/")'
+          Rscript -e 'renv::snapshot()'
+
+      - name: Limpar Biblioteca (Simular Novo Ambiente)
+        run: rm -rf renv/library
+
+      - name: Restaurar renv (Testar Cache)
+        run: |
+          Rscript -e 'renv::restore()'
+          Rscript -e 'library(cli); print("Cache Test: CLI Carregado!")'
