@@ -35,7 +35,10 @@ jobs:
 
       - name: Run R script
         run: |
-          Rscript -e 'source("renv/activate.R")'
+          Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
+          Rscript -e 'renv::restore(rebuild = TRUE, prompt = FALSE)'  # Garante que os pacotes são reinstalados corretamente
+          Rscript -e 'source("renv/activate.R")'  # Ativar o renv
+          Rscript -e 'library(httr)'  # Testa se o httr pode ser carregado
           cd gs
           Rscript rscript.R
           
