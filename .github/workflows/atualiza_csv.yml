@@ -8,6 +8,8 @@ on:
 jobs:
   run-script:
     runs-on: ubuntu-latest
+    env:
+      RENV_PATHS_CACHE: ~/.local/share/renv/cache  # Define o caminho do cache do renv
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -18,9 +20,9 @@ jobs:
       - name: Setup cache for R packages
         uses: actions/cache@v3
         with:
-          path: renv/cache
-          key: renv-${{ runner.os }}-${{ hashFiles('renv.lock') }}
-          restore-keys: renv-${{ runner.os }}-
+          path: ~/.local/share/renv/cache  # Caminho do cache do renv
+          key: renv-cache-R-${{ matrix.r-version }}  # Chave do cache
+          restore-keys: renv-cache-R-
 
       - name: Install system dependencies
         run: |
