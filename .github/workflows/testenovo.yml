@@ -1,21 +1,23 @@
 name: Test renv Cache
 
 on:
-  workflow_dispatch:  # Permite execução manual para testar
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-  test-cache:
+  test-renv-cache:
     runs-on: ubuntu-latest
-    env:
-      RENV_PATHS_CACHE: ~/.cache/R/renv  # Configura o caminho correto do cache
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup R environment
+      - name: Set up R
         uses: r-lib/actions/setup-r@v2
 
-      - name: Setup cache for R packages
+      - name: Cache renv packages
         uses: actions/cache@v3
         with:
           path: ~/.cache/R/renv
@@ -23,29 +25,14 @@ jobs:
           restore-keys: |
             renv-cache-${{ runner.os }}-
 
-      - name: Install renv and restore packages
+      - name: Install renv
         run: |
           Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
-          Rscript -e 'renv::restore(prompt = FALSE)'
 
-      - name: Debug renv cache path
+      - name: Restore R packages
         run: |
-          echo "### Caminho real do cache do renv:"
-          Rscript -e 'print(renv::paths$cache())'
+          Rscript -e 'renv::restore()'
 
-      - name: Install small package (`cli`)
+      - name: Test if renv cache is used
         run: |
-          Rscript -e 'renv::activate()'
-          Rscript -e 'renv::install("cli")'
-
-      - name: Verify installation
-        run: |
-          Rscript -e 'library(cli); print("cli package loaded successfully!")'
-          echo "### Lista de pacotes instalados no renv:"
-          Rscript -e 'print(installed.packages()[,1])'
-
-      - name: Check if package exists in cache
-        run: |
-          echo "### Verificando cache do renv para o package cli:"
-          find ~/.cache/R/renv -name "cli"
-
+          Rscript -e 'if (!requireNamespace("dplyr", quietly = TRUE)) stop("dplyr not found in cache")'
