@@ -25,7 +25,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev
 
       - name: Install renv and restore packages
         run: |
@@ -35,37 +35,31 @@ jobs:
       - name: Debug R Libraries (Antes da ativação do renv)
         run: |
           echo "### Caminhos de bibliotecas antes do renv:"
-          Rscript -e '.libPaths()'
+          Rscript -e 'print(.libPaths())'
           echo "### Pacotes instalados antes do renv:"
-          Rscript -e 'installed.packages()[,1]'
+          Rscript -e 'print(installed.packages()[,1])'
 
       - name: Activate renv
         run: |
-          Rscript -e 'source("renv/activate.R")'
+          Rscript -e 'renv::activate()'
 
       - name: Debug R Libraries (Depois da ativação do renv)
         run: |
           echo "### Caminhos de bibliotecas após ativação do renv:"
-          Rscript -e '.libPaths()'
+          Rscript -e 'print(.libPaths())'
           echo "### Pacotes instalados após ativação do renv:"
-          Rscript -e 'installed.packages()[,1]'
+          Rscript -e 'print(installed.packages()[,1])'
           echo "### Status do renv:"
           Rscript -e 'renv::status()'
 
-      - name: Force Set R Library Path
-        run: |
-          Rscript -e '.libPaths(c("/home/runner/work/_temp/Library", .libPaths()))'
-          Rscript -e 'source("renv/activate.R")'
-          Rscript -e 'library(httr)'
-
       - name: Run R script
         run: |
-          Rscript -e 'source("renv/activate.R")'  # Ativar o renv antes de rodar
-          Rscript -e '.libPaths()'  # Verificar bibliotecas ativas para debugging
-          Rscript -e 'library(httr)'  # Testar se o httr pode ser carregado
-          Rscript -e 'print(installed.packages()[,1])'  # Mostrar pacotes instalados
-          Rscript -e 'Sys.getenv("RENV_PATHS_ROOT")'  # Verifica se o renv está a apontar para o sítio correto
-          Rscript gs/rscript.R  # Agora roda o script corretamente
+          Rscript -e 'renv::activate()'
+          Rscript -e 'print(.libPaths())'
+          Rscript -e 'library(httr)'  # Testar se o pacote pode ser carregado
+          Rscript -e 'print(installed.packages()[,1])'
+          Rscript -e 'Sys.getenv("RENV_PATHS_ROOT")'
+          Rscript gs/rscript.R  # Corre o script principal
 
       - name: Commit new file
         uses: EndBug/add-and-commit@v9
