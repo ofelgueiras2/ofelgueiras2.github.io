@@ -17,7 +17,13 @@ jobs:
       - name: ⚙️ Configurar repositório
         uses: actions/checkout@v4
 
-      # Mostra informações do sistema antes de qualquer outra coisa
+      # 🔴 INSTALAR R (A correção essencial)
+      - name: 📦 Instalar R e dependências
+        run: |
+          sudo apt update
+          sudo apt install -y r-base r-base-dev libcurl4-openssl-dev libssl-dev libxml2-dev
+
+      # Testa se o R foi instalado corretamente
       - name: 🛠️ Diagnóstico Inicial
         run: |
           echo "=== Informações do Sistema ==="
@@ -28,12 +34,6 @@ jobs:
           which R
           echo "=== Caminho do Rscript ==="
           which Rscript
-
-      # Instala dependências do sistema (se necessário)
-      - name: 🔧 Instalar pacotes de sistema necessários
-        run: |
-          sudo apt update
-          sudo apt install -y libcurl4-openssl-dev libssl-dev libxml2-dev
 
       # Instala o `renv`
       - name: 📦 Instalar `renv`
@@ -92,4 +92,3 @@ jobs:
       # Finaliza o workflow e imprime mensagem de sucesso
       - name: ✅ Diagnóstico Concluído
         run: echo "Se chegou até aqui sem erros, a configuração do `renv` está correta!"
-
