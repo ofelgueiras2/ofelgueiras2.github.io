@@ -3,7 +3,7 @@ name: Run R Script and Commit CSV
 on:
   schedule:
     - cron: '0 14,20 * * *'  # Executa às 14h e 20h UTC todos os dias
-  workflow_dispatch:  # Permite executar manualmente
+  workflow_dispatch:  # Permite execução manual
 
 jobs:
   run-script:
@@ -27,15 +27,36 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
 
-      - name: Install and activate renv
+      - name: Install renv and restore packages
         run: |
           Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
           Rscript -e 'renv::restore(prompt = FALSE)'
 
-      - name: Verify installed packages
+      - name: Debug R Libraries (Antes da ativação do renv)
         run: |
-          Rscript -e 'installed.packages()[,1]'  # Lista pacotes instalados para debugging
-          Rscript -e 'library(httr)'  # Testa se httr pode ser carregado
+          echo "### Caminhos de bibliotecas antes do renv:"
+          Rscript -e '.libPaths()'
+          echo "### Pacotes instalados antes do renv:"
+          Rscript -e 'installed.packages()[,1]'
+
+      - name: Activate renv
+        run: |
+          Rscript -e 'source("renv/activate.R")'
+
+      - name: Debug R Libraries (Depois da ativação do renv)
+        run: |
+          echo "### Caminhos de bibliotecas após ativação do renv:"
+          Rscript -e '.libPaths()'
+          echo "### Pacotes instalados após ativação do renv:"
+          Rscript -e 'installed.packages()[,1]'
+          echo "### Status do renv:"
+          Rscript -e 'renv::status()'
+
+      - name: Force Set R Library Path
+        run: |
+          Rscript -e '.libPaths(c("/home/runner/work/_temp/Library", .libPaths()))'
+          Rscript -e 'source("renv/activate.R")'
+          Rscript -e 'library(httr)'
 
       - name: Run R script
         run: |
