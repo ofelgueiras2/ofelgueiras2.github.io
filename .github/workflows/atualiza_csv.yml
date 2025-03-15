@@ -60,8 +60,12 @@ jobs:
 
       - name: Run R script
         run: |
-          cd gs
-          Rscript rscript.R
+          Rscript -e 'source("renv/activate.R")'  # Ativar o renv antes de rodar
+          Rscript -e '.libPaths()'  # Verificar bibliotecas ativas para debugging
+          Rscript -e 'library(httr)'  # Testar se o httr pode ser carregado
+          Rscript -e 'print(installed.packages()[,1])'  # Mostrar pacotes instalados
+          Rscript -e 'Sys.getenv("RENV_PATHS_ROOT")'  # Verifica se o renv está a apontar para o sítio correto
+          Rscript gs/rscript.R  # Agora roda o script corretamente
 
       - name: Commit new file
         uses: EndBug/add-and-commit@v9
