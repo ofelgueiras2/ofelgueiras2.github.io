@@ -252,7 +252,7 @@ Dados <- bind_rows(dados_pre, dados_pos) %>%
 
 # Ler o CSV preservando as colunas em branco
 
-simulador <- read_delim("SimuladorEletricidade_OF_MN_2025.csv",
+simulador <- read_delim("gs/SimuladorEletricidade_OF_MN_2025.csv",
                         delim = ";",
                         col_names = FALSE,
                         locale = locale(encoding = "UTF-8"),
@@ -306,7 +306,7 @@ simulador[6:24, 30] <- novos_valores_formatted
 
 simulador <- as.data.frame(simulador)
 names(simulador) <- NULL
-write.csv2(simulador, "SimuladorEletricidade_OF_MN_2025_2.csv", row.names = FALSE, na = "")
+write.csv2(simulador, "gs/SimuladorEletricidade_OF_MN_2025_2.csv", row.names = FALSE, na = "")
 
 
 # Salvar o CSV mantendo a estrutura e as colunas em branco
@@ -334,6 +334,6 @@ if (length(content) > 0) {
 }
 
 # Agora salve normalmente
-writeLines(content, "SimuladorEletricidade_OF_MN_2025_2.csv", useBytes = TRUE)
+writeLines(content, "gs/SimuladorEletricidade_OF_MN_2025_2.csv", useBytes = TRUE)
 
 file.remove(temp_file)
