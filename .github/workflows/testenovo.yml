@@ -43,5 +43,5 @@ jobs:
           Rscript -e 'renv::status()'
 
       - name: Verify dplyr is installed
-        run: |
-          Rscript -e 'if (!requireNamespace("dplyr", quietly = TRUE)) stop("dplyr not found in cache")'
+        run: Rscript -e "if (!requireNamespace('dplyr', quietly = TRUE)) stop('dplyr not found in cache')"
+
