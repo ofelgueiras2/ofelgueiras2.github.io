@@ -39,7 +39,13 @@ jobs:
       - name: Limpar Biblioteca (Simular Novo Ambiente)
         run: rm -rf renv/library
 
-      - name: Restaurar renv (Testar Cache)
+      - name: Verificar Cache Renv
         run: |
-          Rscript -e 'renv::restore()'
-          Rscript -e 'library(cli); print("Cache Test: CLI Carregado!")'
+          echo "Conteúdo da cache renv:"
+          ls -la ~/.cache/R/renv
+          echo "Conteúdo da biblioteca renv:"
+          ls -la renv/library
+
+      - name: Restaurar renv (Forçando reconstrução)
+        run: Rscript -e 'renv::restore(rebuild = TRUE, prompt = FALSE)'
+
