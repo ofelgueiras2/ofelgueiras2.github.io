@@ -20,14 +20,17 @@ jobs:
       - name: Setup cache for R packages
         uses: actions/cache@v3
         with:
-          path: ~/.local/share/renv/cache  # Caminho do cache do renv
-          key: renv-cache-R-${{ matrix.r-version }}  # Chave do cache
-          restore-keys: renv-cache-R-
+          path: |
+            ~/.local/share/renv/cache
+            renv/library
+          key: renv-cache-${{ runner.os }}-${{ hashFiles('renv.lock') }}
+          restore-keys: |
+            renv-cache-${{ runner.os }}-
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev libx11-dev
 
       - name: Install renv and restore packages
         run: |
@@ -40,10 +43,6 @@ jobs:
           Rscript -e 'print(.libPaths())'
           echo "### Pacotes instalados antes do renv:"
           Rscript -e 'print(installed.packages()[,1])'
-
-      - name: Activate renv
-        run: |
-          Rscript -e 'renv::activate()'
 
       - name: Debug R Libraries (Depois da ativação do renv)
         run: |
