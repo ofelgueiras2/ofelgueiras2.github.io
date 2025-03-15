@@ -1,94 +1,44 @@
-name: Teste Diagnóstico Renv
+name: Test renv Cache
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch: # Permite execução manual
+  workflow_dispatch:  # Permite rodar manualmente
 
 jobs:
-  test-renv-cache:
+  test-renv:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ⚙️ Configurar repositório
+      - name: Checkout do repositório
         uses: actions/checkout@v4
 
-      # 🔴 INSTALAR R (A correção essencial)
-      - name: 📦 Instalar R e dependências
-        run: |
-          sudo apt update
-          sudo apt install -y r-base r-base-dev libcurl4-openssl-dev libssl-dev libxml2-dev
+      - name: Instalar R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.4.3'  # Mesma versão do lockfile
 
-      # Testa se o R foi instalado corretamente
-      - name: 🛠️ Diagnóstico Inicial
-        run: |
-          echo "=== Informações do Sistema ==="
-          uname -a
-          echo "=== Versão do R ==="
-          R --version
-          echo "=== Caminho do R ==="
-          which R
-          echo "=== Caminho do Rscript ==="
-          which Rscript
+      - name: Configurar Cache do renv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/R/renv
+          key: renv-cache-R-4.4.3
+          restore-keys: renv-cache-R-
 
-      # Instala o `renv`
-      - name: 📦 Instalar `renv`
-        run: |
-          Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
+      - name: Instalar renv
+        run: Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
 
-      # Diagnóstico: Verificar onde o `renv` está a armazenar a cache
-      - name: 🔍 Verificar Caminhos do `renv`
+      - name: Criar/Ativar renv
         run: |
-          echo "=== Verificando Caminhos do renv ==="
-          Rscript -e 'print(Sys.getenv("RENV_PATHS_CACHE"))'
-          Rscript -e 'print(renv::paths$cache())'
-          Rscript -e 'print(renv::paths$library())'
+          mkdir -p renv
+          Rscript -e 'if (!file.exists("renv.lock")) renv::init(bare = TRUE)'
+          Rscript -e 'renv::activate()'
 
-      # Garante que `renv` está inicializado corretamente
-      - name: 🚀 Iniciar `renv`
+      - name: Instalar pacote pequeno (cli)
         run: |
-          Rscript -e 'if (!renv::status()$synchronized) renv::restore(rebuild = TRUE, prompt = FALSE)'
+          Rscript -e 'renv::install("cli")'
+          Rscript -e 'renv::snapshot()'
 
-      # Diagnóstico: Verificar pacotes antes do restore
-      - name: 🔍 Verificar Pacotes Antes do Restore
-        run: |
-          echo "=== Caminhos de bibliotecas antes do renv ==="
-          Rscript -e 'print(.libPaths())'
-          echo "=== Pacotes instalados antes do restore ==="
-          Rscript -e 'print(installed.packages()[,1])'
+      - name: Verificar Cache do renv
+        run: Rscript -e 'print(Sys.getenv("RENV_PATHS_CACHE"))'
 
-      # Restaurar pacotes do `renv`
-      - name: 🔄 Restaurar Pacotes do `renv`
-        run: |
-          Rscript -e 'renv::restore(rebuild = TRUE, prompt = FALSE)'
-
-      # Diagnóstico: Verificar pacotes depois do restore
-      - name: 🔍 Verificar Pacotes Após Restore
-        run: |
-          echo "=== Caminhos de bibliotecas após ativação do renv ==="
-          Rscript -e 'print(.libPaths())'
-          echo "=== Pacotes instalados após restore ==="
-          Rscript -e 'print(installed.packages()[,1])'
-
-      # Diagnóstico: Listar conteúdo da cache do `renv`
-      - name: 📂 Verificar Cache do `renv`
-        run: |
-          echo "=== Conteúdo da cache renv ==="
-          ls -la ~/.cache/R/renv || echo "Cache não encontrada"
-          echo "=== Conteúdo da biblioteca renv ==="
-          ls -la renv/library || echo "Biblioteca renv não encontrada"
-
-      # Teste: Verifica se um pacote essencial (`httr`) pode ser carregado
-      - name: 🧪 Testar carregamento de pacotes
-        run: |
-          Rscript -e 'library(httr)'
-          Rscript -e 'library(dplyr)'
-          Rscript -e 'library(lubridate)'
-
-      # Finaliza o workflow e imprime mensagem de sucesso
-      - name: ✅ Diagnóstico Concluído
-        run: echo "Se chegou até aqui sem erros, a configuração do `renv` está correta!"
+      - name: Testar se a cache funcionou
+        run: Rscript -e 'library(cli); print(cli::symbol$bullet)'
