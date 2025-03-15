@@ -34,18 +34,14 @@ jobs:
         run: |
           Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
 
-      - name: Check renv cache status
-        run: |
-          Rscript -e 'renv::status()'
-
-      - name: Force reinstall curl (if needed)
-        run: |
-          Rscript -e "remove.packages('curl'); install.packages('curl', repos='https://cran.rstudio.com/')"
-
       - name: Restore R packages
         run: |
           Rscript -e 'renv::restore()'
+        
+      - name: Check renv status
+        run: |
+          Rscript -e 'renv::status()'
 
       - name: Verify dplyr is installed
         run: |
-          Rscript -e 'if (!requireNamespace("
+          Rscript -e 'if (!requireNamespace("dplyr", quietly = TRUE)) stop("dplyr not found in cache")'
