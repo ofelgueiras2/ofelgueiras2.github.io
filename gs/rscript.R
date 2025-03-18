@@ -62,8 +62,10 @@ dados_csv <- read_delim(url_csv, delim = ";", col_names = FALSE,
                         locale = locale(encoding = "windows-1252"),
                         col_types = cols(.default = col_character()),
                         skip = 2)
-colnames(dados_csv) <- as.character(dados_csv[1,])
-dados_csv <- dados_csv[-1,] %>% select(-which(is.na(names(.))))
+dados_csv <- dados_csv[-1,1:4]
+names(dados_csv)=c("Fecha","Hora",
+                   "Precio marginal en el sistema español (EUR/MWh)",
+                   "Precio marginal en el sistema portugués (EUR/MWh)")
 dados_csv <- dados_csv %>%
   mutate(
     Fecha = as.Date(Fecha, format = "%d/%m/%Y"),
