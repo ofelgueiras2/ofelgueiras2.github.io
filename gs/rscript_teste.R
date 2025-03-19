@@ -88,9 +88,34 @@ remDr <- remoteDriver(
 
 # Abrir o navegador
 remDr$open()
-if (!remDr$getStatus()$ready) {
+
+# (Opcional) Verificar o status:
+status <- remDr$getStatus()
+print(status)
+if (is.null(status) || length(status) == 0) {
   stop("O navegador não foi aberto corretamente.")
 }
+
+max_wait <- 40      # tempo máximo de espera em segundos
+poll_interval <- 1  # intervalo entre as tentativas (em segundos)
+start_time <- Sys.time()
+
+repeat {
+  status <- try(remDr$getStatus(), silent = TRUE)
+  if (!inherits(status, "try-error") && !is.null(status)) {
+    # Se obtivermos um status sem erro, saímos do loop.
+    break
+  }
+  
+  if (as.numeric(Sys.time() - start_time, units = "secs") > max_wait) {
+    stop("Timeout: o servidor Selenium não respondeu dentro de ", max_wait, " segundos.")
+  }
+  
+  Sys.sleep(poll_interval)
+}
+
+print("Selenium está pronto!")
+
 
 # Navegar para a página
 url <- "https://www.omie.es"  # substitua pela URL real
