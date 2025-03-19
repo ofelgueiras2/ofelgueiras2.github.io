@@ -69,6 +69,18 @@ jobs:
           wget https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
           mv selenium-server-4.29.0.jar selenium-server.jar
 
+      # Passo 5: Instalar o Geckodriver
+      - name: Install Geckodriver
+        run: |
+          wget https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz
+          tar -xvzf geckodriver-v0.36.0-linux64.tar.gz
+          chmod +x geckodriver
+          sudo mv geckodriver /usr/local/bin/
+
+      # Passo 6: Instalar o Firefox
+      - name: Install Firefox
+        run: sudo apt-get install -y firefox
+
       - name: Start Selenium Server
         run: |
           java -jar selenium-server.jar standalone --port 4444 &
@@ -90,7 +102,6 @@ jobs:
             print(Sys.getenv("RENV_PATHS_ROOT"));
             source("gs/rscript_teste.R")
           '
-
       - name: Check if CSV file exists
         run: |
           if [ ! -f "gs/SimuladorEletricidade_OF_MN_2025_2.csv" ]; then
