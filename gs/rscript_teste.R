@@ -9,6 +9,7 @@ library(purrr)
 library(RSelenium)
 library(jsonlite)
 library(netstat)
+library(wdman)
 
 ### 1 – Extração e processamento dos dados da web
 
@@ -74,6 +75,10 @@ csv_date <- dmy(dados_csv$Fecha[1])
 
 
 # --- Parte 1: Extração via RSelenium e rvest -----------------
+
+dir.create("~/.local/share/binman_seleniumserver", recursive = TRUE, showWarnings = FALSE)
+selServ <- selenium(port = 4444L)
+
 
 # Inicializar RSelenium (exemplo com Firefox; ajuste se necessário)
 port <- netstat::free_port()
