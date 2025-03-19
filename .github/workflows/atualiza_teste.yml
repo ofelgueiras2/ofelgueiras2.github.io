@@ -58,6 +58,7 @@ jobs:
           Rscript -e 'print(installed.packages()[,1])'
           echo "### Status do renv:"
           Rscript -e 'renv::status()'
+          Rscript -e 'renv::install(c("RSelenium", "netstat"))'
 
       - name: Run R script
         run: |
