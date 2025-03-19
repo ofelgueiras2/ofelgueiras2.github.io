@@ -77,6 +77,11 @@ jobs:
           chmod +x geckodriver
           sudo mv geckodriver /usr/local/bin/
 
+      - name: Check Geckodriver
+        run: |
+          which geckodriver
+          geckodriver --version
+
       # Passo 6: Instalar o Firefox
       - name: Install Firefox
         run: sudo apt-get install -y firefox
