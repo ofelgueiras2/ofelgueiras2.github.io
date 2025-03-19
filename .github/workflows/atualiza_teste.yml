@@ -1,11 +1,6 @@
 name: Run R Script and Commit CSV Teste
 
 on:
-  schedule:
-    - cron: '0-59/10 12 * * *'  # De 13:00 até 13:59 (de 10 em 10 minutos)
-    - cron: '0-59/10 13 * * *'   # De 14:00 até 14:30 (de 10 em 10 minutos)
-    - cron: '0-59/10 19 * * *'  # De 19:00 até 19:59 (de 10 em 10 minutos)
-    - cron: '0-30/10 20 * * *'   # De 20:00 até 20:30 (de 10 em 10 minutos)
   workflow_dispatch:  # Permite execução manual
 
 jobs:
@@ -59,17 +54,14 @@ jobs:
           echo "### Status do renv:"
           Rscript -e 'renv::status()'
 
-      # Passo 3: Instalar o Java
       - name: Install Java
         run: sudo apt-get install -y default-jre
 
-      # Passo 4: Baixar o Selenium Server
       - name: Download Selenium Server
         run: |
           wget https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
           mv selenium-server-4.29.0.jar selenium-server.jar
 
-      # Passo 5: Instalar o Geckodriver
       - name: Install Geckodriver
         run: |
           wget https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz
@@ -82,19 +74,15 @@ jobs:
           which geckodriver
           geckodriver --version
 
-
-      # Passo 7: Remover o Snap do Firefox
       - name: Remove Firefox Snap
         run: |
           sudo snap remove firefox
 
-      # Passo 8: Adicionar o PPA do Mozilla Team
       - name: Add Mozilla Team PPA
         run: |
           sudo add-apt-repository ppa:mozillateam/ppa
           sudo apt-get update
 
-      # Passo 9: Configurar o APT para priorizar o PPA
       - name: Configure APT to prefer PPA
         run: |
           echo 'Package: firefox*
@@ -102,12 +90,10 @@ jobs:
           Pin-Priority: 1001
           ' | sudo tee /etc/apt/preferences.d/mozillateam-ppa
 
-      # Passo 10: Instalar o Firefox (sem Snap)
       - name: Install Firefox (without Snap)
         run: |
           sudo apt-get install -y firefox
 
-      # Passo 11: Verificar o Firefox
       - name: Check Firefox
         run: |
           firefox --version
@@ -118,11 +104,9 @@ jobs:
           sleep 10  # Aguarda o servidor iniciar
           echo "Selenium Server iniciado na porta 4444"
 
-      # Passo 6: Instalar o RSelenium
-#      - name: Install RSelenium
-#        run: |
-#          install.packages("RSelenium")
-#          renv::install("RSelenium")
+      - name: Install RSelenium
+        run: |
+          Rscript -e 'renv::install("RSelenium")'
 
       - name: Run R script
         run: |
@@ -134,6 +118,7 @@ jobs:
             print(Sys.getenv("RENV_PATHS_ROOT"));
             source("gs/rscript_teste.R")
           '
+
       - name: Check if CSV file exists
         run: |
           if [ ! -f "gs/SimuladorEletricidade_OF_MN_2025_2.csv" ]; then
