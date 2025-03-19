@@ -104,9 +104,9 @@ jobs:
           sleep 10  # Aguarda o servidor iniciar
           echo "Selenium Server iniciado na porta 4444"
 
-      - name: Install RSelenium
+      - name: Check if Selenium port is open
         run: |
-          Rscript -e 'renv::install("RSelenium")'
+          netstat -tuln | grep 4444
 
       - name: Run R script
         run: |
