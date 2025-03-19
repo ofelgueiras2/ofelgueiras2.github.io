@@ -82,13 +82,32 @@ jobs:
           which geckodriver
           geckodriver --version
 
-      # Passo 6: Instalar o Firefox
-      - name: Install Firefox (without Snap)
+
+      # Passo 7: Remover o Snap do Firefox
+      - name: Remove Firefox Snap
+        run: |
+          sudo snap remove firefox
+
+      # Passo 8: Adicionar o PPA do Mozilla Team
+      - name: Add Mozilla Team PPA
         run: |
           sudo add-apt-repository ppa:mozillateam/ppa
           sudo apt-get update
+
+      # Passo 9: Configurar o APT para priorizar o PPA
+      - name: Configure APT to prefer PPA
+        run: |
+          echo 'Package: firefox*
+          Pin: release o=LP-PPA-mozillateam
+          Pin-Priority: 1001
+          ' | sudo tee /etc/apt/preferences.d/mozillateam-ppa
+
+      # Passo 10: Instalar o Firefox (sem Snap)
+      - name: Install Firefox (without Snap)
+        run: |
           sudo apt-get install -y firefox
 
+      # Passo 11: Verificar o Firefox
       - name: Check Firefox
         run: |
           firefox --version
