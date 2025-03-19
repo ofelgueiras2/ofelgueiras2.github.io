@@ -80,11 +80,6 @@ jobs:
 #          install.packages("RSelenium")
 #          renv::install("RSelenium")
 
-      # Passo 7: Executar o script R
-      - name: Run R script
-        run: Rscript seu_script.R
-          
-
       - name: Run R script
         run: |
           Rscript -e '
