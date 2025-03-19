@@ -88,16 +88,12 @@ remDr <- remoteDriver(
 
 # Abrir o navegador
 remDr$open()
-
-# Navegar para a página
-url <- "https://www.omie.es"  # substitua pela URL real
-remDr$navigate(url)
-
-remDr$open()
 if (!remDr$getStatus()$ready) {
   stop("O navegador não foi aberto corretamente.")
 }
 
+# Navegar para a página
+url <- "https://www.omie.es"  # substitua pela URL real
 remDr$navigate(url)
 Sys.sleep(5)  # Aguarda o carregamento da página
 if (remDr$getCurrentUrl() != url) {
