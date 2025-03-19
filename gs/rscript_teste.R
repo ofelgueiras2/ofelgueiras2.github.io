@@ -86,16 +86,6 @@ remDr <- remoteDriver(
   )
 )
 
-# Conectar ao Selenium Server (já iniciado no workflow)
-remDr <- remoteDriver(
-  remoteServerAddr = "localhost",  # Endereço do servidor
-  port = 4444L,                   # Porta do Selenium Server
-  browserName = "firefox",         # Navegador a ser usado
-  extraCapabilities = list(
-    "moz:firefoxOptions" = list(args = list("--headless"))  # Modo headless
-  )
-)
-
 # Abrir o navegador
 remDr$open()
 
@@ -103,12 +93,29 @@ remDr$open()
 url <- "https://www.omie.es"  # substitua pela URL real
 remDr$navigate(url)
 
+remDr$open()
+if (!remDr$getStatus()$ready) {
+  stop("O navegador não foi aberto corretamente.")
+}
+
+remDr$navigate(url)
+Sys.sleep(5)  # Aguarda o carregamento da página
+if (remDr$getCurrentUrl() != url) {
+  stop("A página não foi carregada corretamente.")
+}
+
 # Aguardar o carregamento da página
 remDr$setImplicitWaitTimeout(10000)  # Espera implícita de 10 segundos
 
+page_source <- remDr$getPageSource()
+if (is.null(page_source)) {
+  stop("Não foi possível obter o código-fonte da página.")
+}
+html <- page_source[[1]]
+
 # Obter o HTML renderizado
-page_source <- remDr$getPageSource()[[1]]
-html <- read_html(page_source)
+#page_source <- remDr$getPageSource()[[1]]
+#html <- read_html(page_source)
 
 # --- Extração dos dados de preços via JSON embutido ---
 data_chart <- html %>%
