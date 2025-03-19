@@ -41,7 +41,7 @@ jobs:
       - name: Install renv, restore
         run: |
           Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
-          Rscript -e 'renv::activate(); renv::restore(prompt = FALSE)
+          Rscript -e 'renv::activate(); renv::restore(prompt = FALSE)'
 
       - name: Debug R Libraries (Antes da ativação do renv)
         run: |
