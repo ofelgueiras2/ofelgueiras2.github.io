@@ -85,6 +85,7 @@ jobs:
         run: |
           java -jar selenium-server.jar standalone --port 4444 &
           sleep 10  # Aguarda o servidor iniciar
+          echo "Selenium Server iniciado na porta 4444"
 
       # Passo 6: Instalar o RSelenium
 #      - name: Install RSelenium
