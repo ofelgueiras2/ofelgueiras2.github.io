@@ -76,29 +76,41 @@ csv_date <- dmy(dados_csv$Fecha[1])
 
 # --- Parte 1: Extração via RSelenium e rvest -----------------
 
-dir.create("~/.local/share/binman_seleniumserver", recursive = TRUE, showWarnings = FALSE)
-selServ <- selenium(port = 4444L)
+# Conectar ao Selenium Server (já iniciado no workflow)
+remDr <- remoteDriver(
+  remoteServerAddr = "localhost",  # Endereço do servidor
+  port = 4444L,                   # Porta do Selenium Server
+  browserName = "firefox",         # Navegador a ser usado
+  extraCapabilities = list(
+    "moz:firefoxOptions" = list(args = list("--headless"))  # Modo headless
+  )
+)
 
+# Conectar ao Selenium Server (já iniciado no workflow)
+remDr <- remoteDriver(
+  remoteServerAddr = "localhost",  # Endereço do servidor
+  port = 4444L,                   # Porta do Selenium Server
+  browserName = "firefox",         # Navegador a ser usado
+  extraCapabilities = list(
+    "moz:firefoxOptions" = list(args = list("--headless"))  # Modo headless
+  )
+)
 
-# Inicializar RSelenium (exemplo com Firefox; ajuste se necessário)
-port <- netstat::free_port()
-rD <- rsDriver(browser = "firefox", ,chromever=NULL ,check = F, port = port, verbose = TRUE)
-
-remDr <- rD$client
+# Abrir o navegador
+remDr$open()
 
 # Navegar para a página
 url <- "https://www.omie.es"  # substitua pela URL real
 remDr$navigate(url)
 
-# Aguardar o carregamento da página (ajuste o tempo se necessário)
-Sys.sleep(3)
+# Aguardar o carregamento da página
+remDr$setImplicitWaitTimeout(10000)  # Espera implícita de 10 segundos
 
 # Obter o HTML renderizado
 page_source <- remDr$getPageSource()[[1]]
 html <- read_html(page_source)
 
 # --- Extração dos dados de preços via JSON embutido ---
-# Supondo que o elemento com id "prices-and-volumes-block" contém o atributo "data-chart" com os dados
 data_chart <- html %>%
   html_node("#prices-and-volumes-block") %>%
   html_attr("data-chart")
@@ -112,7 +124,6 @@ portugal_data <- chart_data$series$data[[1]]
 espanha_data  <- chart_data$series$data[[2]]
 
 # --- Extração da data da página ---
-# Extraindo a data do elemento <h3 class="block-title">Mercado diario para el día: 20/03/2025</h3>
 page_date_str <- html %>%
   html_node("h3.block-title") %>%
   html_text() %>%
@@ -120,11 +131,10 @@ page_date_str <- html %>%
 
 # Converter para Date (assumindo formato "dd/mm/yyyy")
 page_date <- dmy(page_date_str)
-print(paste("Data extraída da página:", page_date))
+#print(paste("Data extraída da página:", page_date))
 
-# Fechar RSelenium quando não for mais necessário
+# Fechar o navegador
 remDr$close()
-rD$server$stop()
 
 if(page_date == csv_date + 1) {
   # Criar um data frame com 24 linhas para cada hora (supondo 24 horas)
