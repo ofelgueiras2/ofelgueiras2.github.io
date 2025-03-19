@@ -59,6 +59,33 @@ jobs:
           echo "### Status do renv:"
           Rscript -e 'renv::status()'
 
+      # Passo 3: Instalar o Java
+      - name: Install Java
+        run: sudo apt-get install -y default-jre
+
+      # Passo 4: Baixar o Selenium Server
+      - name: Download Selenium Server
+        run: |
+          wget https://selenium-release.storage.googleapis.com/4.10/selenium-server-4.10.0.jar
+          mv selenium-server-4.10.0.jar selenium-server.jar
+
+      # Passo 5: Iniciar o Selenium Server
+      - name: Start Selenium Server
+        run: |
+          java -jar selenium-server.jar standalone &
+          sleep 10  # Aguarda o servidor iniciar
+
+      # Passo 6: Instalar o RSelenium
+#      - name: Install RSelenium
+#        run: |
+#          install.packages("RSelenium")
+#          renv::install("RSelenium")
+
+      # Passo 7: Executar o script R
+      - name: Run R script
+        run: Rscript seu_script.R
+          
+
       - name: Run R script
         run: |
           Rscript -e '
