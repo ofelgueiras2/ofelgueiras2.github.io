@@ -1,0 +1,47 @@
+name: Test renv Cache
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test-renv-cache:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libcurl4-openssl-dev libssl-dev libx11-dev
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Cache renv packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/R/renv
+          key: renv-cache-${{ runner.os }}-${{ hashFiles('renv.lock') }}
+          restore-keys: |
+            renv-cache-${{ runner.os }}-
+
+      - name: Install renv
+        run: |
+          Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
+
+      - name: Restore R packages
+        run: |
+          Rscript -e 'renv::restore()'
+        
+      - name: Check renv status
+        run: |
+          Rscript -e 'renv::status()'
+
+      - name: Verify dplyr is installed
+        run: Rscript -e "if (!requireNamespace('dplyr', quietly = TRUE)) stop('dplyr not found in cache')"
+
