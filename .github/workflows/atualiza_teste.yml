@@ -89,11 +89,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y firefox
 
-      - name: Install Firefox
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y firefox
-
       - name: Check Firefox
         run: |
           firefox --version
