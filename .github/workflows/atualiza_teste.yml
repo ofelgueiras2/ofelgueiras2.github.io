@@ -66,11 +66,6 @@ jobs:
       # Passo 4: Baixar o Selenium Server
       - name: Download Selenium Server
         run: |
-          wget https://selenium-release.storage.googleapis.com/4.10/selenium-server-4.29.0.jar
-          mv selenium-server-4.10.0.jar selenium-server.jar
-
-      - name: Download Selenium Server
-        run: |
           wget https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
           mv selenium-server-4.16.0.jar selenium-server.jar
 
