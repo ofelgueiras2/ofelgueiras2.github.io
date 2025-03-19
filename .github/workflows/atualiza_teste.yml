@@ -83,8 +83,11 @@ jobs:
           geckodriver --version
 
       # Passo 6: Instalar o Firefox
-      - name: Install Firefox
-        run: sudo apt-get install -y firefox
+      - name: Install Firefox (without Snap)
+        run: |
+          sudo add-apt-repository ppa:mozillateam/ppa
+          sudo apt-get update
+          sudo apt-get install -y firefox
 
       - name: Install Firefox
         run: |
