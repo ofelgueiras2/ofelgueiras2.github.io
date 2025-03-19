@@ -90,13 +90,13 @@ remDr <- remoteDriver(
 remDr$open()
 
 # Polling para aguardar que o Selenium esteja pronto
-max_wait <- 40      # tempo máximo de espera (segundos)
+max_wait <- 120      # tempo máximo de espera (segundos)
 poll_interval <- 1  # intervalo entre tentativas (segundos)
 start_time <- Sys.time()
 
 repeat {
   status <- try(remDr$getStatus(), silent = TRUE)
-  
+  print(status)
   # Se não ocorrer erro, se status não for NULL e se status$ready for TRUE, saia do loop:
   if (!inherits(status, "try-error") &&
       !is.null(status) &&
