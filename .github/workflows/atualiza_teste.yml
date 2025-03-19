@@ -38,10 +38,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev libx11-dev
 
-      - name: Install renv and restore packages
+      - name: Install renv, restore and install missing packages
         run: |
           Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
-          Rscript -e 'renv::activate(); renv::restore(prompt = FALSE)'
+          Rscript -e 'renv::activate(); renv::restore(prompt = FALSE); renv::install(c("RSelenium", "netstat"))'
 
       - name: Debug R Libraries (Antes da ativação do renv)
         run: |
