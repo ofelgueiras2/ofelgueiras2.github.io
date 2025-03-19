@@ -222,11 +222,16 @@ function atualizarResultados() {
     const mesSelecionadoIndex = document.getElementById("mesSelecionado").selectedIndex;
     
     let diasInput = document.getElementById("dias").value.trim();
-    diasInput = diasInput === "" ? NaN : parseInt(diasInput, 10);
+    diasInput = diasInput === "" ? NaN : parseFloat(diasInput.replace(",", "."));
     const diasMesesTabela = obterTabela("diasMeses")?.flat() || [];
-    let diasS = !isNaN(diasInput) ? diasInput : (parseInt(diasMesesTabela[mesSelecionadoIndex]) || 30);
+    const strDiasTabela = obterTabela("strDias")?.flat() || [];
+    let diasS = !isNaN(diasInput) ? diasInput : parseFloat(diasMesesTabela[mesSelecionadoIndex]);
     console.log(`🔎 diasS determinado: ${diasS}`);
-    
+    console.log(`🔎 diasInput determinado: ${diasInput}`);
+    let strDiasSimples = (!isNaN(diasInput) ? String(diasS) : (strDiasTabela[mesSelecionadoIndex]));
+    console.log(`🔎 strDias determinado: ${strDiasTabela[mesSelecionadoIndex]}`);
+    console.log(`🔎 strDiasSimples determinado: ${strDiasSimples}`);
+
     const potencias = obterTabela("kVAs")?.map(row => row[0]) || [];
     console.log("🔍 Conteúdo de potencias:", potencias);
     const nomesTarifarios = obterTabela("empresasSimples")?.flat().map(nome => nome.replace(/\*+$/, "").trim()) || [];
@@ -483,8 +488,13 @@ function atualizarResultados() {
         
         let tabelaResultados = `<table>
         <tr>
-          <th colspan="3" rowspan="2" style="background-color:#375623; color:white; text-align:center; vertical-align:middle; position:relative;">
-            Potência contratada ${potenciaSelecionada}
+          <th colspan="3" rowspan="2" style="background-color:#375623; color:white; text-align:center; vertical-align:middle; position:relative;
+          font-weight: normal;line-height:1;">
+            <div style="font-weight: bold;margin-top: 15px;margin-bottom: 10px;">Potência contratada ${potenciaSelecionada}</div>
+            <br>
+            <div style="font-size: 14px;margin-bottom: -10px;">${strDiasSimples} dia${(typeof diasS === 'number' && diasS !== 1 ? 's' : '')}</div>
+            <br>
+            <div style="font-size: 14px;">OMIE = ${OMIESSelecionadoS} €/kWh</div>            
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='default' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('default','asc')">&#9650;</span>
               <span class="sort-arrow ${sortField==='default' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('default','desc')">&#9660;</span>
@@ -494,6 +504,7 @@ function atualizarResultados() {
             Consumo (kWh)
           </th>
         </tr>
+
         <tr>
           <td style="background-color:#FFC000; font-weight:bold; color:black; text-align:center;">
             ${consumo || 0}
