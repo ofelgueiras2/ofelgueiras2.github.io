@@ -7,7 +7,7 @@ jobs:
   run-script:
     runs-on: ubuntu-latest
     env:
-      RENV_PATHS_CACHE: ~/.local/share/renv/cache  # Define o caminho do cache do renv
+      RENV_PATHS_CACHE: ~/.local/share/renv/cache
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -31,7 +31,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev libx11-dev dbus-x11
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev libx11-dev dbus-x11 net-tools
 
       - name: Install renv, restore
         run: |
@@ -47,9 +47,9 @@ jobs:
           sudo apt-get purge firefox -y
           sudo add-apt-repository -y ppa:mozillateam/ppa
           sudo apt-get update
-          sudo apt-get install -y firefox
+          sudo apt-get install -y firefox dbus-x11
 
-      - name: Install Geckodriver
+      - name: Install Correct Geckodriver Version
         run: |
           GECKO_VERSION="0.36.0"
           sudo rm -f /usr/local/bin/geckodriver
@@ -60,7 +60,7 @@ jobs:
           sudo chown $(whoami) /usr/local/bin/geckodriver
           geckodriver --version
 
-      - name: Kill any running Firefox (Força um perfil limpo)
+      - name: Kill any running Firefox
         run: |
           echo "🔪 Encerrando possíveis instâncias travadas do Firefox..."
           pkill -9 firefox || echo "Nenhuma instância do Firefox em execução."
@@ -91,6 +91,15 @@ jobs:
           
           sleep 30
           echo "✅ Selenium Server iniciado na porta 4444"
+
+      - name: Check Selenium Server Status
+        run: |
+          echo "🔍 Verificando se Selenium realmente iniciou..."
+          if ! ps aux | grep '[s]elenium-server.jar'; then
+            echo "❌ ERRO: O Selenium Server não está a correr!"
+            cat selenium.log
+            exit 1
+          fi
 
       - name: Check if Selenium port is open
         run: |
@@ -141,4 +150,5 @@ jobs:
           add: "gs/SimuladorEletricidade_OF_MN_2025_3.csv"
           message: "Adiciona novo arquivo gerado pelo workflow"
           github_token: ${{ secrets.PAT_TOKEN }}
+
 
