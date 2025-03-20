@@ -101,7 +101,7 @@ tryCatch({
 # Testar navegação inicial
 print("🔍 Testando navegação inicial com o Google...")
 remDr$navigate("https://www.google.com")
-Sys.sleep(5)
+Sys.sleep(20)
 
 current_url <- remDr$getCurrentUrl()
 
