@@ -107,6 +107,54 @@ repeat {
 
 print("Selenium está pronto!")
 
+# 🔄 Testar a conexão antes de navegar para omie.es
+print("🔍 Testando navegação inicial com o Google...")
+remDr$navigate("https://www.google.com")
+Sys.sleep(5)  
+
+# Verificar se o Selenium está realmente a navegar
+google_url <- remDr$getCurrentUrl()
+print(paste("🌍 URL Google carregada:", google_url))
+
+if (length(google_url) == 0 || is.null(google_url[[1]])) {
+  stop("❌ ERRO: Selenium não conseguiu carregar nem o Google. O navegador pode não ter iniciado corretamente.")
+}
+
+# 🚀 Agora tentar carregar omie.es
+url <- "https://www.omie.es"
+print("🕵️ Tentando carregar:", url)
+remDr$navigate(url)
+Sys.sleep(10)
+
+# 🔄 Tentativa de verificação (retry loop)
+tentativas <- 0
+max_tentativas <- 3
+repeat {
+  current_url <- remDr$getCurrentUrl()
+  
+  if (length(current_url) > 0 && !is.null(current_url[[1]])) {
+    break  # Se obteve uma URL válida, sai do loop
+  }
+  
+  tentativas <- tentativas + 1
+  if (tentativas >= max_tentativas) {
+    stop("❌ Erro: Selenium não retornou nenhuma URL após múltiplas tentativas.")
+  }
+  
+  print(paste("⚠️ Tentativa", tentativas, "falhou. Repetindo navegação..."))
+  remDr$navigate(url)
+  Sys.sleep(5)
+}
+
+# 🌍 Imprimir URL final
+print(paste("✅ Página carregada com sucesso:", current_url[[1]]))
+
+# Alternativa mais flexível: verificar se contém "omie.es"
+if (!grepl("omie.es", current_url[[1]])) {
+  stop(paste("A página não foi carregada corretamente. URL obtida:", current_url[[1]]))
+}
+
+
 # Navegar para a página
 url <- "https://www.omie.es"  # substitua pela URL real
 remDr$navigate(url)
@@ -129,14 +177,6 @@ if (!grepl("omie.es", current_url[[1]])) {
   stop(paste("A página não foi carregada corretamente. URL obtida:", current_url[[1]]))
 }
 
-# Define espera implícita
-remDr$setImplicitWaitTimeout(10000)
-
-page_source <- remDr$getPageSource()
-if (is.null(page_source)) {
-  stop("Não foi possível obter o código-fonte da página.")
-}
-html <- page_source[[1]]
 
 # Extração dos dados
 data_chart <- html %>%
