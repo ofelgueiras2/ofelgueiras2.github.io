@@ -98,43 +98,33 @@ jobs:
         run: |
           firefox --version
 
-      - name: Test Firefox
+            - name: Setup Virtual Display
         run: |
-          firefox --version
-          firefox --headless &
-          sleep 5
-          ps aux | grep firefox
-
-      - name: Test Geckodriver
-        run: |
-          geckodriver --version || echo "❌ Geckodriver não está instalado corretamente!"
-
-      - name: Test Firefox Manualmente
-        run: |
-          export DISPLAY=:99
-          firefox --headless --screenshot https://www.google.com
-          echo "✅ Teste Firefox concluído. Se não houver erro acima, o Firefox está funcional."
-
-      - name: Setup Virtual Display
-        run: |
-          Xvfb :99 -screen 0 1920x1080x24 &  # Iniciar display virtual
+          Xvfb :99 -screen 0 1920x1080x24 &
           echo "🎥 Display virtual iniciado."
+
+      - name: Kill any running Firefox
+        run: |
+          echo "🔪 Encerrando possíveis instâncias travadas do Firefox..."
+          pkill -9 firefox || echo "Nenhuma instância do Firefox em execução."
 
       - name: Start Selenium Server
         run: |
-          export DISPLAY=:99  # Garantir que todas as execuções seguintes o usam
+          export DISPLAY=:99
           export PATH=$PWD:$PATH
           export GECKODRIVER_PATH="/usr/local/bin/geckodriver"
+          
+          echo "🔥 Iniciando Selenium Server..."
           java -Dwebdriver.gecko.driver=$GECKODRIVER_PATH \
                -jar selenium-server.jar standalone \
-               --port 4444 --host 127.0.0.1 \
-               --allow-system-access > selenium.log 2>&1 &  # Adicionando --allow-system-access
-          sleep 20  # Aguardar mais tempo para garantir que inicializa
+               --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
+          
+          sleep 20  # Aguardar mais tempo para garantir que o Selenium inicia corretamente
           echo "✅ Selenium Server iniciado na porta 4444"
 
       - name: Check Selenium Server Status
         run: |
-          echo "🔍 Verificando o status do Selenium Server..."
+          echo "🔍 Verificando status do Selenium..."
           curl -s http://127.0.0.1:4444/wd/hub/status | jq . || echo "❌ Erro ao consultar status!"
 
       - name: Check if Selenium port is open
@@ -149,10 +139,20 @@ jobs:
 
       - name: Test Firefox Session
         run: |
+          echo "🟠 Criando novo perfil do Firefox para evitar bloqueios..."
+          FIREFOX_PROFILE=$(mktemp -d)
+          
           echo "🟠 Tentando criar sessão no Firefox..."
           curl -X POST http://127.0.0.1:4444/session \
           -H "Content-Type: application/json; charset=utf-8" \
-          -d '{"capabilities": {"alwaysMatch": {"browserName": "firefox"}}}' || echo "❌ Erro ao criar sessão do Firefox!"
+          -d "{
+                \"capabilities\": {
+                  \"alwaysMatch\": {
+                    \"browserName\": \"firefox\",
+                    \"moz:firefoxOptions\": {\"args\": [\"--headless\"], \"profile\": \"$FIREFOX_PROFILE\"}
+                  }
+                }
+              }" || echo "❌ Erro ao criar sessão do Firefox!"
 
       - name: Run R script
         run: |
