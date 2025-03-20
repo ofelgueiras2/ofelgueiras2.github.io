@@ -86,6 +86,9 @@ remDr <- remoteDriver(
   )
 )
 
+print("🔍 Testando conexão com Selenium...")
+print(system("netstat -tuln | grep 4444", intern = TRUE))  # Vê se o Selenium está na porta certa
+
 # Inicia o navegador
 remDr$open()
 
