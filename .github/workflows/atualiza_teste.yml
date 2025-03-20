@@ -98,6 +98,13 @@ jobs:
         run: |
           firefox --version
 
+      - name: Test Firefox
+        run: |
+          firefox --version
+          firefox --headless &
+          sleep 5
+          ps aux | grep firefox
+
       - name: Start Selenium Server
         run: |
           java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 &
