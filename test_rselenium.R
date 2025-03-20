@@ -1,6 +1,5 @@
 library(RSelenium)
 
-# Cria o driver remoto com as mesmas configurações usadas no seu workflow
 remDr <- remoteDriver(
   remoteServerAddr = "127.0.0.1",
   port = 4444L,
@@ -12,19 +11,22 @@ remDr <- remoteDriver(
   )
 )
 
-# Tenta abrir o navegador
 cat("📡 Tentando abrir o navegador...\n")
 remDr$open()
 cat("✅ Navegador aberto com sucesso!\n")
 
-# Navega para o Google e aguarda
 cat("🔍 Navegando para https://www.google.com ...\n")
 remDr$navigate("https://www.google.com")
-Sys.sleep(10)  # aguarda 10 segundos para o carregamento
+Sys.sleep(10)
 
-# Obtém e imprime a URL atual
+# Verifica se a URL foi obtida
 current_url <- remDr$getCurrentUrl()
-cat("🌍 URL carregada:", current_url[[1]], "\n")
+cat("Comprimento do vetor de URL:", length(current_url), "\n")
+print(current_url)
 
-# Fecha o navegador
+# Tenta capturar parte do conteúdo da página
+page_source <- remDr$getPageSource()[[1]]
+cat("Trecho do page source:\n", substr(page_source, 1, 300), "\n")
+
 remDr$close()
+
