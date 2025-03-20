@@ -112,6 +112,9 @@ jobs:
       - name: Check if Selenium port is open
         run: |
           netstat -tuln | grep 4444
+      - name: Check Selenium Logs
+        run: |
+          cat selenium.log || echo "No logs found"
 
       - name: Run R script
         run: |
