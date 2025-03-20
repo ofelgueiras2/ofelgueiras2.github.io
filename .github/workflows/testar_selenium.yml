@@ -106,8 +106,11 @@ jobs:
         run: |
           Rscript -e '
             renv::activate();
-            print(.libPaths());
+            if (!requireNamespace("httr", quietly = TRUE)) {
+              install.packages("httr", repos="https://cran.rstudio.com/")
+            }
             library(httr);
+            print(.libPaths());
             print(installed.packages()[,1]);
             print(Sys.getenv("RENV_PATHS_ROOT"));
             source("gs/rscript_teste.R")
