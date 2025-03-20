@@ -62,37 +62,44 @@ jobs:
           wget https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
           mv selenium-server-4.29.0.jar selenium-server.jar
 
-      - name: Remove Firefox Snap
+      - name: Remove Firefox Snap and Install Dependencies
         run: |
-          sudo snap remove firefox
-
-      - name: Install Firefox and Geckodriver
-        run: |
-          sudo add-apt-repository ppa:mozillateam/ppa
+          sudo snap remove firefox || echo "Firefox snap não estava instalado."
+          sudo add-apt-repository -y ppa:mozillateam/ppa
           sudo apt-get update
           sudo apt-get install -y firefox
+
+      - name: Install Geckodriver
+        run: |
           GECKO_VERSION="0.36.0"
+          sudo rm -f /usr/local/bin/geckodriver
           wget -q "https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz"
           tar -xzf geckodriver-v$GECKO_VERSION-linux64.tar.gz
           chmod +x geckodriver
           sudo mv geckodriver /usr/local/bin/
           geckodriver --version
 
-      - name: Kill any running Firefox
+      - name: Kill any running Firefox (Força um perfil limpo)
         run: |
           echo "🔪 Encerrando possíveis instâncias travadas do Firefox..."
           pkill -9 firefox || echo "Nenhuma instância do Firefox em execução."
+          firefox --headless --safe-mode &
+          sleep 5
+          pkill -9 firefox
+          echo "🧹 Firefox limpo e pronto para execução."
 
       - name: Setup Virtual Display
         run: |
           Xvfb :99 -screen 0 1920x1080x24 &
           echo "🎥 Display virtual iniciado."
 
-      - name: Start Selenium Server
+      - name: Start Selenium Server with Logging
         run: |
           export DISPLAY=:99
           export PATH=$PWD:$PATH
           export GECKODRIVER_PATH="/usr/local/bin/geckodriver"
+          export MOZ_LOG="timestamp,sync,nsHttp:5"
+          export MOZ_LOG_FILE="moz_log.txt"
           
           echo "🔥 Iniciando Selenium Server..."
           java -Dwebdriver.gecko.driver=$GECKODRIVER_PATH \
@@ -109,6 +116,22 @@ jobs:
             echo "❌ ERRO: A porta 4444 não está ativa!"
             exit 1
           fi
+
+      - name: Run a simple Selenium test
+        run: |
+          echo "🟠 Testando criação de sessão no Firefox..."
+          curl -X POST http://127.0.0.1:4444/session \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d '{
+                "capabilities": {
+                  "alwaysMatch": {
+                    "browserName": "firefox",
+                    "moz:firefoxOptions": {
+                      "args": ["--headless"]
+                    }
+                  }
+                }
+              }' || echo "❌ Erro ao criar sessão do Firefox!"
 
       - name: Run R script
         run: |
