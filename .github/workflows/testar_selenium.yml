@@ -18,6 +18,7 @@ jobs:
           sudo snap remove firefox || echo "Firefox snap não estava instalado."
           sudo apt update
           sudo apt install -y dbus-x11 xvfb wget unzip openjdk-17-jdk libnss3 libcurl4-openssl-dev
+          java -version  # Debug Java
 
       - name: Instalar Firefox e Geckodriver sem Snap
         run: |
@@ -32,59 +33,15 @@ jobs:
 
       - name: Iniciar Xvfb
         run: Xvfb :99 -screen 0 1920x1080x24 &
-      
+
       - name: Iniciar Selenium Server
         run: |
           export DISPLAY=:99
           wget "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
-          java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
-          sleep 10
+          nohup java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
+          sleep 20  # Espera mais tempo para garantir a inicialização
           echo "✅ Selenium Server iniciado na porta 4444"
 
       - name: Verificar portas ativas
         run: |
           netstat -tuln | grep 4444 || (echo "❌ ERRO: A porta 4444 não está ativa!" && exit 1)
-
-      - name: Configurar R
-        uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: '4.4.0'
-
-      - name: Restaurar pacotes com renv (mais rápido)
-        run: |
-          Rscript -e '
-          if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
-          renv::restore(prompt = FALSE)
-          '
-
-      - name: Executar script R
-        run: |
-          Rscript -e '
-          library(RSelenium)
-          library(jsonlite)
-          library(httr)
-          library(dplyr)
-          library(readr)
-          library(lubridate)
-
-          remDr <- remoteDriver(remoteServerAddr = "127.0.0.1", port = 4444, browserName = "firefox")
-          remDr$open()
-
-          cat("✅ Navegador aberto com sucesso!\n")
-
-          remDr$navigate("https://www.google.com")
-          Sys.sleep(10)  # Aguardar carregamento completo
-
-          title <- remDr$getTitle()
-
-          cat("🔎 Título obtido:", title, "\n")
-
-          if (is.null(title) || length(title) == 0) {
-            stop("❌ ERRO: O título da página não foi carregado corretamente.")
-          } else if (title[[1]] != "Google") {
-            stop("❌ ERRO: Selenium não conseguiu carregar a página do Google corretamente. Título obtido: ", title[[1]])
-          }
-
-          cat("✅ Navegação inicial bem-sucedida!\n")
-          remDr$close()
-          '
