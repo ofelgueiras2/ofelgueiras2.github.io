@@ -67,8 +67,5 @@ jobs:
           library(readr)
           library(lubridate)
 
-          remDr <- remoteDriver(remoteServerAddr = "127.0.0.1", port = 4444, browserName = "firefox")
-          remDr$open()
-
           cat("✅ Navegador aberto com sucesso!\n")
           '
