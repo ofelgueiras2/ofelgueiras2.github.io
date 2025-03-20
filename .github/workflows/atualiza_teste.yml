@@ -77,6 +77,13 @@ jobs:
           echo "🌍 Testando Firefox em modo headless..."
           firefox --headless --screenshot && echo "✅ Firefox funcionando!" || echo "❌ Erro ao iniciar Firefox!"
 
+      - name: Download and Verify Selenium Server
+        run: |
+          SELENIUM_VERSION="4.29.0"
+          wget -q "https://github.com/SeleniumHQ/selenium/releases/download/selenium-$SELENIUM_VERSION/selenium-server-$SELENIUM_VERSION.jar" -O selenium-server.jar
+          ls -lah selenium-server.jar || echo "❌ ERRO: Selenium Server JAR não foi baixado corretamente!"
+          java -jar selenium-server.jar --version || echo "❌ ERRO: Não foi possível verificar o Selenium Server!"
+
       - name: Start Selenium Server with Logging
         run: |
           export DISPLAY=:99
