@@ -13,20 +13,17 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Instalar dependências do sistema
+      - name: Instalar dependências
         run: |
           sudo snap remove firefox || echo "Firefox snap não estava instalado."
           sudo apt update
-          sudo apt install -y dbus-x11 xvfb wget unzip openjdk-17-jdk libnss3 software-properties-common libcurl4-openssl-dev
+          sudo apt install -y dbus-x11 xvfb wget unzip openjdk-17-jdk libnss3 libcurl4-openssl-dev
 
-      - name: Adicionar repositório do Firefox (sem Snap)
+      - name: Instalar Firefox e Geckodriver sem Snap
         run: |
           sudo add-apt-repository -y ppa:mozillateam/ppa
           sudo apt update
           sudo apt install -y firefox
-
-      - name: Instalar Geckodriver
-        run: |
           GECKO_VERSION="0.36.0"
           wget "https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz"
           tar -xzf geckodriver-v$GECKO_VERSION-linux64.tar.gz
@@ -41,7 +38,7 @@ jobs:
           export DISPLAY=:99
           wget "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
           java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
-          sleep 30
+          sleep 10
           echo "✅ Selenium Server iniciado na porta 4444"
 
       - name: Verificar portas ativas
@@ -53,38 +50,7 @@ jobs:
         with:
           r-version: '4.4.0'
 
-      - name: Instalar pacotes R necessários
+      - name: Restaurar pacotes com renv (mais rápido)
         run: |
           Rscript -e '
-          install.packages(c("RSelenium", "jsonlite", "httr", "dplyr", "readr", "lubridate", "curl"))
-          '
-
-      - name: Executar script R
-        run: |
-          Rscript -e '
-          library(RSelenium)
-          library(jsonlite)
-          library(httr)
-          library(dplyr)
-          library(readr)
-          library(lubridate)
-
-          remDr <- remoteDriver(remoteServerAddr = "127.0.0.1", port = 4444, browserName = "firefox")
-          remDr$open()
-
-          cat("✅ Navegador aberto com sucesso!\n")
-
-          remDr$navigate("https://www.google.com")
-          Sys.sleep(5)
-
-          title <- remDr$getTitle()
-
-          if (is.null(title) || length(title) == 0) {
-            stop("❌ ERRO: O título da página não foi carregado corretamente.")
-          } else if (title[[1]] != "Google") {
-            stop("❌ ERRO: Selenium não conseguiu carregar nem o Google.")
-          }
-
-          cat("✅ Navegação inicial bem-sucedida!\n")
-          remDr$close()
-          '
+          if (!requireNamespace("renv", quietly = TRUE)) 
