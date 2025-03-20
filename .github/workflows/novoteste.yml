@@ -1,12 +1,7 @@
 name: Novo Teste Selenium
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-  workflow_dispatch:
-
+  workflow_dispatch:  # Permite execução manual
 
 jobs:
   run-script:
