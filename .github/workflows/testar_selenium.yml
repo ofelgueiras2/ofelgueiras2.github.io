@@ -17,7 +17,7 @@ jobs:
         run: |
           sudo snap remove firefox || echo "Firefox snap não estava instalado."
           sudo apt update
-          sudo apt install -y dbus-x11 xvfb wget unzip openjdk-17-jdk libnss3 software-properties-common
+          sudo apt install -y dbus-x11 xvfb wget unzip openjdk-17-jdk libnss3 software-properties-common libcurl4-openssl-dev
 
       - name: Adicionar repositório do Firefox (sem Snap)
         run: |
@@ -56,7 +56,7 @@ jobs:
       - name: Instalar pacotes R necessários
         run: |
           Rscript -e '
-          install.packages(c("RSelenium", "jsonlite", "httr", "dplyr", "readr", "lubridate"))
+          install.packages(c("RSelenium", "jsonlite", "httr", "dplyr", "readr", "lubridate", "curl"))
           '
 
       - name: Executar script R
@@ -85,4 +85,3 @@ jobs:
           cat("✅ Navegação inicial bem-sucedida!\n")
           remDr$close()
           '
-
