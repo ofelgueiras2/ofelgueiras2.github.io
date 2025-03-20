@@ -31,40 +31,20 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev libx11-dev
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev libx11-dev dbus-x11
 
       - name: Install renv, restore
         run: |
           Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
           Rscript -e 'renv::activate(); renv::restore(prompt = FALSE)'
 
-      - name: Debug R Libraries (Antes da ativação do renv)
-        run: |
-          echo "### Caminhos de bibliotecas antes do renv:"
-          Rscript -e 'print(.libPaths())'
-          echo "### Pacotes instalados antes do renv:"
-          Rscript -e 'print(installed.packages()[,1])'
-
-      - name: Debug R Libraries (Depois da ativação do renv)
-        run: |
-          echo "### Caminhos de bibliotecas após ativação do renv:"
-          Rscript -e 'print(.libPaths())'
-          echo "### Pacotes instalados após ativação do renv:"
-          Rscript -e 'print(installed.packages()[,1])'
-          echo "### Status do renv:"
-          Rscript -e 'renv::status()'
-
       - name: Install Java
         run: sudo apt-get install -y default-jre
-
-      - name: Download Selenium Server
-        run: |
-          wget https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
-          mv selenium-server-4.29.0.jar selenium-server.jar
 
       - name: Remove Firefox Snap and Install Dependencies
         run: |
           sudo snap remove firefox || echo "Firefox snap não estava instalado."
+          sudo apt-get purge firefox -y
           sudo add-apt-repository -y ppa:mozillateam/ppa
           sudo apt-get update
           sudo apt-get install -y firefox
@@ -77,29 +57,32 @@ jobs:
           tar -xzf geckodriver-v$GECKO_VERSION-linux64.tar.gz
           chmod +x geckodriver
           sudo mv geckodriver /usr/local/bin/
+          sudo chown $(whoami) /usr/local/bin/geckodriver
           geckodriver --version
 
       - name: Kill any running Firefox (Força um perfil limpo)
         run: |
           echo "🔪 Encerrando possíveis instâncias travadas do Firefox..."
           pkill -9 firefox || echo "Nenhuma instância do Firefox em execução."
-          firefox --headless --safe-mode &
-          sleep 5
-          pkill -9 firefox
-          echo "🧹 Firefox limpo e pronto para execução."
 
-      - name: Setup Virtual Display
+      - name: Start Virtual Display
         run: |
           Xvfb :99 -screen 0 1920x1080x24 &
           echo "🎥 Display virtual iniciado."
+          sleep 5
+
+      - name: Test Firefox Standalone
+        run: |
+          export DISPLAY=:99
+          echo "🌍 Testando Firefox em modo headless..."
+          firefox --headless --screenshot && echo "✅ Firefox funcionando!" || echo "❌ Erro ao iniciar Firefox!"
 
       - name: Start Selenium Server with Logging
         run: |
           export DISPLAY=:99
           export PATH=$PWD:$PATH
           export GECKODRIVER_PATH="/usr/local/bin/geckodriver"
-          export MOZ_LOG="timestamp,sync,nsHttp:5"
-          export MOZ_LOG_FILE="moz_log.txt"
+          export MOZ_HEADLESS=1
           
           echo "🔥 Iniciando Selenium Server..."
           java -Dwebdriver.gecko.driver=$GECKODRIVER_PATH \
@@ -158,3 +141,4 @@ jobs:
           add: "gs/SimuladorEletricidade_OF_MN_2025_3.csv"
           message: "Adiciona novo arquivo gerado pelo workflow"
           github_token: ${{ secrets.PAT_TOKEN }}
+
