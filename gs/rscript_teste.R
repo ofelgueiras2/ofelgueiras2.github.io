@@ -76,15 +76,38 @@ csv_date <- dmy(dados_csv$Fecha[1])
 
 # --- Parte 1: Extração via RSelenium e rvest -----------------
 
-# Conectar ao Selenium Server
 remDr <- remoteDriver(
-  remoteServerAddr = "127.0.0.1",  # Tente usar o IP
+  remoteServerAddr = "127.0.0.1",
   port = 4444L,
   browserName = "firefox",
   extraCapabilities = list(
     "moz:firefoxOptions" = list(args = list("--headless"))
   )
 )
+
+print("📡 Tentando abrir o navegador...")
+Sys.sleep(5)
+
+# Verifica erro ao abrir o navegador
+tryCatch({
+  remDr$open()
+  print("✅ Navegador aberto com sucesso!")
+}, error = function(e) {
+  stop("❌ ERRO: O navegador não conseguiu abrir!")
+})
+
+# Testar navegação inicial
+print("🔍 Testando navegação inicial com o Google...")
+remDr$navigate("https://www.google.com")
+Sys.sleep(5)
+
+current_url <- remDr$getCurrentUrl()
+
+if (length(current_url) == 0 || is.null(current_url[[1]])) {
+  stop("❌ ERRO: Selenium não conseguiu carregar nem o Google.")
+}
+
+print(paste("🌍 URL carregada:", current_url[[1]]))
 
 print("🔍 Testando conexão com Selenium...")
 print(system("netstat -tuln | grep 4444", intern = TRUE))  # Vê se o Selenium está na porta certa
