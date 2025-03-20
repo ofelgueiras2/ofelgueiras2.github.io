@@ -107,13 +107,16 @@ repeat {
 
 print("Selenium está pronto!")
 
-# Agora, prossiga com a navegação e extração...
-url <- "https://www.omie.es"
+# Navegar para a página
+url <- "https://www.omie.es"  # substitua pela URL real
 remDr$navigate(url)
-Sys.sleep(5)  # aguarda o carregamento
+Sys.sleep(5)  # Aguarda o carregamento da página
 
-# Opcional: verifique se a URL atual é a esperada
-if (remDr$getCurrentUrl() != url) {
+# Obter a URL atual (o retorno geralmente é uma lista)
+current_url <- remDr$getCurrentUrl()
+
+# Verificar se o retorno está vazio ou se a URL não corresponde
+if (length(current_url) == 0 || is.null(current_url[[1]]) || current_url[[1]] != url) {
   stop("A página não foi carregada corretamente.")
 }
 
