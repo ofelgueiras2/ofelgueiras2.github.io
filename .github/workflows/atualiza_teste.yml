@@ -100,9 +100,14 @@ jobs:
 
       - name: Start Selenium Server
         run: |
-          java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver -jar selenium-server.jar standalone --port 4444 --host 0.0.0.0 &
+          java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 &
           sleep 15  # aguarde um pouco mais para garantir que o servidor esteja pronto
           echo "Selenium Server iniciado na porta 4444"
+
+      - name: Check Selenium Server Status
+        run: |
+          echo "Verificando o status do Selenium Server..."
+          curl -s http://127.0.0.1:4444/wd/hub/status
 
       - name: Check if Selenium port is open
         run: |
