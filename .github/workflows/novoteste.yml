@@ -88,6 +88,11 @@ jobs:
           sleep 10
           echo "🚀 Selenium Server iniciado!"
 
+      - name: Testar RSelenium mínimo
+        run: |
+          export DISPLAY=:99
+          Rscript test_rselenium.R
+
       - name: Verificar se Selenium está ativo
         run: |
           ps aux | grep "[s]elenium" || (echo "❌ ERRO: Selenium não está rodando!" && cat selenium.log && exit 1)
