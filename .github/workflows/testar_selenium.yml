@@ -10,10 +10,10 @@ jobs:
   run-script:
     runs-on: ubuntu-latest
     env:
-      RENV_PATHS_CACHE: ~/.local/share/renv/cache  # Define o caminho do cache do renv
+      RENV_PATHS_CACHE: ~/.local/share/renv/cache
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup R environment
         uses: r-lib/actions/setup-r@v2
@@ -57,9 +57,6 @@ jobs:
           echo "### Status do renv:"
           Rscript -e 'renv::status()'
           
-      - name: Checkout do código
-        uses: actions/checkout@v4
-
       - name: Instalar dependências essenciais
         run: |
           sudo snap remove firefox || echo "Firefox snap não estava instalado."
@@ -128,5 +125,6 @@ jobs:
         uses: EndBug/add-and-commit@v9
         with:
           add: "gs/SimuladorEletricidade_OF_MN_2025_3.csv"
+
           message: "Adiciona novo arquivo gerado pelo workflow"
           github_token: ${{ secrets.PAT_TOKEN }}
