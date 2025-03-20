@@ -21,8 +21,8 @@ jobs:
 
       - name: Instalar Firefox e Geckodriver
         run: |
-          wget -qO - https://packages.mozilla.org/keys/mozilla.asc | sudo apt-key add -
-          echo "deb http://ppa.launchpad.net/mozillateam/ppa/ubuntu noble main" | sudo tee /etc/apt/sources.list.d/mozillateam-ppa.list
+          wget -qO /usr/share/keyrings/mozillateam-archive-keyring.gpg https://packages.mozilla.org/keys/mozilla.asc
+          echo "deb [signed-by=/usr/share/keyrings/mozillateam-archive-keyring.gpg] http://ppa.launchpad.net/mozillateam/ppa/ubuntu noble main" | sudo tee /etc/apt/sources.list.d/mozillateam-ppa.list
           sudo apt update
           sudo apt install -y firefox
           GECKO_VERSION="0.36.0"
