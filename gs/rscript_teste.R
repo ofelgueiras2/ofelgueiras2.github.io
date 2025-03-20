@@ -110,14 +110,23 @@ print("Selenium está pronto!")
 # Navegar para a página
 url <- "https://www.omie.es"  # substitua pela URL real
 remDr$navigate(url)
-Sys.sleep(5)  # Aguarda o carregamento da página
+Sys.sleep(10)  # Aumentar o tempo de espera para garantir carregamento
 
 # Obter a URL atual (o retorno geralmente é uma lista)
 current_url <- remDr$getCurrentUrl()
 
-# Verificar se o retorno está vazio ou se a URL não corresponde
-if (length(current_url) == 0 || is.null(current_url[[1]]) || current_url[[1]] != url) {
-  stop("A página não foi carregada corretamente.")
+# 🛠️ Depuração: imprimir a URL obtida
+print("URL obtida pelo Selenium:")
+print(current_url)
+
+# Verificar se a URL está vazia ou não corresponde
+if (length(current_url) == 0 || is.null(current_url[[1]])) {
+  stop("Erro: Selenium não retornou nenhuma URL. O site pode não ter carregado corretamente.")
+}
+
+# Alternativa mais flexível: verificar se o URL contém "omie.es"
+if (!grepl("omie.es", current_url[[1]])) {
+  stop(paste("A página não foi carregada corretamente. URL obtida:", current_url[[1]]))
 }
 
 # Define espera implícita
