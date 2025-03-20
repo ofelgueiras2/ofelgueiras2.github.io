@@ -78,7 +78,7 @@ csv_date <- dmy(dados_csv$Fecha[1])
 
 # Conectar ao Selenium Server (já iniciado no workflow)
 remDr <- remoteDriver(
-  remoteServerAddr = "127.0.0.1",  # use localhost
+  remoteServerAddr = "localhost",  # use localhost
   port = 4444L,
   browserName = "firefox",
   extraCapabilities = list(
