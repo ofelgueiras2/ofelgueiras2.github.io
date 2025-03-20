@@ -123,7 +123,7 @@ jobs:
 
       - name: Check if CSV file exists
         run: |
-          if [ ! -f "gs/SimuladorEletricidade_OF_MN_2025_3.csv" ]; then
+          if [ ! -f "gs/SimuladorEletricidade_OF_MN_2025_2.csv" ]; then
             echo "::error::CSV file does not exist. Skipping commit."
             exit 1
           fi
