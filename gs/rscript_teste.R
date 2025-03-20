@@ -83,8 +83,7 @@ remDr <- remoteDriver(
   browserName = "firefox",
   extraCapabilities = list(
     "moz:firefoxOptions" = list(args = list("--headless"))
-  ),
-  timeout = 120  # aumenta o timeout para 120 segundos (opcional)
+  )
 )
 
 # Abrir o navegador
