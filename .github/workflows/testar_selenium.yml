@@ -13,23 +13,28 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Instalar dependências
+      - name: Instalar dependências essenciais
         run: |
           sudo snap remove firefox || echo "Firefox snap não estava instalado."
           sudo apt update
-          sudo apt install -y dbus-x11 xvfb wget unzip openjdk-17-jdk libnss3 libcurl4-openssl-dev
+          sudo apt install -y dbus-x11 xvfb openjdk-17-jre libnss3 wget unzip libcurl4-openssl-dev
           java -version  # Debug Java
 
-      - name: Instalar Firefox e Geckodriver sem Snap
+      - name: Instalar Firefox sem Snap
         run: |
           sudo add-apt-repository -y ppa:mozillateam/ppa
           sudo apt update
           sudo apt install -y firefox
+          firefox --version  # Debug Firefox
+
+      - name: Instalar Geckodriver
+        run: |
           GECKO_VERSION="0.36.0"
           wget "https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz"
           tar -xzf geckodriver-v$GECKO_VERSION-linux64.tar.gz
           sudo mv geckodriver /usr/local/bin/
           rm geckodriver-v$GECKO_VERSION-linux64.tar.gz
+          geckodriver --version  # Debug Geckodriver
 
       - name: Iniciar Xvfb
         run: Xvfb :99 -screen 0 1920x1080x24 &
@@ -37,11 +42,15 @@ jobs:
       - name: Iniciar Selenium Server
         run: |
           export DISPLAY=:99
-          wget "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
+          wget -q "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
           nohup java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
-          sleep 20  # Espera mais tempo para garantir a inicialização
-          echo "✅ Selenium Server iniciado na porta 4444"
+          sleep 10
+          echo "🚀 Selenium Server iniciado!"
+
+      - name: Verificar se Selenium está ativo
+        run: |
+          ps aux | grep "[s]elenium" || (echo "❌ ERRO: Selenium não está rodando!" && cat selenium.log && exit 1)
 
       - name: Verificar portas ativas
         run: |
-          netstat -tuln | grep 4444 || (echo "❌ ERRO: A porta 4444 não está ativa!" && exit 1)
+          netstat -tuln | grep 4444 || (echo "❌ ERRO: A porta 4444 não está ativa!" && cat selenium.log && exit 1)
