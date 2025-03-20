@@ -53,4 +53,38 @@ jobs:
       - name: Restaurar pacotes com renv (mais rápido)
         run: |
           Rscript -e '
-          if (!requireNamespace("renv", quietly = TRUE)) 
+          if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
+          renv::restore(prompt = FALSE)
+          '
+
+      - name: Executar script R
+        run: |
+          Rscript -e '
+          library(RSelenium)
+          library(jsonlite)
+          library(httr)
+          library(dplyr)
+          library(readr)
+          library(lubridate)
+
+          remDr <- remoteDriver(remoteServerAddr = "127.0.0.1", port = 4444, browserName = "firefox")
+          remDr$open()
+
+          cat("✅ Navegador aberto com sucesso!\n")
+
+          remDr$navigate("https://www.google.com")
+          Sys.sleep(10)  # Aguardar carregamento completo
+
+          title <- remDr$getTitle()
+
+          cat("🔎 Título obtido:", title, "\n")
+
+          if (is.null(title) || length(title) == 0) {
+            stop("❌ ERRO: O título da página não foi carregado corretamente.")
+          } else if (title[[1]] != "Google") {
+            stop("❌ ERRO: Selenium não conseguiu carregar a página do Google corretamente. Título obtido: ", title[[1]])
+          }
+
+          cat("✅ Navegação inicial bem-sucedida!\n")
+          remDr$close()
+          '
