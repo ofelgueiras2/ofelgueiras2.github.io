@@ -62,51 +62,31 @@ jobs:
           wget https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
           mv selenium-server-4.29.0.jar selenium-server.jar
 
-      - name: Install Geckodriver
-        run: |
-          wget https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz
-          tar -xvzf geckodriver-v0.36.0-linux64.tar.gz
-          chmod +x geckodriver
-          sudo mv geckodriver /usr/local/bin/
-
-      - name: Check Geckodriver
-        run: |
-          which geckodriver
-          geckodriver --version
-
       - name: Remove Firefox Snap
         run: |
           sudo snap remove firefox
 
-      - name: Add Mozilla Team PPA
+      - name: Install Firefox and Geckodriver
         run: |
           sudo add-apt-repository ppa:mozillateam/ppa
           sudo apt-get update
-
-      - name: Configure APT to prefer PPA
-        run: |
-          echo 'Package: firefox*
-          Pin: release o=LP-PPA-mozillateam
-          Pin-Priority: 1001
-          ' | sudo tee /etc/apt/preferences.d/mozillateam-ppa
-
-      - name: Install Firefox (without Snap)
-        run: |
           sudo apt-get install -y firefox
-
-      - name: Check Firefox
-        run: |
-          firefox --version
-
-      - name: Setup Virtual Display
-        run: |
-          Xvfb :99 -screen 0 1920x1080x24 &
-          echo "🎥 Display virtual iniciado."
+          GECKO_VERSION="0.36.0"
+          wget -q "https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz"
+          tar -xzf geckodriver-v$GECKO_VERSION-linux64.tar.gz
+          chmod +x geckodriver
+          sudo mv geckodriver /usr/local/bin/
+          geckodriver --version
 
       - name: Kill any running Firefox
         run: |
           echo "🔪 Encerrando possíveis instâncias travadas do Firefox..."
           pkill -9 firefox || echo "Nenhuma instância do Firefox em execução."
+
+      - name: Setup Virtual Display
+        run: |
+          Xvfb :99 -screen 0 1920x1080x24 &
+          echo "🎥 Display virtual iniciado."
 
       - name: Start Selenium Server
         run: |
@@ -119,40 +99,16 @@ jobs:
                -jar selenium-server.jar standalone \
                --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
           
-          sleep 20  # Aguardar mais tempo para garantir que o Selenium inicia corretamente
+          sleep 30
           echo "✅ Selenium Server iniciado na porta 4444"
-
-      - name: Check Selenium Server Status
-        run: |
-          echo "🔍 Verificando status do Selenium..."
-          curl -s http://127.0.0.1:4444/wd/hub/status | jq . || echo "❌ Erro ao consultar status!"
 
       - name: Check if Selenium port is open
         run: |
           echo "🔍 Verificando portas ativas..."
-          netstat -tuln | grep 4444 || echo "❌ Porta 4444 não está ativa!"
-
-      - name: Check Selenium Logs
-        run: |
-          echo "📜 Logs do Selenium:"
-          cat selenium.log || echo "No logs found"
-
-      - name: Test Firefox Session
-        run: |
-          echo "🟠 Criando novo perfil do Firefox para evitar bloqueios..."
-          FIREFOX_PROFILE=$(mktemp -d)
-          
-          echo "🟠 Tentando criar sessão no Firefox..."
-          curl -X POST http://127.0.0.1:4444/session \
-          -H "Content-Type: application/json; charset=utf-8" \
-          -d "{
-                \"capabilities\": {
-                  \"alwaysMatch\": {
-                    \"browserName\": \"firefox\",
-                    \"moz:firefoxOptions\": {\"args\": [\"--headless\"], \"profile\": \"$FIREFOX_PROFILE\"}
-                  }
-                }
-              }" || echo "❌ Erro ao criar sessão do Firefox!"
+          if ! netstat -tuln | grep 4444; then
+            echo "❌ ERRO: A porta 4444 não está ativa!"
+            exit 1
+          fi
 
       - name: Run R script
         run: |
@@ -167,7 +123,7 @@ jobs:
 
       - name: Check if CSV file exists
         run: |
-          if [ ! -f "gs/SimuladorEletricidade_OF_MN_2025_2.csv" ]; then
+          if [ ! -f "gs/SimuladorEletricidade_OF_MN_2025_3.csv" ]; then
             echo "::error::CSV file does not exist. Skipping commit."
             exit 1
           fi
