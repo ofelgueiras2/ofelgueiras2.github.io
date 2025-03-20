@@ -76,9 +76,9 @@ csv_date <- dmy(dados_csv$Fecha[1])
 
 # --- Parte 1: Extração via RSelenium e rvest -----------------
 
-# Conectar ao Selenium Server (já iniciado no workflow)
+# Conectar ao Selenium Server
 remDr <- remoteDriver(
-  remoteServerAddr = "localhost",  # use localhost
+  remoteServerAddr = "127.0.0.1",  # Tente usar o IP
   port = 4444L,
   browserName = "firefox",
   extraCapabilities = list(
@@ -86,42 +86,39 @@ remDr <- remoteDriver(
   )
 )
 
-# Abrir o navegador
+# Inicia o navegador
 remDr$open()
 
-# Polling para aguardar que o Selenium esteja pronto
-max_wait <- 120      # tempo máximo de espera (você pode aumentar se necessário)
-poll_interval <- 1   # intervalo entre tentativas em segundos
+# Polling: espera ativa para obter um status válido do Selenium
+max_wait <- 180      # tempo máximo de espera em segundos (ex: 3 minutos)
+poll_interval <- 1   # intervalo entre as tentativas (1 segundo)
 start_time <- Sys.time()
 
 repeat {
   status <- try(remDr$getStatus(), silent = TRUE)
-  
-  # Verifica se a chamada não falhou, se retornou um status e se a propriedade ready é TRUE
-  if (!inherits(status, "try-error") && !is.null(status) &&
-      !is.null(status$ready) && status$ready) {
-    break  # o servidor está pronto
+  if (!inherits(status, "try-error") && !is.null(status)) {
+    break
   }
-  
   if (as.numeric(Sys.time() - start_time, units = "secs") > max_wait) {
     stop("Timeout: o servidor Selenium não respondeu dentro de ", max_wait, " segundos.")
   }
-  
   Sys.sleep(poll_interval)
 }
 
 print("Selenium está pronto!")
 
-# Navegar para a página
-url <- "https://www.omie.es"  # substitua pela URL real
+# Agora, prossiga com a navegação e extração...
+url <- "https://www.omie.es"
 remDr$navigate(url)
-Sys.sleep(5)  # Aguarda o carregamento da página
+Sys.sleep(5)  # aguarda o carregamento
+
+# Opcional: verifique se a URL atual é a esperada
 if (remDr$getCurrentUrl() != url) {
   stop("A página não foi carregada corretamente.")
 }
 
-# Aguardar o carregamento da página
-remDr$setImplicitWaitTimeout(10000)  # Espera implícita de 10 segundos
+# Define espera implícita
+remDr$setImplicitWaitTimeout(10000)
 
 page_source <- remDr$getPageSource()
 if (is.null(page_source)) {
@@ -129,34 +126,24 @@ if (is.null(page_source)) {
 }
 html <- page_source[[1]]
 
-# Obter o HTML renderizado
-#page_source <- remDr$getPageSource()[[1]]
-#html <- read_html(page_source)
-
-# --- Extração dos dados de preços via JSON embutido ---
+# Extração dos dados
 data_chart <- html %>%
   html_node("#prices-and-volumes-block") %>%
   html_attr("data-chart")
 
 chart_data <- fromJSON(data_chart)
-
-# Supondo que as séries estão organizadas de modo que:
-# - A primeira série contém os preços de Portugal;
-# - A segunda série contém os preços de Espanha.
 portugal_data <- chart_data$series$data[[1]]
 espanha_data  <- chart_data$series$data[[2]]
 
-# --- Extração da data da página ---
+# Extração da data
 page_date_str <- html %>%
   html_node("h3.block-title") %>%
   html_text() %>%
-  str_extract("\\d{2}/\\d{2}/\\d{4}")  # procura padrão DD/MM/YYYY
+  str_extract("\\d{2}/\\d{2}/\\d{4}")
 
-# Converter para Date (assumindo formato "dd/mm/yyyy")
 page_date <- dmy(page_date_str)
-#print(paste("Data extraída da página:", page_date))
+print(paste("Data extraída da página:", page_date))
 
-# Fechar o navegador
 remDr$close()
 
 if(page_date == csv_date + 1) {
