@@ -109,30 +109,49 @@ jobs:
         run: |
           geckodriver --version || echo "❌ Geckodriver não está instalado corretamente!"
 
+      - name: Test Firefox Manualmente
+        run: |
+          export DISPLAY=:99
+          firefox --headless --screenshot https://www.google.com
+          echo "✅ Teste Firefox concluído. Se não houver erro acima, o Firefox está funcional."
+
+      - name: Setup Virtual Display
+        run: |
+          Xvfb :99 -screen 0 1920x1080x24 &  # Iniciar display virtual
+          echo "🎥 Display virtual iniciado."
+
       - name: Start Selenium Server
         run: |
+          export DISPLAY=:99  # Garantir que todas as execuções seguintes o usam
           export PATH=$PWD:$PATH
           export GECKODRIVER_PATH="/usr/local/bin/geckodriver"
-          java -Dwebdriver.gecko.driver=$GECKODRIVER_PATH -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
-          sleep 15
-          echo "Selenium Server iniciado na porta 4444"
+          java -Dwebdriver.gecko.driver=$GECKODRIVER_PATH \
+               -jar selenium-server.jar standalone \
+               --port 4444 --host 127.0.0.1 \
+               --allow-system-access > selenium.log 2>&1 &  # Adicionando --allow-system-access
+          sleep 20  # Aguardar mais tempo para garantir que inicializa
+          echo "✅ Selenium Server iniciado na porta 4444"
 
       - name: Check Selenium Server Status
         run: |
-          echo "Verificando o status do Selenium Server..."
-          curl -s http://127.0.0.1:4444/wd/hub/status
+          echo "🔍 Verificando o status do Selenium Server..."
+          curl -s http://127.0.0.1:4444/wd/hub/status | jq . || echo "❌ Erro ao consultar status!"
 
       - name: Check if Selenium port is open
         run: |
-          netstat -tuln | grep 4444
+          echo "🔍 Verificando portas ativas..."
+          netstat -tuln | grep 4444 || echo "❌ Porta 4444 não está ativa!"
+
       - name: Check Selenium Logs
         run: |
+          echo "📜 Logs do Selenium:"
           cat selenium.log || echo "No logs found"
 
       - name: Test Firefox Session
         run: |
+          echo "🟠 Tentando criar sessão no Firefox..."
           curl -X POST http://127.0.0.1:4444/session \
-          -H "Content-Type: application/json" \
+          -H "Content-Type: application/json; charset=utf-8" \
           -d '{"capabilities": {"alwaysMatch": {"browserName": "firefox"}}}' || echo "❌ Erro ao criar sessão do Firefox!"
 
       - name: Run R script
