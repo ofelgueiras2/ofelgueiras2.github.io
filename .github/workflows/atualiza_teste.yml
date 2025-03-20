@@ -105,10 +105,16 @@ jobs:
           sleep 5
           ps aux | grep firefox
 
+      - name: Test Geckodriver
+        run: |
+          geckodriver --version || echo "❌ Geckodriver não está instalado corretamente!"
+
       - name: Start Selenium Server
         run: |
-          java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 &
-          sleep 15  # aguarde um pouco mais para garantir que o servidor esteja pronto
+          export PATH=$PWD:$PATH
+          export GECKODRIVER_PATH="/usr/local/bin/geckodriver"
+          java -Dwebdriver.gecko.driver=$GECKODRIVER_PATH -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
+          sleep 15
           echo "Selenium Server iniciado na porta 4444"
 
       - name: Check Selenium Server Status
@@ -122,6 +128,12 @@ jobs:
       - name: Check Selenium Logs
         run: |
           cat selenium.log || echo "No logs found"
+
+      - name: Test Firefox Session
+          run: |
+          curl -X POST http://127.0.0.1:4444/session \
+          -H "Content-Type: application/json" \
+          -d '{"capabilities": {"alwaysMatch": {"browserName": "firefox"}}}' || echo "❌ Erro ao criar sessão do Firefox!"
 
       - name: Run R script
         run: |
