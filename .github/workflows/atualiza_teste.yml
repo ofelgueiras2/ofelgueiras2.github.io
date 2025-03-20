@@ -130,7 +130,7 @@ jobs:
           cat selenium.log || echo "No logs found"
 
       - name: Test Firefox Session
-          run: |
+        run: |
           curl -X POST http://127.0.0.1:4444/session \
           -H "Content-Type: application/json" \
           -d '{"capabilities": {"alwaysMatch": {"browserName": "firefox"}}}' || echo "❌ Erro ao criar sessão do Firefox!"
