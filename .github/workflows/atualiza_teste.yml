@@ -1,125 +1,87 @@
-name: Run R Script and Commit CSV Teste
+name: Selenium Test with R
 
 on:
-  workflow_dispatch:  # Permite execução manual
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
-  run-script:
+  test:
     runs-on: ubuntu-latest
-    env:
-      RENV_PATHS_CACHE: ~/.local/share/renv/cache  # Define o caminho do cache do renv
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout do código
+        uses: actions/checkout@v4
 
-      - name: Setup R environment
-        uses: r-lib/actions/setup-r@v2
-
-      - name: Create renv directory if it doesn't exist
-        run: mkdir -p renv/library
-
-      - name: Setup cache for R packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.local/share/renv/cache
-            renv/library
-          key: renv-cache-${{ runner.os }}-${{ hashFiles('renv.lock') }}
-          restore-keys: |
-            renv-cache-${{ runner.os }}-
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev libx11-dev dbus-x11
-
-      - name: Install renv, restore
-        run: |
-          Rscript -e 'install.packages("renv", repos="https://cran.rstudio.com/")'
-          Rscript -e 'renv::activate(); renv::restore(prompt = FALSE)'
-
-      - name: Debug R Libraries (Antes da ativação do renv)
-        run: |
-          echo "### Caminhos de bibliotecas antes do renv:"
-          Rscript -e 'print(.libPaths())'
-          echo "### Pacotes instalados antes do renv:"
-          Rscript -e 'print(installed.packages()[,1])'
-
-      - name: Debug R Libraries (Depois da ativação do renv)
-        run: |
-          echo "### Caminhos de bibliotecas após ativação do renv:"
-          Rscript -e 'print(.libPaths())'
-          echo "### Pacotes instalados após ativação do renv:"
-          Rscript -e 'print(installed.packages()[,1])'
-          echo "### Status do renv:"
-          Rscript -e 'renv::status()'
-
-      - name: Install Java
-        run: sudo apt-get install -y default-jre
-
-      - name: Remove Firefox Snap
+      - name: Instalar dependências do sistema
         run: |
           sudo snap remove firefox || echo "Firefox snap não estava instalado."
-          sudo apt-get remove --purge -y firefox
-          sudo add-apt-repository ppa:mozillateam/ppa -y
-          sudo apt-get update
-          sudo apt-get install -y firefox
+          sudo apt update
+          sudo apt install -y dbus-x11 xvfb wget unzip openjdk-17-jdk libnss3 software-properties-common libcurl4-openssl-dev
 
-      - name: Install Firefox and Geckodriver
+      - name: Adicionar repositório do Firefox (sem Snap)
+        run: |
+          sudo add-apt-repository -y ppa:mozillateam/ppa
+          sudo apt update
+          sudo apt install -y firefox
+
+      - name: Instalar Geckodriver
         run: |
           GECKO_VERSION="0.36.0"
-          wget -q "https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz"
+          wget "https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz"
           tar -xzf geckodriver-v$GECKO_VERSION-linux64.tar.gz
-          chmod +x geckodriver
           sudo mv geckodriver /usr/local/bin/
-          geckodriver --version
+          rm geckodriver-v$GECKO_VERSION-linux64.tar.gz
 
-      - name: Setup Virtual Display
-        run: |
-          Xvfb :99 -screen 0 1920x1080x24 &
-          echo "🎥 Display virtual iniciado."
-
-      - name: Start Selenium Server
+      - name: Iniciar Xvfb
+        run: Xvfb :99 -screen 0 1920x1080x24 &
+      
+      - name: Iniciar Selenium Server
         run: |
           export DISPLAY=:99
-          export PATH=$PWD:$PATH
-          export GECKODRIVER_PATH="/usr/local/bin/geckodriver"
-          export MOZ_HEADLESS=1
-          wget -q "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
-          java -Dwebdriver.gecko.driver=$GECKODRIVER_PATH -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 &
+          wget "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
+          java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
           sleep 30
           echo "✅ Selenium Server iniciado na porta 4444"
 
-      - name: Check if Selenium port is open
+      - name: Verificar portas ativas
         run: |
-          echo "🔍 Verificando portas ativas..."
-          if ! netstat -tuln | grep 4444; then
-            echo "❌ ERRO: A porta 4444 não está ativa!"
-            exit 1
-          fi
+          netstat -tuln | grep 4444 || (echo "❌ ERRO: A porta 4444 não está ativa!" && exit 1)
 
-      - name: Run R script
+      - name: Configurar R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.4.0'
+
+      - name: Instalar pacotes R necessários
         run: |
           Rscript -e '
-            renv::activate();
-            print(.libPaths());
-            library(httr);
-            print(installed.packages()[,1]);
-            print(Sys.getenv("RENV_PATHS_ROOT"));
-            source("gs/rscript_teste.R")
+          install.packages(c("RSelenium", "jsonlite", "httr", "dplyr", "readr", "lubridate", "curl"))
           '
 
-      - name: Check if CSV file exists
+      - name: Executar script R
         run: |
-          if [ ! -f "gs/SimuladorEletricidade_OF_MN_2025_2.csv" ]; then
-            echo "::error::CSV file does not exist. Skipping commit."
-            exit 1
-          fi
-          echo "CSV file exists. Proceeding to commit."
+          Rscript -e '
+          library(RSelenium)
+          library(jsonlite)
+          library(httr)
+          library(dplyr)
+          library(readr)
+          library(lubridate)
 
-      - name: Commit new file
-        uses: EndBug/add-and-commit@v9
-        with:
-          add: "gs/SimuladorEletricidade_OF_MN_2025_3.csv"
-          message: "Adiciona novo arquivo gerado pelo workflow"
-          github_token: ${{ secrets.PAT_TOKEN }}
+          remDr <- remoteDriver(remoteServerAddr = "127.0.0.1", port = 4444, browserName = "firefox")
+          remDr$open()
+
+          cat("✅ Navegador aberto com sucesso!\n")
+
+          remDr$navigate("https://www.google.com")
+          Sys.sleep(5)
+
+          title <- remDr$getTitle()
+          if (title != "Google") {
+            stop("❌ ERRO: Selenium não conseguiu carregar nem o Google.")
+          }
+
+          cat("✅ Navegação inicial bem-sucedida!\n")
+          remDr$close()
+          '
