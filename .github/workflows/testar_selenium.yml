@@ -78,7 +78,10 @@ jobs:
           Sys.sleep(5)
 
           title <- remDr$getTitle()
-          if (title != "Google") {
+
+          if (is.null(title) || length(title) == 0) {
+            stop("❌ ERRO: O título da página não foi carregado corretamente.")
+          } else if (title[[1]] != "Google") {
             stop("❌ ERRO: Selenium não conseguiu carregar nem o Google.")
           }
 
