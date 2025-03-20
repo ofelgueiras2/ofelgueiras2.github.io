@@ -98,7 +98,7 @@ jobs:
         run: |
           firefox --version
 
-            - name: Setup Virtual Display
+      - name: Setup Virtual Display
         run: |
           Xvfb :99 -screen 0 1920x1080x24 &
           echo "🎥 Display virtual iniciado."
