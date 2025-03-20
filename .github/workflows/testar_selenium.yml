@@ -101,6 +101,7 @@ jobs:
 
       - name: Run R script
         run: |
+          export DISPLAY=:99
           Rscript -e '
             renv::activate();
             if (!requireNamespace("httr", quietly = TRUE)) {
