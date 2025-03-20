@@ -13,18 +13,20 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Instalar dependências
+      - name: Instalar dependências do sistema
         run: |
           sudo snap remove firefox || echo "Firefox snap não estava instalado."
           sudo apt update
-          sudo apt install -y dbus-x11 xvfb wget unzip openjdk-17-jdk libnss3
+          sudo apt install -y dbus-x11 xvfb wget unzip openjdk-17-jdk libnss3 software-properties-common
 
-      - name: Instalar Firefox e Geckodriver
+      - name: Adicionar repositório do Firefox (sem Snap)
         run: |
-          wget -qO /usr/share/keyrings/mozillateam-archive-keyring.gpg https://packages.mozilla.org/keys/mozilla.asc
-          echo "deb [signed-by=/usr/share/keyrings/mozillateam-archive-keyring.gpg] http://ppa.launchpad.net/mozillateam/ppa/ubuntu noble main" | sudo tee /etc/apt/sources.list.d/mozillateam-ppa.list
+          sudo add-apt-repository -y ppa:mozillateam/ppa
           sudo apt update
           sudo apt install -y firefox
+
+      - name: Instalar Geckodriver
+        run: |
           GECKO_VERSION="0.36.0"
           wget "https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz"
           tar -xzf geckodriver-v$GECKO_VERSION-linux64.tar.gz
@@ -83,3 +85,4 @@ jobs:
           cat("✅ Navegação inicial bem-sucedida!\n")
           remDr$close()
           '
+
