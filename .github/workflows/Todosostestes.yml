@@ -53,7 +53,7 @@ jobs:
           Rscript -e 'install.packages("renv", repos="https://cloud.r-project.org")'
 
       - name: Restore renv lockfile (optional)
-        if: ${{ exists('renv.lock') }}
+        if: ${{ hashFiles('renv.lock') != '' }}
         run: |
           Rscript -e 'renv::restore()'
 
