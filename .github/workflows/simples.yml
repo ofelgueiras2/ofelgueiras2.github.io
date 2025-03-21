@@ -93,6 +93,3 @@ jobs:
             message("URL atual: ", current)
             remDr$close()
           '
-
-          '
-
