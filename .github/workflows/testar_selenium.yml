@@ -88,7 +88,6 @@ jobs:
           geckodriver --version
 
       - name: Iniciar Xvfb
-        # Corrigida a indentação e adicionada a chave 'run:'
         run: nohup Xvfb :99 -screen 0 1920x1080x24 &
 
       - name: Iniciar Selenium Server
@@ -96,8 +95,12 @@ jobs:
           export DISPLAY=:99
           wget -q "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
           nohup java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
-          sleep 10
+          # ALTERAÇÃO: Aumentado o tempo de espera de 10 para 20 segundos para garantir que o servidor esteja pronto
+          sleep 20
           echo "🚀 Selenium Server iniciado!"
+
+      - name: Debug Selenium Log
+        run: cat selenium.log
 
       - name: Verificar se Selenium está ativo
         run: |
@@ -106,6 +109,12 @@ jobs:
       - name: Verificar portas ativas
         run: |
           netstat -tuln | grep 4444 || (echo "❌ ERRO: A porta 4444 não está ativa!" && cat selenium.log && exit 1)
+
+      # Etapa opcional: Testar RSelenium mínimo (certifique-se de que o script de teste está no local correto)
+      - name: Testar RSelenium mínimo
+        run: |
+          export DISPLAY=:99
+          Rscript gs/test_rselenium.R
 
       - name: Run R script
         run: |
