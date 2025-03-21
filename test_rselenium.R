@@ -4,19 +4,38 @@ Sys.setenv(DISPLAY = ":99")
 cat("=== Início do teste de RSelenium ===\n")
 
 # Configura o perfil do Firefox
-fprof <- makeFirefoxProfile(list(
-  "moz:firefoxOptions" = list(
-    args = c("--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage", "--profile", "/tmp/firefox-profile")
-  )
-))
+#fprof <- makeFirefoxProfile(list(
+#  "moz:firefoxOptions" = list(
+#    args = c("--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage", "--profile", "/tmp/firefox-profile")
+#  )
+#))
 
-# Conecta ao Selenium Server
-remDr <- remoteDriver(
-  remoteServerAddr = "127.0.0.1",
-  port = 4444L,
+# Define capabilities more explicitly
+fprof <- list(
   browserName = "firefox",
-  extraCapabilities = fprof,
+  "moz:firefoxOptions" = list(
+    args = c("--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"),
+    prefs = list(
+      "browser.download.folderList" = 2,
+      "browser.download.manager.showWhenStarting" = FALSE
+    ),
+    log = list(level = "trace")
+  )
 )
+
+# Connect to Selenium Server with error handling
+tryCatch({
+  cat("Attempting to connect to Selenium server...\n")
+  remDr <- remoteDriver(
+    remoteServerAddr = "127.0.0.1",
+    port = 4444L,
+    browserName = "firefox",
+    extraCapabilities = fprof,
+    verbose = TRUE
+  )
+
+
+
 
 # Abre o navegador
 remDr$open()
