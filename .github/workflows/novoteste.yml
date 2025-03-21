@@ -119,7 +119,8 @@ jobs:
         run: |
           export DISPLAY=:99
           wget -q "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
-          nohup java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
+          # nohup java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
+          nohup java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 --selenium-manager true > selenium.log 2>&1 &
           sleep 30
           echo "🚀 Selenium Server iniciado!"
 
