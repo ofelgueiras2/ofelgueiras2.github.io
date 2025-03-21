@@ -120,8 +120,8 @@ jobs:
           export DISPLAY=:99
           wget -q "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
           # nohup java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
-          nohup java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 --selenium-manager true > selenium.log 2>&1 &
-          sleep 30
+          nohup java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 --selenium-manager false > selenium.log 2>&1 &
+          sleep 20
           echo "🚀 Selenium Server iniciado!"
 
       - name: Debug Selenium Log
@@ -196,7 +196,7 @@ jobs:
             )
             remDr$open()
             remDr$navigate("https://www.google.com")
-            Sys.sleep(60) # Aumentar tempo de espera
+            Sys.sleep(5) # Aumentar tempo de espera
             print(remDr$getCurrentUrl())
             remDr$close()
           '
@@ -219,7 +219,7 @@ jobs:
             )
             remDr$open()
             remDr$navigate("https://www.google.com")
-            Sys.sleep(60) # Aumentar tempo de espera
+            Sys.sleep(5) # Aumentar tempo de espera
             print(remDr$getCurrentUrl())
             remDr$close()
           '
@@ -242,7 +242,7 @@ jobs:
             )
             remDr$open()
             remDr$navigate("https://www.google.com")
-            Sys.sleep(60) # Aumentar tempo de espera
+            Sys.sleep(5) # Aumentar tempo de espera
             print(remDr$getCurrentUrl())
             remDr$close()
           '
@@ -265,7 +265,7 @@ jobs:
             )
             remDr$open()
             remDr$navigate("https://www.google.com")
-            Sys.sleep(60) # Aumentar tempo de espera
+            Sys.sleep(5) # Aumentar tempo de espera
             print(remDr$getCurrentUrl())
             remDr$close()
           '
