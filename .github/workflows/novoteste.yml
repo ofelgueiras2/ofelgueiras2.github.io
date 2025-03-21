@@ -126,6 +126,40 @@ jobs:
         run: |
           netstat -tuln | grep 4444 || (echo "❌ ERRO: A porta 4444 não está ativa!" && cat selenium.log && exit 1)
 
+      - name: Verificar permissões do /tmp
+        run: |
+          echo "Permissões do diretório /tmp:"
+          ls -ld /tmp
+          echo "Conteúdo do /tmp:"
+          ls -l /tmp
+
+      - name: Verificar permissões do diretório do Selenium
+        run: |
+          echo "Permissões do diretório do Selenium:"
+          ls -ld $(pwd)
+          echo "Conteúdo do diretório do Selenium:"
+          ls -l
+
+      - name: Verificar permissões do Geckodriver
+        run: |
+          echo "Permissões do Geckodriver:"
+          ls -l /usr/local/bin/geckodriver
+          echo "Testando execução do Geckodriver:"
+          /usr/local/bin/geckodriver --version
+
+      - name: Verificar permissões do diretório do Firefox
+        run: |
+          echo "Permissões do diretório do Firefox:"
+          ls -ld /usr/lib/firefox
+          echo "Conteúdo do diretório do Firefox:"
+          ls -l /usr/lib/firefox
+
+      - name: Corrigir permissões (se necessário)
+        run: |
+          sudo chmod +x /usr/local/bin/geckodriver
+          sudo chmod 1777 /tmp
+          sudo chmod -R 755 $(pwd)
+
       # Aqui você pode testar com um script de teste mínimo para isolar o problema
       - name: Testar RSelenium mínimo
         run: |
