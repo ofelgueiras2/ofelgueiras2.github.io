@@ -32,7 +32,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev libx11-dev mesa-utils libegl-mesa0
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev libx11-dev mesa-utils libegl-mesa0 xvfb x11-utils
 
       - name: Install renv, restore
         run: |
@@ -73,6 +73,11 @@ jobs:
             exit 1
           fi
 
+      - name: Configurar perfil do Firefox
+        run: |
+          mkdir -p /tmp/firefox-profile
+          chmod -R 777 /tmp/firefox-profile
+
       - name: Instalar Geckodriver
         run: |
           GECKO_VERSION="0.36.0"
@@ -105,7 +110,10 @@ jobs:
         run: nohup Xvfb :99 -screen 0 1920x1080x24 &
 
       - name: Verificar Xvfb
-        run: ps aux | grep Xvfb
+        run: |
+          ps aux | grep Xvfb
+          echo "DISPLAY: $DISPLAY"
+          xdpyinfo -display :99 > /dev/null 2>&1 && echo "Xvfb está funcionando." || echo "Xvfb não está funcionando."
 
       - name: Iniciar Selenium Server
         run: |
@@ -134,19 +142,22 @@ jobs:
 
       - name: Iniciar Geckodriver em uma porta diferente
         run: |
-          /usr/local/bin/geckodriver --port 4445 &
+          /usr/local/bin/geckodriver --port 4445 --allow-system-access &
           sleep 5
 
       - name: Verificar logs do Selenium
         run: |
           cat selenium.log
 
-      - name: Verificar Xvfb
+      - name: Verificar logs do Geckodriver
         run: |
-          ps aux | grep Xvfb
-          echo "DISPLAY: $DISPLAY"
+          cat geckodriver.log || echo "Nenhum log do Geckodriver encontrado."
 
-      - name: Testar RSelenium sem modo headless
+      - name: Verificar logs do Firefox
+        run: |
+          cat /tmp/firefox-profile/firefox.log || echo "Nenhum log do Firefox encontrado."
+
+      - name: Testar RSelenium com modo headless
         run: |
           export DISPLAY=:99
           Rscript -e '
@@ -157,7 +168,7 @@ jobs:
               browserName = "firefox",
               extraCapabilities = list(
                 "moz:firefoxOptions" = list(
-                  args = c("--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage") # Sem --headless
+                  args = c("--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage")
                 )
               )
             )
