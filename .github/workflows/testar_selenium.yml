@@ -78,6 +78,7 @@ jobs:
           GECKO_VERSION="0.36.0"
           wget "https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz"
           tar -xzf geckodriver-v$GECKO_VERSION-linux64.tar.gz
+          sudo rm -f /usr/local/bin/geckodriver  # remove versão antiga, se existir
           sudo mv geckodriver /usr/local/bin/
           rm geckodriver-v$GECKO_VERSION-linux64.tar.gz
           geckodriver --version  # Debug Geckodriver
