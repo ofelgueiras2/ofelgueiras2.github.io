@@ -86,6 +86,15 @@ jobs:
           rm geckodriver-v$GECKO_VERSION-linux64.tar.gz
           geckodriver --version
 
+      - name: Verificar e matar Geckodriver
+        run: |
+          if pgrep -x "geckodriver" > /dev/null; then
+            echo "Geckodriver está em execução. Matando o processo..."
+            sudo pkill -f "geckodriver"
+          else
+            echo "Geckodriver não está em execução."
+          fi
+
       - name: Liberar portas
         run: |
           sudo pkill -f "selenium-server"
@@ -103,7 +112,7 @@ jobs:
           export DISPLAY=:99
           wget -q "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
           nohup java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
-          sleep 60  # Aumente o tempo de espera
+          sleep 60
           echo "🚀 Selenium Server iniciado!"
 
       - name: Debug Selenium Log
@@ -123,11 +132,10 @@ jobs:
           firefox --headless --screenshot https://www.google.com
           ls -l screenshot.png
 
-      - name: Testar Geckodriver manualmente
+      - name: Iniciar Geckodriver em uma porta diferente
         run: |
-          /usr/local/bin/geckodriver --log debug &
+          /usr/local/bin/geckodriver --port 4445 &
           sleep 5
-          curl -X POST http://localhost:4444/session -d '{"capabilities": {}}'
 
       - name: Verificar logs do Selenium
         run: |
@@ -145,7 +153,7 @@ jobs:
             library(RSelenium)
             remDr <- remoteDriver(
               remoteServerAddr = "127.0.0.1",
-              port = 4444L,
+              port = 4444L,  # Certifique-se de que está usando a porta correta
               browserName = "firefox",
               extraCapabilities = list(
                 "moz:firefoxOptions" = list(
