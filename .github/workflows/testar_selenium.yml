@@ -136,6 +136,3 @@ jobs:
           add: "gs/SimuladorEletricidade_OF_MN_2025_3.csv"
           message: "Adiciona novo arquivo gerado pelo workflow"
           github_token: ${{ secrets.PAT_TOKEN }}
-
-          message: "Adiciona novo arquivo gerado pelo workflow"
-          github_token: ${{ secrets.PAT_TOKEN }}
