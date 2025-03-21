@@ -4,122 +4,92 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-selenium:
+  test-rselenium:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # 1) Install system dependencies (including libcurl4-openssl-dev for R 'curl')
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev \
-            xvfb xauth dbus-x11 default-jre wget tar
+          sudo apt-get install -y \
+            libcurl4-openssl-dev \
+            libssl-dev \
+            libxml2-dev \
+            libgit2-dev \
+            xvfb \
+            dbus-x11 \
+            openjdk-17-jre \
+            firefox
 
-      # 2) Install Firefox (Deb-based, not snap)
-      - name: Install Firefox (from Mozilla Team PPA)
+      - name: Install geckodriver manually
         run: |
-          sudo add-apt-repository -y ppa:mozillateam/ppa
-          # Pin to ensure we don't accidentally get Snap
-          printf 'Package: firefox*\nPin: release o=LP-PPA-mozillateam\nPin-Priority: 1001\n' | sudo tee /etc/apt/preferences.d/mozilla-firefox
-          sudo apt-get update
-          sudo apt-get remove -y firefox firefox* || true
-          sudo snap remove firefox || true
-          sudo apt-get install -y firefox
-          firefox --version
-
-      # 3) Install geckodriver v0.36.0
-      - name: Install geckodriver
-        run: |
-          GECKO_VERSION="0.36.0"
-          wget -q "https://github.com/mozilla/geckodriver/releases/download/v${GECKO_VERSION}/geckodriver-v${GECKO_VERSION}-linux64.tar.gz"
-          tar -xzf "geckodriver-v${GECKO_VERSION}-linux64.tar.gz"
+          GECKO_VER="0.36.0"
+          wget -q https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VER/geckodriver-v${GECKO_VER}-linux64.tar.gz
+          tar -xzf geckodriver-v${GECKO_VER}-linux64.tar.gz
           sudo mv geckodriver /usr/local/bin/
           sudo chmod +x /usr/local/bin/geckodriver
           geckodriver --version
 
-      # 4) Setup R
-      - name: Set up R
+      - name: Setup R
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: '4.2.3'
+          r-version: '4.4.3'
 
-      # (Optional) If you have a renv lockfile, you can restore. Otherwise, skip these steps
-      - name: Install renv (optional)
+      - name: Setup renv
+        uses: r-lib/actions/setup-renv@v2
+
+      - name: Restore renv packages
         run: |
-          Rscript -e 'install.packages("renv", repos="https://cloud.r-project.org")'
+          Rscript -e 'renv::restore(prompt = FALSE)'
 
-      - name: Restore renv lockfile (optional)
-        if: ${{ hashFiles('renv.lock') != '' }}
-        run: |
-          Rscript -e 'renv::restore()'
-
-      # Install RSelenium explicitly (if not using renv restore)
-      - name: Install RSelenium
+      - name: Install RSelenium if needed (just in case)
         run: |
           Rscript -e 'if (!requireNamespace("RSelenium", quietly=TRUE)) install.packages("RSelenium", repos="https://cloud.r-project.org")'
 
-      # 5) Start Xvfb (virtual display) at :99
       - name: Start Xvfb
         run: |
-          Xvfb :99 -ac -screen 0 1280x800x24 &
-          sleep 3
-          # Set environment var so R sees the display
+          Xvfb :99 -ac -screen 0 1920x1080x24 &
           echo "DISPLAY=:99" >> $GITHUB_ENV
-          echo "Xvfb started."
 
-      # 6) Download Selenium Server and run it
       - name: Download Selenium Server
         run: |
-          wget -q -O selenium-server.jar "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar"
+          wget -q https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar -O selenium-server.jar
 
-      - name: Launch Selenium Standalone
+      - name: Start Selenium (firefox-only)
         run: |
-          # read DISPLAY from env
           echo "DISPLAY is $DISPLAY"
           nohup java \
             -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
             -jar selenium-server.jar standalone \
             --port 4444 --host 127.0.0.1 \
-            >selenium.log 2>&1 &
-          # Wait up to ~10 sec for it to come up
+            --selenium-manager false \
+            --drivers firefox \
+            > selenium.log 2>&1 &
           sleep 10
           echo "Selenium started."
           ps aux | grep '[s]elenium' || (echo "Selenium not running!" && cat selenium.log && exit 1)
           netstat -tuln | grep 4444 || (echo "Port 4444 not listening!" && cat selenium.log && exit 1)
 
-      # 7) Run a small RSelenium test
-      - name: RSelenium test
+      - name: Run RSelenium test
         run: |
-          Rscript -e '
+          Rscript - <<'RSCRIPT'
             library(RSelenium)
-            message("Connecting to Selenium + Firefox on localhost:4444 ...")
-            remDr <- remoteDriver(
-              remoteServerAddr="127.0.0.1",
-              port=4444,
-              browserName="firefox"
-            )
+            remDr <- remoteDriver(browserName = "firefox", port = 4444L)
             remDr$open()
-            message("Navigating to https://www.google.com ...")
             remDr$navigate("https://www.google.com")
             Sys.sleep(3)
-            current_url <- remDr$getCurrentUrl()[[1]]
-            page_title  <- remDr$getTitle()[[1]]
-            cat("URL:   ", current_url, "\n")
-            cat("Title: ", page_title,   "\n")
-            # If we fail to get a URL, forcibly stop for debug
-            if (is.na(current_url) || current_url == "") {
-              stop("Failed to retrieve a valid URL from Selenium / Firefox.")
+            page_title <- remDr$getTitle()[[1]]
+            page_url <- remDr$getCurrentUrl()[[1]]
+            cat("Page Title:", page_title, "\n")
+            cat("Page URL:", page_url, "\n")
+            if (is.na(page_url) || page_url == "") {
+              stop("Failed to retrieve page URL")
             }
             remDr$close()
-          '
+          RSCRIPT
 
-      # 8) Always show Selenium log (for debug)
-      - name: Show Selenium Log
-        if: ${{ always() }}
-        run: |
-          echo "------ SELENIUM LOG ------"
-          cat selenium.log
+      - name: Show Selenium logs
+        if: always()
+        run: cat selenium.log
