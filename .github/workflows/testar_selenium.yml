@@ -119,7 +119,7 @@ jobs:
             print(.libPaths());
             print(installed.packages()[,1]);
             print(Sys.getenv("RENV_PATHS_ROOT"));
-            source("test_rselenium.R")
+            source("gs/rscript_teste.R")
           '
 
       - name: Check if CSV file exists
