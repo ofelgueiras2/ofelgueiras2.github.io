@@ -167,7 +167,8 @@ jobs:
           Sys.sleep(60) # Aumentar tempo de espera
           print(remDr$getCurrentUrl())
           remDr$close()
-    '
+          '
+          
     # Aqui você pode testar com um script de teste mínimo para isolar o problema
       - name: Testar RSelenium mínimo
         run: |
