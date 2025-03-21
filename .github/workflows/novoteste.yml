@@ -147,8 +147,7 @@ jobs:
           chmod -R 777 /tmp/firefox-profile
 
           # Inicia o Geckodriver com perfil personalizado
-          geckodriver --profile-root /tmp/firefox-profile --port 4445 --allow-system-access &
-
+          geckodriver --profile-root /tmp/firefox-profile --port 4445 --allow-system-access --log debug > geckodriver.log 2>&1 &
           # Verifica se o Geckodriver está em execução
           sleep 5
           ps aux | grep geckodriver || echo "❌ ERRO: Geckodriver não está rodando!"
@@ -162,10 +161,11 @@ jobs:
 
       - name: Verificar logs do Geckodriver
         run: |
-          geckodriver --log debug > geckodriver.log 2>&1 &
+          pkill -f "geckodriver"  # Mata processos do Geckodriver em execução
+          geckodriver --profile-root /tmp/firefox-profile --port 4445 --allow-system-access --log debug > geckodriver.log 2>&1 &
           sleep 5
           cat geckodriver.log || echo "Nenhum log do Geckodriver encontrado."
-
+  
       - name: Verificar logs do Firefox
         run: |
           firefox --headless --screenshot https://www.google.com
