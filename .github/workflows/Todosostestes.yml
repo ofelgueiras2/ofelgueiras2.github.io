@@ -1,196 +1,123 @@
-name: Test RSelenium + Firefox + Geckodriver
+name: Teste Selenium (com placeholders para Chrome/Edge)
 
 on:
   workflow_dispatch:
 
 jobs:
-  firefox-geckodriver-rselenium:
+  run-selenium:
     runs-on: ubuntu-latest
     steps:
-      # Opicional: se quiser ver o repositório.
-      - name: Checkout
+      - name: Checkout do repositório
         uses: actions/checkout@v4
 
-      # 1) REMOVE FIREFOX SNAP (se existir) + PURGE
-      - name: Remove Snap e Firefox Snap
+      # Instala R e pacotes essenciais (se você quiser usar RSelenium e renv)
+      - name: Instalar R
+        uses: r-lib/actions/setup-r@v2
+
+      # Instala dependências do sistema
+      - name: Instalar dependências do sistema
         run: |
-          sudo snap remove firefox || echo "Snap firefox não estava instalado."
+          sudo apt-get update
+          # Xvfb e libs que precisamos
+          sudo apt-get install -y \
+            xvfb x11-utils \
+            libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev libx11-dev \
+            wget unzip default-jre
+
+      # Criar placeholders para chromedriver e edgedriver
+      - name: Criar placeholders de chromedriver e edgedriver
+        run: |
+          sudo sh -c 'echo "#!/usr/bin/env bash\necho Fake chromedriver 0.0.0\nexit 0" > /usr/local/bin/chromedriver'
+          sudo chmod +x /usr/local/bin/chromedriver
+
+          sudo sh -c 'echo "#!/usr/bin/env bash\necho Fake edgedriver 0.0.0\nexit 0" > /usr/local/bin/edgedriver'
+          sudo chmod +x /usr/local/bin/edgedriver
+
+          # Verifica se estão no PATH
+          which chromedriver || echo "chromedriver não encontrado"
+          which edgedriver || echo "edgedriver não encontrado"
+          # Exibe o "fake" --version
+          /usr/local/bin/chromedriver --version || true
+          /usr/local/bin/edgedriver --version || true
+
+      # Instalar Firefox pelo PPA sem Snap
+      - name: Instalar Firefox sem snap
+        run: |
+          sudo snap remove firefox || echo "Snap firefox não instalado."
           sudo apt-get purge -y firefox*
-      
-      # 2) ADICIONA PPA do mozillateam e força priorização do APT
-      - name: Instalar Firefox via PPA
-        run: |
           sudo add-apt-repository -y ppa:mozillateam/ppa
+          # Force prioridade
           echo 'Package: firefox*
           Pin: release o=LP-PPA-mozillateam
-          Pin-Priority: 1001
-          ' | sudo tee /etc/apt/preferences.d/mozillateam-ppa
+          Pin-Priority: 1001' | sudo tee /etc/apt/preferences.d/firefox-no-snap
           sudo apt-get update
-          # (Opcional) Mostra pacotes firefox no apt-cache
-          apt-cache policy firefox
-
-          # Instala firefox sem snap
           sudo apt-get install -y firefox
           firefox --version
 
-      # 3) INSTALA geckodriver MANUALMENTE
+      # Instalar geckodriver 0.36.0 manualmente
       - name: Instalar geckodriver
         run: |
           GECKO_VERSION="0.36.0"
-          wget -q "https://github.com/mozilla/geckodriver/releases/download/v${GECKO_VERSION}/geckodriver-v${GECKO_VERSION}-linux64.tar.gz"
-          tar -xzf geckodriver-v${GECKO_VERSION}-linux64.tar.gz
+          wget "https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz"
+          tar -xzf geckodriver-v$GECKO_VERSION-linux64.tar.gz
           sudo mv geckodriver /usr/local/bin/
-          rm geckodriver-v${GECKO_VERSION}-linux64.tar.gz
+          rm geckodriver-v$GECKO_VERSION-linux64.tar.gz
           geckodriver --version
 
-      # 4) INSTALA pacotes necessários p/ R e Xvfb
-      - name: Instalar libs e Xvfb
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y r-base xvfb x11-utils libnss3 libcurl4-openssl-dev libssl-dev libxml2-dev
-
-      # 5) SOBE Xvfb :99 (DISPLAY) e confere
+      # Sobe Xvfb
       - name: Subir Xvfb
         run: |
-          Xvfb :99 -screen 0 1920x1080x24 &
-          sleep 2
-          DISPLAY=:99 xdpyinfo || (echo "Xvfb falhou" && exit 1)
-
-      # 6) [OPCIONAL] SOBE SELENIUM-SERVER (para quem quiser - mas é opcional)
-      - name: Baixar e subir Selenium Server
-        run: |
-          wget -q https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
-          # Vamos setar manualmente o path do geckodriver
-          export PATH="/usr/local/bin:${PATH}"
+          nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+          sleep 3
           export DISPLAY=:99
-          nohup java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
-            -jar selenium-server-4.29.0.jar standalone \
-            --port 4444 --host 127.0.0.1 --selenium-manager false \
-            >selenium.log 2>&1 &
+          xdpyinfo -display :99 || echo "Xvfb não disponível"
+
+      # Baixa Selenium 4.29.0 e inicia com placeholders
+      - name: Iniciar Selenium Standalone
+        run: |
+          wget -q "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
+          export DISPLAY=:99
+          nohup java -jar selenium-server.jar standalone \
+            --port 4444 \
+            --host 127.0.0.1 \
+            --selenium-manager false \
+            > selenium.log 2>&1 &
           sleep 10
           echo "Selenium subiu"
-          ps aux | grep "[s]elenium" || (echo "Selenium não está rodando!" && cat selenium.log && exit 1)
-          netstat -tuln | grep 4444 || (echo "Porta 4444 não está escutando!" && cat selenium.log && exit 1)
+          ps aux | grep "[s]elenium" || (echo "❌ Selenium não rodando" && cat selenium.log && exit 1)
+          netstat -tuln | grep 4444 || (echo "❌ Porta 4444 não está escutando!" && cat selenium.log && exit 1)
 
-      # 7) INSTALA RSelenium [Simples]
-      - name: Instalar RSelenium
+      # (Opcional) Instala RSelenium para teste
+      - name: Instalar RSelenium rapidamente
         run: |
-          # Pode ser feito com install.packages() simples
           Rscript -e 'install.packages("RSelenium", repos="https://cran.rstudio.com")'
 
-      # 8) TESTE 1: usando SELEnium-server .jar
-      - name: Teste com Selenium server
+      # Teste simples do RSelenium
+      - name: Testar RSelenium
         run: |
           export DISPLAY=:99
           Rscript -e '
             library(RSelenium)
-            remDr <- remoteDriver(remoteServerAddr="127.0.0.1", port=4444, browserName="firefox")
-            message("Abrindo Firefox via Selenium (selenium-server).")
-            remDr$open()
-            remDr$navigate("https://www.google.com")
-            Sys.sleep(3)
-            cur <- remDr$getCurrentUrl()
-            message("URL atual: ", cur)
-            # Ver snippet do HTML
-            ps <- remDr$getPageSource()[[1]]
-            message("Snippet do pageSource: ", substring(ps,1,100))
-            remDr$close()
-          '
-          # Se der erro, logs:
-          echo "==== LOG do Selenium ===="
-          cat selenium.log
-
-      # 9) ENCERRA SELENIUM-SERVER, p/ testarmos geckodriver standalone
-      - name: Desligar selenium
-        run: |
-          pkill -f "selenium-server" || true
-          echo "Parou Selenium."
-
-      # 10) SUBIR geckodriver standalone
-      - name: Subir geckodriver standalone
-        run: |
-          export DISPLAY=:99
-          nohup geckodriver --port 5555 --log debug > gecko-standalone.log 2>&1 &
-          sleep 3
-          cat gecko-standalone.log
-
-      # 11) TESTE 2: RSelenium + geckodriver standalone
-      - name: Testar geckodriver standalone
-        run: |
-          export DISPLAY=:99
-          Rscript -e '
-            library(RSelenium)
-            # Conecta no geckodriver que roda na porta 5555
-            remDr <- remoteDriver(remoteServerAddr="127.0.0.1", port=5555L, browserName="firefox")
-            message("Abrindo Firefox via geckodriver standalone.")
-            remDr$open()
-            remDr$navigate("https://www.google.com")
-            Sys.sleep(3)
-            cur <- remDr$getCurrentUrl()
-            message("URL atual: ", cur)
-            # snippet do HTML
-            ps <- remDr$getPageSource()[[1]]
-            message("Snippet do pageSource: ", substring(ps,1,100))
-            remDr$close()
-          '
-          echo "=== geckodriver.log final ==="
-          cat gecko-standalone.log
-
-      # 12) Testes com HEADLESS x NON-HEADLESS
-      - name: Teste 3 HEADLESS explicit
-        run: |
-          export DISPLAY=:99
-          Rscript -e '
-            library(RSelenium)
-            # re-sobe geckodriver se for preciso
-            # pkill -f geckodriver; system("nohup geckodriver --port 5555 &")
-            Sys.sleep(2)
+            cat("-> Conectando remoteDriver...\n")
             remDr <- remoteDriver(
               remoteServerAddr="127.0.0.1",
-              port=5555L,
-              browserName="firefox",
-              extraCapabilities=list(
-                "moz:firefoxOptions"=list(args=c("--headless"))
-              )
+              port=4444,
+              browserName="firefox"
             )
-            message("Teste HEADLESS explicit.")
             remDr$open()
-            remDr$navigate("https://www.bing.com")
-            Sys.sleep(2)
-            cur <- remDr$getCurrentUrl()
-            message("URL atual: ", cur)
+            cat("-> Navegando em https://www.google.com ...\n")
+            remDr$navigate("https://www.google.com")
+            Sys.sleep(3)
+            current_url <- remDr$getCurrentUrl()[[1]]
+            cat("URL atual:", current_url, "\n")
+            cat("-> Page title:", remDr$getTitle()[[1]], "\n")
+            cat("-> Page source snippet:", substring(remDr$getPageSource()[[1]], 1, 300), "\n")
             remDr$close()
           '
-
-      - name: Teste 4 Sem headless
+      
+      # Ver logs
+      - name: Ver logs
         run: |
-          export DISPLAY=:99
-          Rscript -e '
-            library(RSelenium)
-            # Reutiliza geckodriver porta 5555
-            remDr <- remoteDriver(
-              remoteServerAddr="127.0.0.1",
-              port=5555L,
-              browserName="firefox",
-              extraCapabilities=list(
-                "moz:firefoxOptions"=list(args=c("--no-sandbox")) # sem headless
-              )
-            )
-            message("Teste SEM HEADLESS.")
-            remDr$open()
-            remDr$navigate("https://www.duckduckgo.com")
-            Sys.sleep(2)
-            cur <- remDr$getCurrentUrl()
-            message("URL atual: ", cur)
-            remDr$close()
-          '
+          echo "=== Logs do Selenium ==="
+          cat selenium.log || true
 
-      # 13) FIM - logs
-      - name: Final logs
-        run: |
-          echo "=== gecko-standalone.log FIM ==="
-          cat gecko-standalone.log || true
-          ps aux | grep geckodriver || true
-
-          echo "=== Xvfb log ==="
-          cat xvfb.log || echo "No xvfb log found"
