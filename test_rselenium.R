@@ -2,14 +2,14 @@ library(RSelenium)
 
 cat("=== Início do teste de RSelenium ===\n")
 
-# Configura o remoteDriver com os mesmos parâmetros utilizados
 remDr <- remoteDriver(
   remoteServerAddr = "127.0.0.1",
   port = 4444L,
   browserName = "firefox",
   extraCapabilities = list(
     "moz:firefoxOptions" = list(
-      args = c("--headless", "--no-sandbox", "--disable-gpu")
+      args = c("--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage", "--remote-debugging-port=9222")
+      # Remova "--headless" para teste
     )
   )
 )
