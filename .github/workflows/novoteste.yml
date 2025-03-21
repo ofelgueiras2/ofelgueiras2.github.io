@@ -120,7 +120,7 @@ jobs:
           export DISPLAY=:99
           wget -q "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
           nohup java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
-          sleep 60
+          sleep 30
           echo "🚀 Selenium Server iniciado!"
 
       - name: Debug Selenium Log
@@ -162,10 +162,14 @@ jobs:
 
       - name: Verificar logs do Geckodriver
         run: |
+          geckodriver --log debug > geckodriver.log 2>&1 &
+          sleep 5
           cat geckodriver.log || echo "Nenhum log do Geckodriver encontrado."
 
       - name: Verificar logs do Firefox
         run: |
+          firefox --headless --screenshot https://www.google.com
+          ls -l screenshot.png
           cat /tmp/firefox-profile/firefox.log || echo "Nenhum log do Firefox encontrado."
 
       - name: Testar RSelenium com modo headless
