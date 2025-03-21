@@ -1,35 +1,46 @@
 name: Selenium Test Minimal
 
 on:
-  workflow_dispatch:
-    # Permite gatilho manual
+  workflow_dispatch: {}
 
 jobs:
   run-script:
     runs-on: ubuntu-latest
     steps:
+      # 1) Fazer checkout
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Instalar pacotes do sistema essenciais
+      # 2) Configurar R
+      - name: Instalar R via setup-r
+        uses: r-lib/actions/setup-r@v2
+        with:
+          # Por padrão, instala R mais recente disponível.
+          # Se quiser uma versão específica, defina: r-version: '4.2.2'
+          use-public-rspm: true
+
+      # 3) Instalar libs do sistema
+      - name: Instalar pacotes do sistema
         run: |
           sudo apt-get update
-          # Xvfb e libs para rodar interface "headless"
-          sudo apt-get install -y xvfb libx11-dev libssl-dev libxml2-dev \
-                                  libcurl4-openssl-dev wget unzip
+          sudo apt-get install -y \
+            xvfb libx11-dev libssl-dev libxml2-dev \
+            libcurl4-openssl-dev wget unzip
 
-      - name: Instalar Firefox sem Snap
+      # 4) Instalar Firefox sem Snap
+      - name: Instalar Firefox
         run: |
-          sudo snap remove firefox || echo "Firefox snap não estava instalado."
+          sudo snap remove firefox || echo "snap firefox não estava instalado"
           sudo apt-get purge -y firefox*
           sudo add-apt-repository -y ppa:mozillateam/ppa
           echo 'Package: firefox*
-          Pin: release o=LP-PPA-mozillateam
-          Pin-Priority: 1001' | sudo tee /etc/apt/preferences.d/mozillateam-ppa > /dev/null
+Pin: release o=LP-PPA-mozillateam
+Pin-Priority: 1001' | sudo tee /etc/apt/preferences.d/mozillateam-ppa > /dev/null
           sudo apt-get update
-          sudo apt-get install -y firefox
+          sudo apt-get install -y --allow-downgrades firefox
           firefox --version
 
+      # 5) Instalar geckodriver
       - name: Instalar geckodriver
         run: |
           GECKO_VERSION="0.36.0"
@@ -39,57 +50,49 @@ jobs:
           rm geckodriver-v$GECKO_VERSION-linux64.tar.gz
           geckodriver --version
 
+      # 6) Subir Xvfb
       - name: Iniciar Xvfb
         run: |
           nohup Xvfb :99 -screen 0 1920x1080x24 &
 
-      - name: Confirmar Xvfb
-        run: |
-          ps aux | grep Xvfb
-          export DISPLAY=:99
-          xdpyinfo -display :99 2>/dev/null && echo "Xvfb ok" || echo "Xvfb não está funcionando"
-
-      - name: Baixar Selenium Standalone
+      # 7) Baixar Selenium Server
+      - name: Baixar Selenium
         run: |
           wget -q "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
 
-      - name: Iniciar Selenium Standalone
+      # 8) Subir Selenium Server (standalone)
+      - name: Iniciar Selenium
         run: |
           export DISPLAY=:99
-          nohup java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
+          nohup java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 \
+            >selenium.log 2>&1 &
           sleep 15
-          echo "Selenium Subiu"
+          echo "Selenium Iniciado"
 
-      - name: Verificar Selenium
-        run: |
-          ps aux | grep "[s]elenium" || (echo "Selenium não está rodando!" && exit 1)
-          netstat -tuln | grep 4444 || (echo "Porta 4444 não ativa!" && exit 1)
-          cat selenium.log || true
-
+      # 9) Instalar pacotes R que faltam
       - name: Instalar pacotes R
         run: |
-          Rscript -e 'install.packages(c("Rselenium","jsonlite"), repos="https://cran.rstudio.com")'
+          Rscript -e 'install.packages(c("RSelenium", "jsonlite"), repos="https://cran.rstudio.com")'
 
-      - name: Teste RSelenium mínimo
+      # 10) Testar RSelenium Mínimo
+      - name: Teste RSelenium
         run: |
           export DISPLAY=:99
           Rscript -e '
             library(RSelenium)
-            # Conecta no Selenium que está rodando na porta 4444
             remDr <- remoteDriver(
               remoteServerAddr = "127.0.0.1",
-              port = 4444L,
+              port = 4444,
               browserName = "firefox"
             )
-            message("-> Tentando abrir sessão Firefox via Selenium...")
-            remDr$open()    # Abre o navegador
-            # Navega até Google
+            message("-> Abrindo Firefox via Selenium...")
+            remDr$open()
             remDr$navigate("https://www.google.com")
             Sys.sleep(3)
-            # Exibe URL obtida
-            atual <- remDr$getCurrentUrl()
-            message("URL atual: ", atual)
-            # Fecha navegador
+            current <- remDr$getCurrentUrl()
+            message("URL atual: ", current)
             remDr$close()
+          '
+
           '
 
