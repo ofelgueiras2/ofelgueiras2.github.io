@@ -116,7 +116,7 @@ jobs:
       - name: Testar RSelenium mínimo
         run: |
           export DISPLAY=:99
-          Rscript gs/test_rselenium.R
+          Rscript test_rselenium.R
 
       - name: Run R script
         run: |
