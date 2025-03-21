@@ -1,4 +1,5 @@
 library(RSelenium)
+Sys.setenv(DISPLAY=":99")
 
 cat("=== Início do teste de RSelenium ===\n")
 
