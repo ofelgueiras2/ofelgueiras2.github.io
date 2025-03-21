@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RENV_PATHS_CACHE: ~/.local/share/renv/cache
+      DISPLAY: ":99"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
