@@ -76,27 +76,43 @@ csv_date <- dmy(dados_csv$Fecha[1])
 
 # --- Parte 1: Extração via RSelenium e rvest -----------------
 
+# Cria o objeto remoteDriver sem imediatamente abrir a conexão
 remDr <- remoteDriver(
   remoteServerAddr = "127.0.0.1",
   port = 4444L,
   browserName = "firefox",
   extraCapabilities = list(
     "moz:firefoxOptions" = list(
-      args = list("--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage")
+      args = c("--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage")
     )
   )
 )
 
-print("📡 Tentando abrir o navegador...")
-Sys.sleep(5)
+# Polling para conectar
+max_wait <- 30  # tempo máximo em segundos
+interval <- 2   # intervalo entre tentativas
+start_time <- Sys.time()
+connected <- FALSE
 
-# Verifica erro ao abrir o navegador
-tryCatch({
-  remDr$open()
-  print("✅ Navegador aberto com sucesso!")
-}, error = function(e) {
-  stop("❌ ERRO: O navegador não conseguiu abrir!")
-})
+while(as.numeric(Sys.time() - start_time, units = "secs") < max_wait) {
+  result <- tryCatch({
+    remDr$open()
+    TRUE
+  }, error = function(e) {
+    FALSE
+  })
+  if(result) {
+    connected <- TRUE
+    break
+  }
+  Sys.sleep(interval)
+}
+
+if(!connected) {
+  stop("❌ Erro: Não foi possível conectar ao Selenium Server após ", max_wait, " segundos.")
+} else {
+  cat("✅ Conectado ao Selenium Server.\n")
+}
 
 # Testar navegação inicial
 print("🔍 Testando navegação inicial com o Google...")
