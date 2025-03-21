@@ -1,0 +1,95 @@
+name: Selenium Test Minimal
+
+on:
+  workflow_dispatch:
+    # Permite gatilho manual
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Instalar pacotes do sistema essenciais
+        run: |
+          sudo apt-get update
+          # Xvfb e libs para rodar interface "headless"
+          sudo apt-get install -y xvfb libx11-dev libssl-dev libxml2-dev \
+                                  libcurl4-openssl-dev wget unzip
+
+      - name: Instalar Firefox sem Snap
+        run: |
+          sudo snap remove firefox || echo "Firefox snap não estava instalado."
+          sudo apt-get purge -y firefox*
+          sudo add-apt-repository -y ppa:mozillateam/ppa
+          echo 'Package: firefox*
+Pin: release o=LP-PPA-mozillateam
+Pin-Priority: 1001' | sudo tee /etc/apt/preferences.d/mozillateam-ppa > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y firefox
+          firefox --version
+
+      - name: Instalar geckodriver
+        run: |
+          GECKO_VERSION="0.36.0"
+          wget "https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz"
+          tar -xzf geckodriver-v$GECKO_VERSION-linux64.tar.gz
+          sudo mv geckodriver /usr/local/bin/
+          rm geckodriver-v$GECKO_VERSION-linux64.tar.gz
+          geckodriver --version
+
+      - name: Iniciar Xvfb
+        run: |
+          nohup Xvfb :99 -screen 0 1920x1080x24 &
+
+      - name: Confirmar Xvfb
+        run: |
+          ps aux | grep Xvfb
+          export DISPLAY=:99
+          xdpyinfo -display :99 2>/dev/null && echo "Xvfb ok" || echo "Xvfb não está funcionando"
+
+      - name: Baixar Selenium Standalone
+        run: |
+          wget -q "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
+
+      - name: Iniciar Selenium Standalone
+        run: |
+          export DISPLAY=:99
+          nohup java -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 > selenium.log 2>&1 &
+          sleep 15
+          echo "Selenium Subiu"
+
+      - name: Verificar Selenium
+        run: |
+          ps aux | grep "[s]elenium" || (echo "Selenium não está rodando!" && exit 1)
+          netstat -tuln | grep 4444 || (echo "Porta 4444 não ativa!" && exit 1)
+          cat selenium.log || true
+
+      - name: Instalar pacotes R
+        run: |
+          Rscript -e 'install.packages(c("Rselenium","jsonlite"), repos="https://cran.rstudio.com")'
+
+      - name: Teste RSelenium mínimo
+        run: |
+          export DISPLAY=:99
+          Rscript -e '
+            library(RSelenium)
+            # Conecta no Selenium que está rodando na porta 4444
+            remDr <- remoteDriver(
+              remoteServerAddr = "127.0.0.1",
+              port = 4444L,
+              browserName = "firefox"
+            )
+            message("-> Tentando abrir sessão Firefox via Selenium...")
+            remDr$open()    # Abre o navegador
+            # Navega até Google
+            remDr$navigate("https://www.google.com")
+            Sys.sleep(3)
+            # Exibe URL obtida
+            atual <- remDr$getCurrentUrl()
+            message("URL atual: ", atual)
+            # Fecha navegador
+            remDr$close()
+          '
+
