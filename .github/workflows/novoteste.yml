@@ -53,20 +53,28 @@ jobs:
           Rscript -e 'print(installed.packages()[,1])'
           echo "### Status do renv:"
           Rscript -e 'renv::status()'
-          
-      - name: Instalar dependências essenciais
-        run: |
-          sudo snap remove firefox || echo "Firefox snap não estava instalado."
-          sudo apt update
-          sudo apt install -y dbus-x11 xvfb openjdk-17-jre libnss3 wget unzip libcurl4-openssl-dev
-          java -version  # Debug Java
 
       - name: Instalar Firefox sem Snap
         run: |
+          # Remover o Firefox instalado via snap, se existir
+          sudo snap remove firefox || echo "Firefox snap não estava instalado."
+          # Remover todas as versões instaladas do Firefox via apt
+          sudo apt-get purge -y firefox*
+          # Adicionar o repositório do Mozilla Team
           sudo add-apt-repository -y ppa:mozillateam/ppa
-          sudo apt update
-          sudo apt install -y firefox
-          firefox --version  # Debug Firefox
+          sudo apt-get update
+          # Instalar o Firefox a partir do PPA (não será a versão snap)
+          sudo apt-get install -y firefox
+          firefox --version  # Debug: exibe a versão do Firefox instalada
+
+      - name: Verificar se o Firefox foi instalado via APT
+        run: |
+          if dpkg -l | grep firefox; then
+            echo "✅ Firefox instalado via APT."
+          else
+            echo "❌ Firefox não foi instalado via APT."
+            exit 1
+          fi
 
       - name: Instalar Geckodriver
         run: |
