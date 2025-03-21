@@ -78,7 +78,7 @@ jobs:
       - name: Dump Selenium log
         run: cat selenium.log || echo "No selenium log"
 
-      - name: Scenario A: Headless, no custom profile
+      - name: Scenario A Headless, no custom profile
         run: |
           export DISPLAY=:99
           Rscript -e '
@@ -106,7 +106,7 @@ jobs:
             remDr$close()
           '
 
-      - name: Scenario B: No headless, no custom profile
+      - name: Scenario B No headless, no custom profile
         run: |
           export DISPLAY=:99
           Rscript -e '
@@ -132,7 +132,7 @@ jobs:
             remDr$close()
           '
 
-      - name: Scenario C: Headless + custom profile
+      - name: Scenario C Headless + custom profile
         run: |
           export DISPLAY=:99
           # Cria e libera permissões no /tmp/firefox-profile
