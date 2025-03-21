@@ -189,7 +189,77 @@ jobs:
               browserName = "firefox",
               extraCapabilities = list(
                 "moz:firefoxOptions" = list(
+                  binary = "/usr/bin/firefox",
                   args = c("--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage", "--profile", "/tmp/firefox-profile")
+                )
+              )
+            )
+            remDr$open()
+            remDr$navigate("https://www.google.com")
+            Sys.sleep(60) # Aumentar tempo de espera
+            print(remDr$getCurrentUrl())
+            remDr$close()
+          '
+
+      - name: Testar RSelenium sem modo headless
+        run: |
+          export DISPLAY=:99
+          Rscript -e '
+            library(RSelenium)
+            remDr <- remoteDriver(
+              remoteServerAddr = "127.0.0.1",
+              port = 4444L,  # Certifique-se de que está usando a porta correta
+              browserName = "firefox",
+              extraCapabilities = list(
+                "moz:firefoxOptions" = list(
+                  binary = "/usr/bin/firefox",
+                  args = c("--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage", "--profile", "/tmp/firefox-profile")
+                )
+              )
+            )
+            remDr$open()
+            remDr$navigate("https://www.google.com")
+            Sys.sleep(60) # Aumentar tempo de espera
+            print(remDr$getCurrentUrl())
+            remDr$close()
+          '
+
+      - name: Testar RSelenium com modo headless sem profile
+        run: |
+          export DISPLAY=:99
+          Rscript -e '
+            library(RSelenium)
+            remDr <- remoteDriver(
+              remoteServerAddr = "127.0.0.1",
+              port = 4444L,  # Certifique-se de que está usando a porta correta
+              browserName = "firefox",
+              extraCapabilities = list(
+                "moz:firefoxOptions" = list(
+                  binary = "/usr/bin/firefox",
+                  args = c("--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage")
+                )
+              )
+            )
+            remDr$open()
+            remDr$navigate("https://www.google.com")
+            Sys.sleep(60) # Aumentar tempo de espera
+            print(remDr$getCurrentUrl())
+            remDr$close()
+          '
+
+      - name: Testar RSelenium sem modo headless sem profile
+        run: |
+          export DISPLAY=:99
+          Rscript -e '
+            library(RSelenium)
+            remDr <- remoteDriver(
+              remoteServerAddr = "127.0.0.1",
+              port = 4444L,  # Certifique-se de que está usando a porta correta
+              browserName = "firefox",
+              extraCapabilities = list(
+                "moz:firefoxOptions" = list(
+                  binary = "/usr/bin/firefox",
+                  args = c("--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage")
                 )
               )
             )
