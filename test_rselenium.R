@@ -11,8 +11,8 @@ remDr <- remoteDriver(
   extraCapabilities = list(
     "moz:firefoxOptions" = list(
       # Para diagnóstico, remova "--headless". Se funcionar sem, depois tente re-adicionar
-      args = c("--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage")
-      # args = c("--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage")
+      # args = c("--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage")
+      args = c("--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage")
     )
   )
 )
@@ -44,7 +44,7 @@ if(!connected) {
 # Teste navegando para about:blank (página simples)
 cat("🔍 Navegando para about:blank...\n")
 remDr$navigate("about:blank")
-Sys.sleep(5)
+Sys.sleep(40)
 url_blank <- tryCatch(remDr$getCurrentUrl(), error = function(e) NULL)
 cat("URL obtida para about:blank: ", ifelse(length(url_blank) > 0, url_blank[[1]], "vazia"), "\n")
 
@@ -52,7 +52,7 @@ cat("URL obtida para about:blank: ", ifelse(length(url_blank) > 0, url_blank[[1]
 cat("🔍 Testando navegação para https://www.google.com ...\n")
 remDr$navigate("https://www.google.com")
 # Aguarda um tempo maior para carregamento (por exemplo, 15 segundos)
-Sys.sleep(15)
+Sys.sleep(40)
 current_url <- tryCatch(remDr$getCurrentUrl(), error = function(e) NULL)
 if (is.null(current_url) || length(current_url) == 0 || !nzchar(current_url[[1]])) {
   stop("❌ Erro: Página do Google não carregou, nenhuma URL obtida.")
