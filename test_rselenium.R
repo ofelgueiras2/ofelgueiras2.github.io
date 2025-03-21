@@ -16,7 +16,6 @@ remDr <- remoteDriver(
   port = 4444L,
   browserName = "firefox",
   extraCapabilities = fprof,
-  geckodriver = "/usr/local/bin/geckodriver"  # Caminho completo para o Geckodriver
 )
 
 # Abre o navegador
