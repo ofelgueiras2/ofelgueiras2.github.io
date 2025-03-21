@@ -1,0 +1,23 @@
+name: Network Check
+
+on: [push]
+
+jobs:
+  check-network:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check internet connection
+      run: |
+        echo "Testing connectivity to Google..."
+        curl -I https://www.google.com
+
+        echo "Testing connectivity to GitHub..."
+        curl -I https://www.github.com
+
+        echo "Testing connectivity to Example..."
+        curl -I https://www.example.com
+
+        echo "Checking network information..."
+        curl ifconfig.me
+        curl ipinfo.io
