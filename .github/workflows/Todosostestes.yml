@@ -4,16 +4,34 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-selenium:
+  build-and-test:
     runs-on: ubuntu-latest
-    env:
-      RENV_CACHE_VERSION: 1
     steps:
       - uses: actions/checkout@v3
-      - uses: r-lib/actions/setup-r@v2
+
+      # 1) Instalar pacotes de sistema (libcurl4-openssl-dev, etc.)
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          # libcurl4-openssl-dev é crucial para compilar o pacote 'curl' do R
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev
+
+      # 2) Instalar R
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
         with:
-          r-version: '4.2.3'
-      - uses: r-lib/actions/setup-renv@v2
+          r-version: '4.2.3'  # ou outra versão
+
+      # 3) (Opcional) Instalar e restaurar renv
+      - name: Setup renv
+        uses: r-lib/actions/setup-renv@v2
+
+      # 4) Restaura pacotes do renv (que agora vai conseguir compilar 'curl')
+      #    ou instala manualmente
+      - name: Restore renv
+        run: |
+          Rscript -e 'renv::restore()'
+
       - name: Setup Firefox and Dependencies
         run: |
           sudo add-apt-repository -y ppa:mozillateam/ppa
