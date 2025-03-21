@@ -135,6 +135,11 @@ jobs:
         run: |
           netstat -tuln | grep 4444 || (echo "❌ ERRO: A porta 4444 não está ativa!" && cat selenium.log && exit 1)
 
+      - name: Verificar caminho do Firefox
+        run: |
+          which firefox
+          ls -l $(which firefox)
+
       - name: Testar Firefox manualmente
         run: |
           firefox --version
