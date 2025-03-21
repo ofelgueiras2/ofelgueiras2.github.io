@@ -137,7 +137,7 @@ jobs:
           cat gecko-standalone.log
 
       # 12) Testes com HEADLESS x NON-HEADLESS
-      - name: Teste 3: HEADLESS explicit
+      - name: Teste 3 HEADLESS explicit
         run: |
           export DISPLAY=:99
           Rscript -e '
@@ -162,7 +162,7 @@ jobs:
             remDr$close()
           '
 
-      - name: Teste 4: Sem headless
+      - name: Teste 4 Sem headless
         run: |
           export DISPLAY=:99
           Rscript -e '
