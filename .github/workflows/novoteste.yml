@@ -140,10 +140,21 @@ jobs:
           firefox --headless --screenshot https://www.google.com
           ls -l screenshot.png
 
-      - name: Iniciar Geckodriver em uma porta diferente
+      - name: Iniciar Geckodriver
         run: |
-          /usr/local/bin/geckodriver --port 4445 --allow-system-access &
+          # Cria o diretório de perfil e define permissões
+          mkdir -p /tmp/firefox-profile
+          chmod -R 777 /tmp/firefox-profile
+
+          # Inicia o Geckodriver com perfil personalizado
+          geckodriver --profile-root /tmp/firefox-profile --port 4445 --allow-system-access &
+
+          # Verifica se o Geckodriver está em execução
           sleep 5
+          ps aux | grep geckodriver || echo "❌ ERRO: Geckodriver não está rodando!"
+
+          # Verifica se a porta 4445 está ativa
+          netstat -tuln | grep 4445 || echo "❌ ERRO: A porta 4445 não está ativa!"
 
       - name: Verificar logs do Selenium
         run: |
