@@ -1,4 +1,4 @@
-nname: Selenium Test with R Novo
+name: Selenium Test with R Novo
 
 on:
   push:
@@ -77,16 +77,18 @@ jobs:
           GECKO_VERSION="0.36.0"
           wget "https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz"
           tar -xzf geckodriver-v$GECKO_VERSION-linux64.tar.gz
-          # Alteração: Remover o geckodriver antigo, independente de onde ele esteja
-          sudo rm -f $(which geckodriver)
-          # Alteração: Mover o novo binário para /usr/local/bin (garantindo que esteja no PATH)
+          # REMOÇÃO DE VERSÕES ANTIGAS: removendo o geckodriver de possíveis localizações
+          sudo rm -f /usr/local/bin/geckodriver
+          sudo rm -f /usr/bin/geckodriver
+          sudo rm -f /snap/bin/geckodriver
+          # Mover o novo binário para /usr/local/bin (prioritário no PATH)
           sudo mv geckodriver /usr/local/bin/
           rm geckodriver-v$GECKO_VERSION-linux64.tar.gz
           # Verifica a versão para confirmar que é a 0.36.0
           geckodriver --version
 
       - name: Iniciar Xvfb
-        # Alteração: Corrigida a indentação e adicionada a chave 'run:'
+        # Corrigida a indentação e adicionada a chave 'run:'
         run: nohup Xvfb :99 -screen 0 1920x1080x24 &
 
       - name: Iniciar Selenium Server
@@ -134,7 +136,6 @@ jobs:
           add: "gs/SimuladorEletricidade_OF_MN_2025_3.csv"
           message: "Adiciona novo arquivo gerado pelo workflow"
           github_token: ${{ secrets.PAT_TOKEN }}
-
 
           message: "Adiciona novo arquivo gerado pelo workflow"
           github_token: ${{ secrets.PAT_TOKEN }}
