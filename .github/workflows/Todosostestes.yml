@@ -1,95 +1,137 @@
-name: RSelenium Headless Firefox Test
+name: Teste RSelenium Firefox (sem Snap)
 
 on:
   workflow_dispatch:
 
 jobs:
-  test-rselenium:
+  rselenium-firefox:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
+      # 1) Checkout do repositório (se você tiver scripts R)
+      - uses: actions/checkout@v3
 
+      # 2) Instalar dependências de sistema
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            libcurl4-openssl-dev \
-            libssl-dev \
-            libxml2-dev \
-            libgit2-dev \
-            xvfb \
-            dbus-x11 \
-            openjdk-17-jre \
-            firefox
+          # Necessário para compilar pacotes R tipo 'curl'
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev \
+                                  dbus-x11 xvfb openjdk-17-jre net-tools # net-tools para 'netstat'
+          java -version
 
-      - name: Install geckodriver manually
+      # 3) Remover qualquer firefox snap e pacotes antigos
+      - name: Remove Firefox Snap and purge old Firefox
+        run: |
+          sudo snap remove firefox || echo "Firefox snap não estava instalado"
+          sudo apt-get purge -y firefox firefox-locale* || true
+          sudo apt-get autoremove -y
+
+      # 4) Adicionar PPA oficial do Firefox e bloquear Snap
+      - name: Add MozillaTeam PPA and pin to avoid Snap
+        run: |
+          sudo add-apt-repository -y ppa:mozillateam/ppa
+          # Cria um pinning que prioriza a versão do PPA e recusa a snap
+          echo '
+          Package: *
+          Pin: release o=LP-PPA-mozillateam
+          Pin-Priority: 1001
+
+          Package: firefox
+          Pin: version 1:1snap*
+          Pin-Priority: -1
+          ' | sudo tee /etc/apt/preferences.d/firefox-nosnap
+          sudo apt-get update
+
+      # 5) Instalar Firefox .deb do PPA
+      - name: Install Firefox (deb)
+        run: |
+          sudo apt-get install -y firefox
+          firefox --version
+
+      # 6) Instalar Geckodriver
+      - name: Install Geckodriver 0.36.0
         run: |
           GECKO_VER="0.36.0"
-          wget -q https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VER/geckodriver-v${GECKO_VER}-linux64.tar.gz
-          tar -xzf geckodriver-v${GECKO_VER}-linux64.tar.gz
+          wget -q "https://github.com/mozilla/geckodriver/releases/download/v${GECKO_VER}/geckodriver-v${GECKO_VER}-linux64.tar.gz"
+          tar -xzf "geckodriver-v${GECKO_VER}-linux64.tar.gz"
           sudo mv geckodriver /usr/local/bin/
           sudo chmod +x /usr/local/bin/geckodriver
           geckodriver --version
 
+      # 7) Opcional: Instalar R, usar renv para cache
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: '4.4.3'
+          r-version: '4.2.3'  # ou outra versão
 
-      - name: Setup renv
+      - name: Setup renv (opcional)
         uses: r-lib/actions/setup-renv@v2
 
-      - name: Restore renv packages
+      # Caso você tenha um lockfile e queira restaurar
+      - name: Restore R packages via renv
+        if: ${{ always() }}  # ou use a lógica que preferir
         run: |
           Rscript -e 'renv::restore(prompt = FALSE)'
 
-      - name: Install RSelenium if needed (just in case)
-        run: |
-          Rscript -e 'if (!requireNamespace("RSelenium", quietly=TRUE)) install.packages("RSelenium", repos="https://cloud.r-project.org")'
-
+      # 8) Subir Xvfb (display virtual)
       - name: Start Xvfb
         run: |
           Xvfb :99 -ac -screen 0 1920x1080x24 &
+          sleep 3
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
-      - name: Download Selenium Server
+      # 9) Baixar e iniciar Selenium Server Standalone
+      - name: Start Selenium Standalone
         run: |
-          wget -q https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar -O selenium-server.jar
-
-      - name: Start Selenium (firefox-only)
-        run: |
-          echo "DISPLAY is $DISPLAY"
-          nohup java \
-            -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
+          wget -q "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
+          # Exponha o DISPLAY via env
+          echo "DISPLAY=:99" >> $GITHUB_ENV
+          export DISPLAY=:99
+          # Subir Selenium
+          nohup java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
             -jar selenium-server.jar standalone \
             --port 4444 --host 127.0.0.1 \
-            --selenium-manager false \
-            --drivers firefox \
             > selenium.log 2>&1 &
           sleep 10
-          echo "Selenium started."
-          ps aux | grep '[s]elenium' || (echo "Selenium not running!" && cat selenium.log && exit 1)
-          netstat -tuln | grep 4444 || (echo "Port 4444 not listening!" && cat selenium.log && exit 1)
+          # Verifica se está rodando
+          ps aux | grep "[s]elenium" || (echo "❌ Selenium não está rodando!" && cat selenium.log && exit 1)
+          netstat -tuln | grep 4444 || (echo "❌ Porta 4444 não está escutando!" && cat selenium.log && exit 1)
 
-      - name: Run RSelenium test
+      # 10) Teste simples com RSelenium
+      - name: RSelenium test
         run: |
-          Rscript - <<'RSCRIPT'
+          export DISPLAY=:99
+          Rscript - <<EOF
+            # Carrega RSelenium (ou instale antes, se não usar renv)
+            if (!requireNamespace("RSelenium", quietly=TRUE)) {
+              install.packages("RSelenium", repos="https://cloud.r-project.org")
+            }
             library(RSelenium)
-            remDr <- remoteDriver(browserName = "firefox", port = 4444L)
+
+            message("Conectando ao Selenium + Firefox na porta 4444 ...")
+            remDr <- remoteDriver(browserName = "firefox", port = 4444)
             remDr$open()
+
+            message("Navegando em https://www.google.com ...")
             remDr$navigate("https://www.google.com")
             Sys.sleep(3)
-            page_title <- remDr$getTitle()[[1]]
-            page_url <- remDr$getCurrentUrl()[[1]]
-            cat("Page Title:", page_title, "\n")
-            cat("Page URL:", page_url, "\n")
-            if (is.na(page_url) || page_url == "") {
-              stop("Failed to retrieve page URL")
-            }
-            remDr$close()
-          RSCRIPT
 
+            # Captura a URL e título
+            current_url <- remDr$getCurrentUrl()[[1]]
+            page_title <- remDr$getTitle()[[1]]
+            message("URL atual: ", current_url)
+            message("Título: ", page_title)
+
+            # Se URL vier vazia / NA, sinaliza erro
+            if (is.na(current_url) || current_url == "") {
+              stop("❌ Falha ao obter a URL (ficou vazia / NA).")
+            }
+
+            remDr$close()
+            message("Teste finalizado com sucesso.")
+          EOF
+
+      # 11) Mostrar logs do Selenium
       - name: Show Selenium logs
-        if: always()
+        if: ${{ always() }}
         run: cat selenium.log
