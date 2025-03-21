@@ -1,58 +1,78 @@
-name: "Teste minimalista geckodriver + Firefox"
+name: Minimal RSelenium + geckodriver Test
 
 on:
   workflow_dispatch:
 
 jobs:
-  test-firefox:
+  test-firefox-geckodriver:
     runs-on: ubuntu-latest
     steps:
-    - name: Instalar libs
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y xvfb libnss3 libcurl4-openssl-dev libssl-dev libxml2-dev wget
+      - name: Checar repositório (opcional)
+        uses: actions/checkout@v4
 
-    - name: Instalar Firefox sem snap
-      run: |
-        sudo snap remove firefox || true
-        sudo apt-get purge -y firefox*
-        sudo add-apt-repository -y ppa:mozillateam/ppa
-        sudo apt-get update
-        sudo apt-get install -y firefox
-        firefox --version
+      - name: Remover Snap e Firefox Snap
+        run: |
+          sudo snap remove firefox || echo "Snap firefox não estava instalado."
+          sudo apt-get purge -y firefox*
+      
+      - name: Adicionar PPA mozillateam
+        run: |
+          sudo add-apt-repository -y ppa:mozillateam/ppa
+          echo 'Package: firefox*
+          Pin: release o=LP-PPA-mozillateam
+          Pin-Priority: 1001' | sudo tee /etc/apt/preferences.d/mozillateam-ppa > /dev/null
+          sudo apt-get update
+          # Instala firefox sem snap
+          sudo apt-get install -y firefox
+          firefox --version  # Debug: deve exibir algo como "Mozilla Firefox 136.0.2"
 
-    - name: Instalar geckodriver
-      run: |
-        wget https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz
-        tar -xzf geckodriver-v0.36.0-linux64.tar.gz
-        sudo mv geckodriver /usr/local/bin/
-        geckodriver --version
+      - name: Instalar geckodriver manualmente
+        run: |
+          GECKO_VERSION="0.36.0"
+          wget -q "https://github.com/mozilla/geckodriver/releases/download/v${GECKO_VERSION}/geckodriver-v${GECKO_VERSION}-linux64.tar.gz"
+          tar -xzf geckodriver-v${GECKO_VERSION}-linux64.tar.gz
+          sudo mv geckodriver /usr/local/bin/
+          rm geckodriver-v${GECKO_VERSION}-linux64.tar.gz
+          geckodriver --version  # Debug
 
-    - name: Subir Xvfb
-      run: |
-        Xvfb :99 -screen 0 1920x1080x24 &
-        sleep 3
-        xdpyinfo -display :99
+      - name: Instalar dependências do R e Xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y r-base xvfb x11-utils libnss3 libcurl4-openssl-dev libssl-dev libxml2-dev
 
-    - name: Rodar geckodriver standalone
-      run: |
-        export DISPLAY=:99
-        nohup geckodriver --port 4444 --log debug > geckodriver.log 2>&1 &
-        sleep 3
-        cat geckodriver.log
+      - name: Subir Xvfb
+        run: |
+          Xvfb :99 -screen 0 1920x1080x24 &
+          sleep 2
+          DISPLAY=:99 xdpyinfo  # checa se subiu; se falhar, falha job
 
-    - name: Testar com RSelenium
-      run: |
-        Rscript -e 'install.packages("RSelenium", repos="https://cran.rstudio.com")'
-        Rscript -e '
-          library(RSelenium)
-          Sys.setenv(DISPLAY=":99")
-          remDr <- remoteDriver(remoteServerAddr="127.0.0.1", port=4444L, browserName="firefox")
-          remDr$open()
-          remDr$navigate("https://www.google.com")
-          Sys.sleep(5)
-          cat("URL atual:", remDr$getCurrentUrl(), "\n")
-          cat("PageSource snippet:\n", substring(remDr$getPageSource()[[1]],1,200), "\n")
-          remDr$close()
-        '
-        cat geckodriver.log
+      - name: Subir geckodriver standalone
+        run: |
+          export DISPLAY=:99
+          nohup geckodriver --port 4444 > geckodriver.log 2>&1 &
+          sleep 2
+          cat geckodriver.log  # ver se subiu OK
+
+      - name: Testar com RSelenium
+        run: |
+          # Instala RSelenium rapidamente
+          Rscript -e 'install.packages("RSelenium", repos="https://cran.rstudio.com")'
+          # Testa
+          Rscript -e '
+            Sys.setenv(DISPLAY=":99")
+            library(RSelenium)
+            # Conecta no geckodriver:
+            remDr <- remoteDriver(remoteServerAddr="127.0.0.1", port=4444L, browserName="firefox")
+            remDr$open()
+            remDr$navigate("https://www.google.com")
+            Sys.sleep(5)
+            url <- remDr$getCurrentUrl()
+            cat("URL atual:", url, "\n")
+            
+            ps <- remDr$getPageSource()[[1]]
+            cat("Snippet da page source:\n", substring(ps,1,200), "\n")
+            
+            remDr$close()
+          '
+          echo "=== Conteúdo do geckodriver.log ==="
+          cat geckodriver.log
