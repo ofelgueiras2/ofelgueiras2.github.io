@@ -60,15 +60,16 @@ jobs:
           sudo snap remove firefox || echo "Firefox snap não estava instalado."
           # Remover todas as versões instaladas do Firefox via apt
           sudo apt-get purge -y firefox*
+          # Impedir a reinstalação do pacote transitório do Firefox
+          sudo apt-mark hold firefox
           # Adicionar o repositório do Mozilla Team
           sudo add-apt-repository -y ppa:mozillateam/ppa
           sudo apt-get update
           # Instalar o Firefox a partir do PPA (não será a versão snap)
           sudo apt-get install -y firefox
-          firefox --version  # Debug: exibe a versão do Firefox instalada
-
-      - name: Verificar se o Firefox foi instalado via APT
-        run: |
+          # Verificar a versão do Firefox instalada
+          firefox --version
+          # Verificar se o Firefox foi instalado via APT
           if dpkg -l | grep firefox; then
             echo "✅ Firefox instalado via APT."
           else
