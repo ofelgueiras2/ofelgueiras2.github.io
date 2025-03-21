@@ -3,24 +3,42 @@ Sys.setenv(DISPLAY = ":99")
 
 cat("=== Início do teste de RSelenium ===\n")
 
+# Configura o perfil do Firefox
+fprof <- makeFirefoxProfile(list(
+  "moz:firefoxOptions" = list(
+    args = c("--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage", "--profile", "/tmp/firefox-profile")
+  )
+))
+
+# Conecta ao Selenium Server
 remDr <- remoteDriver(
   remoteServerAddr = "127.0.0.1",
   port = 4444L,
   browserName = "firefox",
-  extraCapabilities = list(
-    "moz:firefoxOptions" = list(
-      args = c("--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage")
-    )
-  )
+  extraCapabilities = fprof,
+  geckodriver = "/usr/local/bin/geckodriver"  # Caminho completo para o Geckodriver
 )
+
+# Abre o navegador
+remDr$open()
+
+# Define um timeout maior
+remDr$setTimeout(type = "page load", milliseconds = 30000)
 
 cat("📡 Tentando abrir o navegador...\n")
 remDr$open()
 cat("✅ Navegador aberto com sucesso.\n")
 
+# Define um timeout maior
+remDr$setTimeout(type = "page load", milliseconds = 30000)
+
 cat("🔍 Navegando para about:blank...\n")
 remDr$navigate("about:blank")
 Sys.sleep(10)  # Aumente o tempo de espera
+
+# Verifica o título da página
+print(remDr$getTitle())
+
 url_blank <- remDr$getCurrentUrl()
 cat("URL obtida para about:blank: ", url_blank, "\n")
 
