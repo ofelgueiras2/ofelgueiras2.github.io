@@ -178,6 +178,24 @@ jobs:
           ls -l screenshot.png
           cat /tmp/firefox-profile/firefox.log || echo "Nenhum log do Firefox encontrado."
 
+      - name: geckodriver em “standalone” (sem Selenium) 
+        run: |
+          export DISPLAY=:99
+          Rscript -e '
+            # 1) Subir geckodriver na porta 4445:
+            system2("geckodriver", c("--port", "4445"))
+
+            # 2) Em outro terminal / outro passo do script:
+            remDr <- remoteDriver(
+            remoteServerAddr = "127.0.0.1",    
+            port             = 4445L,
+            browserName      = "firefox"
+            )
+            remDr$open()
+            remDr$navigate("https://www.google.com")
+            print(remDr$getCurrentUrl())
+          '
+          
       - name: Testar RSelenium com modo headless
         run: |
           export DISPLAY=:99
