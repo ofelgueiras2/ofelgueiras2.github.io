@@ -98,11 +98,11 @@ jobs:
           netstat -tuln | grep 4444 || (echo "❌ Porta 4444 não está escutando!" && cat selenium.log && exit 1)
 
       # 10) Teste simples com RSelenium
-      - name: RSelenium test
+      - name: Run RSelenium script
         run: |
           export DISPLAY=:99
           Rscript - <<EOF
-            # Carrega RSelenium (ou instale antes, se não usar renv)
+            # Se precisar, instale RSelenium (sem renv)
             if (!requireNamespace("RSelenium", quietly=TRUE)) {
               install.packages("RSelenium", repos="https://cloud.r-project.org")
             }
@@ -116,13 +116,12 @@ jobs:
             remDr$navigate("https://www.google.com")
             Sys.sleep(3)
 
-            # Captura a URL e título
             current_url <- remDr$getCurrentUrl()[[1]]
             page_title <- remDr$getTitle()[[1]]
+
             message("URL atual: ", current_url)
             message("Título: ", page_title)
 
-            # Se URL vier vazia / NA, sinaliza erro
             if (is.na(current_url) || current_url == "") {
               stop("❌ Falha ao obter a URL (ficou vazia / NA).")
             }
@@ -130,7 +129,7 @@ jobs:
             remDr$close()
             message("Teste finalizado com sucesso.")
           EOF
-
+          
       # 11) Mostrar logs do Selenium
       - name: Show Selenium logs
         if: ${{ always() }}
