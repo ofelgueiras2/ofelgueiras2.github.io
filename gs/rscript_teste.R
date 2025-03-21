@@ -83,7 +83,7 @@ remDr <- remoteDriver(
   browserName = "firefox",
   extraCapabilities = list(
     "moz:firefoxOptions" = list(
-      args = c("--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage")
+      args = c("--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage")
     )
   )
 )
