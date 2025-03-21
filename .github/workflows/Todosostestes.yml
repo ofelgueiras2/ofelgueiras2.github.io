@@ -6,84 +6,120 @@ on:
 jobs:
   test-selenium:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup R
-        uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: '4.4.3'
-
+      # 1) Install system dependencies (including libcurl4-openssl-dev for R 'curl')
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libcurl4-openssl-dev libssl-dev libxml2-dev \
-            xvfb xauth default-jre wget tar
+            libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev \
+            xvfb xauth dbus-x11 default-jre wget tar
 
-      - name: Install Firefox (via apt, no snap)
+      # 2) Install Firefox (Deb-based, not snap)
+      - name: Install Firefox (from Mozilla Team PPA)
         run: |
           sudo add-apt-repository -y ppa:mozillateam/ppa
+          # Pin to ensure we don't accidentally get Snap
           printf 'Package: firefox*\nPin: release o=LP-PPA-mozillateam\nPin-Priority: 1001\n' | sudo tee /etc/apt/preferences.d/mozilla-firefox
           sudo apt-get update
+          sudo apt-get remove -y firefox firefox* || true
+          sudo snap remove firefox || true
           sudo apt-get install -y firefox
+          firefox --version
 
-      - name: Install geckodriver 0.36.0
+      # 3) Install geckodriver v0.36.0
+      - name: Install geckodriver
         run: |
-          wget -q https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz
-          tar -xzf geckodriver-v0.36.0-linux64.tar.gz
-          chmod +x geckodriver
+          GECKO_VERSION="0.36.0"
+          wget -q "https://github.com/mozilla/geckodriver/releases/download/v${GECKO_VERSION}/geckodriver-v${GECKO_VERSION}-linux64.tar.gz"
+          tar -xzf "geckodriver-v${GECKO_VERSION}-linux64.tar.gz"
           sudo mv geckodriver /usr/local/bin/
+          sudo chmod +x /usr/local/bin/geckodriver
+          geckodriver --version
 
-      - name: Download Selenium Standalone Server
-        run: |
-          wget -q -O selenium-server.jar https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
+      # 4) Setup R
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.2.3'
 
-      - name: Start Xvfb and Selenium server
+      # (Optional) If you have a renv lockfile, you can restore. Otherwise, skip these steps
+      - name: Install renv (optional)
         run: |
-          # Start Xvfb (virtual display) on display :99
-          Xvfb :99 -screen 0 1280x800x24 &
+          Rscript -e 'install.packages("renv", repos="https://cloud.r-project.org")'
+
+      - name: Restore renv lockfile (optional)
+        if: ${{ exists('renv.lock') }}
+        run: |
+          Rscript -e 'renv::restore()'
+
+      # Install RSelenium explicitly (if not using renv restore)
+      - name: Install RSelenium
+        run: |
+          Rscript -e 'if (!requireNamespace("RSelenium", quietly=TRUE)) install.packages("RSelenium", repos="https://cloud.r-project.org")'
+
+      # 5) Start Xvfb (virtual display) at :99
+      - name: Start Xvfb
+        run: |
+          Xvfb :99 -ac -screen 0 1280x800x24 &
+          sleep 3
+          # Set environment var so R sees the display
           echo "DISPLAY=:99" >> $GITHUB_ENV
-          # Launch Selenium server in the background, logging to file
-          nohup java -jar selenium-server.jar > selenium.log 2>&1 &
-          # Wait a few seconds for Selenium server to be ready
-          sleep 5
+          echo "Xvfb started."
 
-      - name: Install R packages (renv and RSelenium)
+      # 6) Download Selenium Server and run it
+      - name: Download Selenium Server
         run: |
-          # Install renv (for package management) and restore packages
-          Rscript -e "install.packages('renv', repos='https://cloud.r-project.org')" || true
-          Rscript -e "tryCatch(renv::restore(), error=function(e) { message('renv restore failed: ', e) })"
-          # Ensure RSelenium is installed (if not installed by renv)
-          Rscript -e "if (!requireNamespace('RSelenium', quietly=TRUE)) install.packages('RSelenium', dependencies=TRUE, repos='https://cloud.r-project.org')"
+          wget -q -O selenium-server.jar "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar"
 
-      - name: Run RSelenium test
+      - name: Launch Selenium Standalone
         run: |
-          Rscript - <<'RSCRIPT'
-            # Load RSelenium library
+          # read DISPLAY from env
+          echo "DISPLAY is $DISPLAY"
+          nohup java \
+            -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
+            -jar selenium-server.jar standalone \
+            --port 4444 --host 127.0.0.1 \
+            >selenium.log 2>&1 &
+          # Wait up to ~10 sec for it to come up
+          sleep 10
+          echo "Selenium started."
+          ps aux | grep '[s]elenium' || (echo "Selenium not running!" && cat selenium.log && exit 1)
+          netstat -tuln | grep 4444 || (echo "Port 4444 not listening!" && cat selenium.log && exit 1)
+
+      # 7) Run a small RSelenium test
+      - name: RSelenium test
+        run: |
+          Rscript -e '
             library(RSelenium)
-            # Connect to Selenium (Firefox)
-            remDr <- remoteDriver(browserName = "firefox", port = 4444L)
+            message("Connecting to Selenium + Firefox on localhost:4444 ...")
+            remDr <- remoteDriver(
+              remoteServerAddr="127.0.0.1",
+              port=4444,
+              browserName="firefox"
+            )
             remDr$open()
-            # Navigate to Google
+            message("Navigating to https://www.google.com ...")
             remDr$navigate("https://www.google.com")
-            # Retrieve page title and URL
-            page_title <- remDr$getTitle()[[1]]
-            page_url <- remDr$getCurrentUrl()[[1]]
-            cat("Page Title:", page_title, "\n")
-            cat("Page URL:", page_url, "\n")
-            # If URL is NA or empty, fail the job for debugging
-            if (is.na(page_url) || page_url == "") {
-              stop("Failed to retrieve page URL")
+            Sys.sleep(3)
+            current_url <- remDr$getCurrentUrl()[[1]]
+            page_title  <- remDr$getTitle()[[1]]
+            cat("URL:   ", current_url, "\n")
+            cat("Title: ", page_title,   "\n")
+            # If we fail to get a URL, forcibly stop for debug
+            if (is.na(current_url) || current_url == "") {
+              stop("Failed to retrieve a valid URL from Selenium / Firefox.")
             }
-            # Close browser session
             remDr$close()
-          RSCRIPT
+          '
 
-      - name: Show Selenium server log
-        # Always run this step to display Selenium log for debugging
+      # 8) Always show Selenium log (for debug)
+      - name: Show Selenium Log
         if: ${{ always() }}
         run: |
-          echo "------ Selenium Server Log ------"
+          echo "------ SELENIUM LOG ------"
           cat selenium.log
