@@ -1,0 +1,170 @@
+name: Test RSelenium + Firefox + Geckodriver
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  rselenium-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          # Instala bibliotecas gráficas e libs necessárias
+          sudo apt-get install -y xvfb x11-utils \
+                                 libssl-dev libxml2-dev libgit2-dev \
+                                 libcurl4-openssl-dev libx11-dev \
+                                 libegl-mesa0 mesa-utils
+          # Remove qualquer Firefox snap
+          sudo snap remove firefox || echo "Firefox snap não estava instalado."
+          # Remove possíveis pacotes firefox antigos
+          sudo apt-get purge -y firefox* || true
+          # Adiciona repositório ppa (para firefox sem snap)
+          sudo add-apt-repository -y ppa:mozillateam/ppa
+          echo 'Package: firefox*
+Pin: release o=LP-PPA-mozillateam
+Pin-Priority: 1001' | sudo tee /etc/apt/preferences.d/mozillateam-ppa > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y --allow-downgrades firefox
+
+          echo "==> Firefox version <=="
+          firefox --version
+
+      - name: Install R + dependencies
+        # Este passo é só um exemplo de instalação rápida de pacotes R:
+        run: |
+          sudo apt-get install -y r-base
+          Rscript -e 'install.packages(c("RSelenium","jsonlite","httr"), repos="https://cloud.r-project.org")'
+
+      - name: Install latest Geckodriver
+        run: |
+          GECKO_VERSION="0.36.0"
+          wget "https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz"
+          tar -xzf geckodriver-v$GECKO_VERSION-linux64.tar.gz
+          sudo mv geckodriver /usr/local/bin/
+          rm geckodriver-v$GECKO_VERSION-linux64.tar.gz
+          echo "==> Geckodriver version <=="
+          geckodriver --version
+
+      - name: Start Xvfb
+        run: |
+          nohup Xvfb :99 -screen 0 1920x1080x24 > xvfb.log 2>&1 &
+          sleep 2
+          echo "== Checking Xvfb =="
+          ps aux | grep Xvfb || true
+          # Testa se Xvfb está funcional
+          xdpyinfo -display :99 || echo "Xvfb not fully available"
+
+      - name: Start Selenium
+        run: |
+          export DISPLAY=:99
+          wget -q "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
+          # Desabilitar o Selenium Manager pra evitar ele tentar baixar driver
+          nohup java -jar selenium-server.jar standalone \
+             --port 4444 \
+             --host 127.0.0.1 \
+             --selenium-manager false > selenium.log 2>&1 &
+          sleep 5
+          echo "== Checking Selenium =="
+          ps aux | grep selenium || true
+          netstat -tuln | grep 4444 || true
+
+      - name: Dump Selenium log
+        run: cat selenium.log || echo "No selenium log"
+
+      - name: Scenario A: Headless, no custom profile
+        run: |
+          export DISPLAY=:99
+          Rscript -e '
+            library(RSelenium)
+            cat("=== Scenario A: Headless, no custom profile ===\n")
+            remDr <- remoteDriver(
+              remoteServerAddr="127.0.0.1",
+              port=4444,
+              browserName="firefox",
+              extraCapabilities=list(
+                "moz:firefoxOptions" = list(
+                  args = c("--headless") # headless
+                )
+              )
+            )
+            remDr$open()
+            remDr$navigate("https://www.google.com")
+            Sys.sleep(4)
+            # Tenta capturar a URL
+            current <- remDr$getCurrentUrl()
+            cat("Current URL:", current, "\n")
+            # Pega parte do pageSource
+            ps <- remDr$getPageSource()[[1]]
+            cat("Page source snippet:\n", substr(ps, 1, 500), "\n")
+            remDr$close()
+          '
+
+      - name: Scenario B: No headless, no custom profile
+        run: |
+          export DISPLAY=:99
+          Rscript -e '
+            library(RSelenium)
+            cat("=== Scenario B: No headless, no custom profile ===\n")
+            remDr <- remoteDriver(
+              remoteServerAddr="127.0.0.1",
+              port=4444,
+              browserName="firefox",
+              extraCapabilities=list(
+                "moz:firefoxOptions" = list(
+                  args = c() # sem headless
+                )
+              )
+            )
+            remDr$open()
+            remDr$navigate("https://example.com/")
+            Sys.sleep(4)
+            current <- remDr$getCurrentUrl()
+            cat("Current URL:", current, "\n")
+            ps <- remDr$getPageSource()[[1]]
+            cat("Page source snippet:\n", substr(ps, 1, 500), "\n")
+            remDr$close()
+          '
+
+      - name: Scenario C: Headless + custom profile
+        run: |
+          export DISPLAY=:99
+          # Cria e libera permissões no /tmp/firefox-profile
+          mkdir -p /tmp/firefox-profile
+          chmod -R 777 /tmp/firefox-profile
+
+          Rscript -e '
+            library(RSelenium)
+            cat("=== Scenario C: Headless with custom /tmp/firefox-profile ===\n")
+            remDr <- remoteDriver(
+              remoteServerAddr="127.0.0.1",
+              port=4444,
+              browserName="firefox",
+              extraCapabilities=list(
+                "moz:firefoxOptions" = list(
+                  args = c("--headless", "--profile", "/tmp/firefox-profile")
+                )
+              )
+            )
+            remDr$open()
+            remDr$navigate("https://www.r-project.org/")
+            Sys.sleep(4)
+            current <- remDr$getCurrentUrl()
+            cat("Current URL:", current, "\n")
+            ps <- remDr$getPageSource()[[1]]
+            cat("Page source snippet:\n", substr(ps, 1, 500), "\n")
+            remDr$close()
+          '
+
+      - name: Dump final logs
+        run: |
+          echo "=== Selenium log ==="
+          cat selenium.log || echo "No selenium log found"
+          echo "=== Xvfb log ==="
+          cat xvfb.log || echo "No xvfb log found"
