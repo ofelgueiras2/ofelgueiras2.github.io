@@ -91,19 +91,7 @@ interval <- 2   # intervalo entre tentativas
 start_time <- Sys.time()
 connected <- FALSE
 
-            remDr$open()
-
-
-            remDr$navigate("https://www.google.com")
-            Sys.sleep(5)
-
-            current_url <- remDr$getCurrentUrl()[[1]]
-            page_title <- remDr$getTitle()[[1]]
-            cat("URL atual:", current_url, "\n")
-            cat("Título:", page_title, "\n")
-
-            remDr$close()
-     
+            remDr$open()     
 
 # Navegar para a página
 url <- "https://www.omie.es"  # substitua pela URL real
