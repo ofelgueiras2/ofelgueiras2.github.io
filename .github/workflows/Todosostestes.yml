@@ -1,10 +1,10 @@
-name: RSelenium Firefox rsDriver (binários manuais)
+name: RSelenium Firefox Selenium Server (remoteDriver)
 
 on:
   workflow_dispatch:
 
 jobs:
-  selenium-test-rsdriver:
+  selenium-test-remotedriver:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,13 +29,29 @@ jobs:
           sudo chmod +x /usr/local/bin/geckodriver
           geckodriver --version
 
-      - name: Iniciar servidor X virtual (Xvfb)
+      - name: Baixar Selenium Server 4.29.0
+        run: |
+          wget https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar -O selenium-server.jar
+
+      - name: Iniciar Xvfb e Selenium Server (robusto)
         run: |
           sudo pkill Xvfb || true
           sudo rm -rf /tmp/.X99-lock /tmp/.X11-unix/X99
           Xvfb :99 -screen 0 1280x1024x24 &
           sleep 5
           echo "DISPLAY=:99" >> $GITHUB_ENV
+
+          sudo pkill -f selenium-server || true
+          nohup java \
+            -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
+            -Dwebdriver.firefox.bin=/usr/bin/firefox \
+            -jar selenium-server.jar standalone \
+            --host 127.0.0.1 --port 4444 \
+            --selenium-manager false \
+            > selenium.log 2>&1 &
+
+          sleep 10
+          netstat -tuln | grep '127.0.0.1:4444' || (cat selenium.log && exit 1)
 
       - name: Setup R environment
         uses: r-lib/actions/setup-r@v2
@@ -46,22 +62,22 @@ jobs:
         run: |
           Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
 
-      - name: Teste RSelenium (rsDriver com binários manuais, sem downloads automáticos)
+      - name: Teste RSelenium (remoteDriver)
         env:
           DISPLAY: :99
         run: |
           Rscript -e '
             library(RSelenium)
-            rD <- rsDriver(browser = "firefox",
-                           port = 4545L,
-                           verbose = TRUE,
-                           geckover = NULL,
-                           check = FALSE,
-                           extraCapabilities = list(
-                             "moz:firefoxOptions" = list(binary = "/usr/bin/firefox", args = list("--headless"))
-                           ))
+            remDr <- remoteDriver(
+              remoteServerAddr = "127.0.0.1",
+              port = 4444L,
+              browserName = "firefox",
+              extraCapabilities = list(
+                "moz:firefoxOptions" = list(args = list("--headless"))
+              )
+            )
 
-            remDr <- rD$client
+            remDr$open(silent = TRUE)
             remDr$navigate("https://www.google.com")
             Sys.sleep(5)
 
@@ -71,5 +87,8 @@ jobs:
             cat("Título:", page_title, "\n")
 
             remDr$close()
-            rD$server$stop()
           '
+
+      - name: Mostrar log Selenium Server (sempre)
+        if: always()
+        run: cat selenium.log
