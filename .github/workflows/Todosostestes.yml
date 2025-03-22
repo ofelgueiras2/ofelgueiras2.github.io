@@ -74,14 +74,18 @@ jobs:
         with:
           r-version: '4.4.3'  # ou 'latest' para versão mais recente do R
 
-      - name: Instalar dependências do sistema (necessárias para R e RSelenium)
+      - name: Instalar dependências essenciais do sistema
         run: |
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev
 
-      # Instala o pacote RSelenium a partir do CRAN&#8203;:contentReference[oaicite:9]{index=9}
-      - name: Install RSelenium package
-        run: Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
+      - name: Instalar curl no R (resolve diretamente a dependência que falha)
+        run: |
+          Rscript -e 'install.packages("curl", repos="https://cloud.r-project.org")'
+
+      - name: Instalar RSelenium (agora sem erros)
+        run: |
+          Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
 
       # Executa o teste RSelenium: abre Firefox, navega até Google, captura URL e título
       - name: Run RSelenium test
