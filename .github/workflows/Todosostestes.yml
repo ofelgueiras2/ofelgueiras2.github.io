@@ -89,32 +89,39 @@ jobs:
 
       # Já assumindo instalações anteriores corretas (Firefox manual, Xvfb rodando, RSelenium instalado)
 
-      - name: Iniciar Xvfb
+      - name: Garantir Xvfb limpo e iniciar corretamente
         run: |
+          sudo pkill Xvfb || true
+          rm -f /tmp/.X99-lock
           Xvfb :99 -ac -screen 0 1280x1024x24 &
           sleep 5
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
-      - name: Iniciar Selenium Server (Selenium Manager ativado)
+      - name: Iniciar Selenium Server (modo standalone com geckodriver explícito)
         run: |
           wget -q -O selenium-server.jar https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
-          nohup java -jar selenium-server.jar standalone --selenium-manager true > selenium.log 2>&1 &
-          sleep 20
+          nohup java \
+          -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
+            -jar selenium-server.jar standalone --selenium-manager false > selenium.log 2>&1 &
+          sleep 15  # Aguarde com segurança o Selenium estar pronto.
 
-      - name: Verificar porta do Selenium
+      - name: Confirmar porta do Selenium aberta
         run: netstat -tuln | grep 4444 || (echo "❌ Porta 4444 não escutando!" && cat selenium.log && exit 1)
 
-      - name: Executar teste RSelenium (com Firefox headless e no-sandbox)
+      - name: Executar teste RSelenium (Firefox headless com no-sandbox e logs explícitos)
         env:
           DISPLAY: :99
         run: |
           Rscript -e '
             library(RSelenium)
             remDr <- remoteDriver(
-              remoteServerAddr = "localhost",
+            remoteServerAddr = "localhost",
               port = 4444L,
               browserName = "firefox",
-              extraCapabilities = list("moz:firefoxOptions" = list(args = list("--headless", "--no-sandbox")))
+              extraCapabilities = list("moz:firefoxOptions" = list(
+                args = list("--headless", "--no-sandbox", "--disable-gpu"),
+                log = list(level = "trace")
+              ))
             )
             remDr$open()
             remDr$navigate("https://www.google.com")
@@ -128,7 +135,7 @@ jobs:
             }
             remDr$close()
           '
-          
-      - name: Exibir log do Selenium
+
+      - name: Exibir log do Selenium (diagnóstico avançado)
         if: always()
         run: cat selenium.log
