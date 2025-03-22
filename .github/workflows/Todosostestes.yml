@@ -72,7 +72,7 @@ jobs:
             )
             remDr$open()
             Sys.sleep(3)
-            if (is.null(remDr$sessionid) || remDr$sessionid == "NA") {
+            if (is.null(remDr$sessionid) || is.na(remDr$sessionid)) {
               stop("Falha ao iniciar sessão no Selenium Server.")
             }
             remDr$navigate("https://www.google.com")
