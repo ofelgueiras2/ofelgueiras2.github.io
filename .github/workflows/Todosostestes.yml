@@ -66,30 +66,27 @@ jobs:
         run: |
           Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
 
-      - name: Run RSelenium Test (Stable)
+     - name: Executar teste RSelenium (direto, sem standalone)
+        env:
+          DISPLAY: :99
         run: |
           Rscript -e '
             library(RSelenium)
-            remDr <- remoteDriver(
-              remoteServerAddr = "127.0.0.1",
-              port = 4444L,
-              browserName = "firefox",
-              extraCapabilities = list(
-                "moz:firefoxOptions" = list(args = list("--headless", "--no-sandbox"))
-              )
-            )
-            remDr$open()
-            Sys.sleep(3)
-            if (is.null(remDr$sessionid) || is.na(remDr$sessionid)) {
-              stop("Falha ao iniciar sessão no Selenium Server.")
-            }
-            remDr$navigate("https://www.google.com")
+            rD <- rsDriver(browser = "firefox", 
+                     port = 4545L, 
+                     verbose = TRUE, 
+                     extraCapabilities = list("moz:firefoxOptions" = list(args = list("--headless"))))
+      
+            remDr <- rD$client
+            remDr$navigate("https://www.google.com")      
             Sys.sleep(5)
             current_url <- remDr$getCurrentUrl()[[1]]
             page_title <- remDr$getTitle()[[1]]
             cat("URL atual:", current_url, "\n")
             cat("Título:", page_title, "\n")
+
             remDr$close()
+            rD$server$stop()
           '
 
       - name: Display Selenium Log (Always)
