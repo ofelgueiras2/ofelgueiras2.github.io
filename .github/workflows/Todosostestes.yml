@@ -99,20 +99,18 @@ jobs:
 
       - name: Baixar e iniciar Selenium Server (IPv4 explícito)
         run: |
-         wget -q -O selenium-server.jar https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
-         nohup java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
-         -jar selenium-server.jar standalone \
-         --host 127.0.0.1 --port 4444 \
-         --selenium-manager false \
-         > selenium.log 2>&1 &
-         sleep 10
-         netstat -tuln | grep '127.0.0.1:4444' || (echo "❌ Porta 4444 não escutando!" && cat selenium.log && exit 1)
+          # Termina qualquer instância anterior do Selenium Server
+          sudo pkill -9 -f selenium-server || true
 
-
-
-
-
-      
+          wget -q -O selenium-server.jar https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
+          nohup java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
+            -jar selenium-server.jar standalone \
+            --host 127.0.0.1 --port 4444 \
+            --selenium-manager false \
+            > selenium.log 2>&1 &
+          sleep 10
+          netstat -tuln | grep '127.0.0.1:4444' || (echo "❌ Porta 4444 não escutando!" && cat selenium.log && exit 1)
+     
       - name: Executar teste RSelenium (Firefox headless com no-sandbox e logs explícitos)
         env:
           DISPLAY: :99
@@ -120,12 +118,12 @@ jobs:
           Rscript -e '
             library(RSelenium)
             remDr <- remoteDriver(
-            remoteServerAddr = "127.0.0.1",  # Força IPv4 explicitamente
-            port = 4444L,
-            browserName = "firefox",
-            extraCapabilities = list(
-            "moz:firefoxOptions" = list(args = list("--headless"))
-            )
+              remoteServerAddr = "127.0.0.1",  # Força IPv4 explicitamente
+              port = 4444L,
+              browserName = "firefox",
+              extraCapabilities = list(
+                "moz:firefoxOptions" = list(args = list("--headless"))
+              )
             )               
             remDr$open()
             remDr$navigate("https://www.google.com")
