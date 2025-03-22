@@ -20,6 +20,14 @@ jobs:
           fetch-depth: 0
           ref: main  # Certifique-se de que seu branch é "main"
 
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Pull latest changes
+        run: |
+          git pull --rebase origin main
 
       - name: Setup R environment
         uses: r-lib/actions/setup-r@v2
