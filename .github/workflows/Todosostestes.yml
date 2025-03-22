@@ -65,7 +65,7 @@ jobs:
         run: |
           Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
 
-      - name: Executar teste RSelenium (Firefox headless confirmado)
+      - name: Executar teste RSelenium (robusto e com diagnóstico claro)
         env:
           DISPLAY: :99
         run: |
@@ -80,6 +80,11 @@ jobs:
               )
             )
             remDr$open(silent = TRUE)
+      
+            if (is.null(remDr$sessionid)) {
+              stop("Falha ao criar sessão! Verificar Selenium Server.")
+            }
+
             remDr$navigate("https://www.google.com")
             Sys.sleep(5)
             current_url <- remDr$getCurrentUrl()[[1]]
@@ -87,7 +92,7 @@ jobs:
             cat("URL atual:", current_url, "\n")
             cat("Título:", page_title, "\n")
             if (is.na(current_url) || current_url == "") {
-              stop("URL está vazia ou NA - falhando o job")
+              stop("URL está vazia ou NA - falhando o job")      
             }
             remDr$close()
           '
