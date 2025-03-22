@@ -11,7 +11,7 @@ jobs:
       - name: Setup system (Xvfb, Java, netcat)
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb openjdk-11-jre-headless netcat
+          sudo apt-get install -y xvfb openjdk-11-jre-headless netcat-openbsd
 
       # Baixa e instala manualmente o Firefox (binário oficial da Mozilla)&#8203;:contentReference[oaicite:6]{index=6}
       - name: Install Firefox (manual download)
