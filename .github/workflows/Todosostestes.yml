@@ -7,125 +7,88 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      # Atualiza e instala dependências do sistema: Xvfb (display virtual), Java (JRE) e netcat
-      - name: Setup system (Xvfb, Java, netcat)
+      # Atualiza e instala dependências do sistema essenciais ao Firefox e Xvfb
+      - name: Setup system (Xvfb, Java, Firefox dependencies)
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb openjdk-11-jre-headless nmap
-          # Agora você tem 'ncat' em vez de 'netcat'
+          sudo apt-get install -y xvfb openjdk-11-jre-headless nmap \
+            libgtk-3-0 libglib2.0-0 libdbus-glib-1-2 libxt6 libxrender1 libfontconfig1 libx11-xcb1
 
-      # Baixa e instala manualmente o Firefox (binário oficial da Mozilla)&#8203;:contentReference[oaicite:6]{index=6}
+      # Baixa e instala manualmente o Firefox (binário oficial da Mozilla)
       - name: Install Firefox (binário .tar.bz2)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libdbus-glib-1-2
           wget -O firefox.tar.bz2 "https://ftp.mozilla.org/pub/firefox/releases/118.0/linux-x86_64/en-US/firefox-118.0.tar.bz2"
-          file firefox.tar.bz2  # verifica o formato
           tar -xjf firefox.tar.bz2
           sudo mv firefox /opt/firefox
           sudo rm -f /usr/bin/firefox
           sudo ln -s /opt/firefox/firefox /usr/bin/firefox
           firefox --version
-    
-      # Baixa o Geckodriver v0.36.0 e instala no PATH&#8203;:contentReference[oaicite:7]{index=7}
+
+      # Baixa o Geckodriver v0.36.0 e instala no PATH
       - name: Install Geckodriver 0.36.0
         run: |
           wget -O geckodriver.tar.gz "https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz"
           tar -xzf geckodriver.tar.gz
           chmod +x geckodriver
           sudo mv geckodriver /usr/local/bin/geckodriver
-          geckodriver --version  # Verifica versão instalada do Geckodriver
+          geckodriver --version
 
-      # Baixa o Selenium Server standalone v4.8.0 (jar)&#8203;:contentReference[oaicite:8]{index=8}
-      - name: Download Selenium Server 4.8.0
+      # Baixa o Selenium Server standalone v4.29.0
+      - name: Download Selenium Server 4.29.0
         run: |
-          wget -O selenium-server.jar "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.8.0/selenium-server-4.8.0.jar"
-          ls -lh selenium-server.jar  # Lista para confirmar download (aprox. 29 MB)
+          wget -O selenium-server.jar "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar"
 
-      # Inicia o Xvfb e o Selenium Server em background
-      - name: Start Selenium Server (headless)
+      # Limpeza total e inicialização segura do Xvfb
+      - name: Garantir Xvfb limpo e iniciar corretamente
         run: |
-          # Inicia Xvfb em display :99
-          nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
-          echo "Xvfb started on display :99"
-          # Inicia o Selenium Server na porta 4444 em segundo plano, logando em selenium.log
-          nohup java -jar selenium-server.jar standalone > selenium.log 2>&1 &
-          echo "Selenium Server iniciado em background"
+          sudo pkill -9 Xvfb || true
+          sudo rm -rf /tmp/.X99-lock /tmp/.X11-unix/X99
+          Xvfb :99 -ac -screen 0 1920x1080x24 &
+          sleep 5
+          echo "DISPLAY=:99" >> $GITHUB_ENV
 
-      # Aguarda o Selenium Server ficar disponível na porta 4444 antes de prosseguir
-      - name: Wait for Selenium Server (port 4444)
+      # Baixar e iniciar Selenium Server
+      - name: Iniciar Selenium Server (IPv4 explícito)
         run: |
-          for i in {1..30}; do
-            nc -z localhost 4444 && break
-            echo "Aguardando Selenium Server iniciar..."
-            sleep 1
-          done
-          if ! nc -z localhost 4444; then
-            echo "Selenium Server não iniciou na porta 4444 dentro do tempo esperado."
-            # Mostra log parcial para depuração, então falha
-            head -50 selenium.log
-            exit 1
-          fi
-          echo "Selenium Server está ouvindo na porta 4444."
+          sudo pkill -9 -f selenium-server || true
+          nohup java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
+            -jar selenium-server.jar standalone \
+            --host 127.0.0.1 --port 4444 \
+            --selenium-manager false > selenium.log 2>&1 &
+          sleep 15
+          netstat -tuln | grep '127.0.0.1:4444' || (echo "❌ Porta 4444 não escutando!" && cat selenium.log && exit 1)
 
-      # Configura o R (instalação do R no runner) – usando ação oficial do r-lib
+      # Setup R
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: '4.4.3'  # ou 'latest' para versão mais recente do R
+          r-version: '4.4.3'
 
-      - name: Instalar dependências essenciais do sistema
+      - name: Instalar dependências essenciais para R
         run: |
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev
 
-      - name: Instalar curl no R (resolve diretamente a dependência que falha)
+      - name: Instalar curl e RSelenium
         run: |
-          Rscript -e 'install.packages("curl", repos="https://cloud.r-project.org")'
+          Rscript -e 'install.packages(c("curl", "RSelenium"), repos="https://cloud.r-project.org")'
 
-      - name: Instalar RSelenium (agora sem erros)
-        run: |
-          Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
-
-      # Já assumindo instalações anteriores corretas (Firefox manual, Xvfb rodando, RSelenium instalado)
-      - name: Garantir Xvfb limpo (remoção forçada) e iniciar corretamente
-        run: |
-          sudo pkill -9 Xvfb || true
-          sudo rm -rf /tmp/.X99-lock /tmp/.X11-unix/X99
-          sleep 2
-          Xvfb :99 -ac -screen 0 1280x1024x24 &
-          sleep 5
-          echo "DISPLAY=:99" >> $GITHUB_ENV
-
-      - name: Baixar e iniciar Selenium Server (IPv4 explícito)
-        run: |
-          # Termina qualquer instância anterior do Selenium Server
-          sudo pkill -9 -f selenium-server || true
-
-          wget -q -O selenium-server.jar https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
-          nohup java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
-            -jar selenium-server.jar standalone \
-            --host 127.0.0.1 --port 4444 \
-            --selenium-manager false \
-            > selenium.log 2>&1 &
-          sleep 10
-          netstat -tuln | grep '127.0.0.1:4444' || (echo "❌ Porta 4444 não escutando!" && cat selenium.log && exit 1)
-     
-      - name: Executar teste RSelenium (Firefox headless com no-sandbox e logs explícitos)
+      # Executar teste RSelenium com detalhes adicionais
+      - name: Executar teste RSelenium (Firefox headless detalhado)
         env:
           DISPLAY: :99
         run: |
           Rscript -e '
             library(RSelenium)
             remDr <- remoteDriver(
-              remoteServerAddr = "127.0.0.1",  # Força IPv4 explicitamente
+              remoteServerAddr = "127.0.0.1",
               port = 4444L,
               browserName = "firefox",
               extraCapabilities = list(
-                "moz:firefoxOptions" = list(args = list("--headless"))
+                "moz:firefoxOptions" = list(args = list("--headless", "--no-sandbox", "--disable-gpu"))
               )
-            )               
-            remDr$open()
+            )
+            remDr$open(silent = FALSE)
             remDr$navigate("https://www.google.com")
             Sys.sleep(5)
             current_url <- remDr$getCurrentUrl()[[1]]
@@ -138,6 +101,6 @@ jobs:
             remDr$close()
           '
 
-      - name: Exibir log do Selenium (diagnóstico avançado)
+      - name: Exibir log do Selenium
         if: always()
         run: cat selenium.log
