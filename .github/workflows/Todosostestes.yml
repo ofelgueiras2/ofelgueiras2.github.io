@@ -43,9 +43,9 @@ jobs:
           sleep 5
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
-          nohup java -jar selenium-server.jar standalone \
+          nohup java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
+            -jar selenium-server.jar standalone \
             --host 127.0.0.1 --port 4444 \
-            --selenium-manager false \
             > selenium.log 2>&1 &
           sleep 10
           netstat -tuln | grep '127.0.0.1:4444' || (cat selenium.log && exit 1)
