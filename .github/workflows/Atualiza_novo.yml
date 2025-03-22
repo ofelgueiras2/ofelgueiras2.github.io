@@ -65,7 +65,14 @@ jobs:
         env:
           DISPLAY: :99
         run: |
-          Rscript gs/rscript_teste.R
+          Rscript -e '
+            renv::activate();
+            print(.libPaths());
+            library(httr);
+            print(installed.packages()[,1]);
+            print(Sys.getenv("RENV_PATHS_ROOT"));
+            source("gs/rscript.R")
+          '
 
       - name: Exibir log Selenium Server (sempre)
         if: always()
