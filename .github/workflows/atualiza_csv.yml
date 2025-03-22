@@ -18,6 +18,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          ref: main  # Certifique-se de que seu branch é "main"
+
 
       - name: Setup R environment
         uses: r-lib/actions/setup-r@v2
@@ -83,7 +85,8 @@ jobs:
       - name: Commit new file
         uses: EndBug/add-and-commit@v9
         with:
+          branch: main
+          pull: true
           add: "gs/SimuladorEletricidade_OF_MN_2025_2.csv"
           message: "Adiciona novo arquivo gerado pelo workflow"
-          pull: true
           github_token: ${{ secrets.PAT_TOKEN }}
