@@ -94,7 +94,6 @@ jobs:
         uses: EndBug/add-and-commit@v9
         with:
           branch: main
-          pull: true
           add: "gs/SimuladorEletricidade_OF_MN_2025_2.csv"
           message: "Adiciona novo arquivo gerado pelo workflow"
           github_token: ${{ secrets.PAT_TOKEN }}
