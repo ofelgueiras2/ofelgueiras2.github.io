@@ -1,4 +1,4 @@
-name: RSelenium Firefox Test (Corrigido e Estável)
+name: RSelenium Firefox Headless (final fix)
 
 on:
   workflow_dispatch:
@@ -15,32 +15,29 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb openjdk-11-jre-headless wget libdbus-glib-1-2 libcurl4-openssl-dev libssl-dev libxml2-dev net-tools
 
-      - name: Instalar Firefox (118.0)
+      - name: Instalar Firefox oficial
         run: |
           wget -O firefox.tar.bz2 "https://ftp.mozilla.org/pub/firefox/releases/118.0/linux-x86_64/en-US/firefox-118.0.tar.bz2"
-          tar -xjf firefox.tar.bz2
-          sudo mv firefox /opt/firefox
+          sudo tar -xjf firefox.tar.bz2 -C /opt
           sudo ln -sf /opt/firefox/firefox /usr/bin/firefox
           firefox --version
 
-      - name: Instalar Geckodriver (0.36.0)
+      - name: Instalar Geckodriver
         run: |
           wget -q -O geckodriver.tar.gz "https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz"
-          tar -xzf geckodriver.tar.gz
-          chmod +x geckodriver
-          sudo mv geckodriver /usr/local/bin/
+          sudo tar -xzf geckodriver.tar.gz -C /usr/local/bin/
+          sudo chmod +x /usr/local/bin/geckodriver
           geckodriver --version
 
-      - name: Baixar Selenium Server (4.29.0)
+      - name: Baixar Selenium Server
         run: |
           wget -O selenium-server.jar "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar"
 
-
-      - name: Iniciar Xvfb e Selenium Server (corrigido definitivo)
+      - name: Iniciar Xvfb e Selenium Server (corrigido definitivamente)
         run: |
           sudo pkill -9 Xvfb || true
           sudo rm -rf /tmp/.X99-lock /tmp/.X11-unix/X99
-          Xvfb :99 -screen 0 1280x1024x24 &
+          Xvfb :99 -ac -screen 0 1280x1024x24 &
           sleep 5
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
@@ -65,7 +62,7 @@ jobs:
         run: |
           Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
 
-      - name: Executar teste RSelenium (robusto e com diagnóstico claro)
+      - name: Teste RSelenium com Firefox headless (definitivo com diagnóstico)
         env:
           DISPLAY: :99
         run: |
@@ -79,10 +76,10 @@ jobs:
                 "moz:firefoxOptions" = list(args = list("--headless", "--no-sandbox"))
               )
             )
-            remDr$open(silent = TRUE)
-      
+            remDr$open(silent = FALSE)
+            
             if (is.null(remDr$sessionid)) {
-              stop("Falha ao criar sessão! Verificar Selenium Server.")
+              stop("Falha ao abrir sessão no Selenium Server. Verifique instalação do Firefox e Geckodriver.")
             }
 
             remDr$navigate("https://www.google.com")
@@ -92,11 +89,11 @@ jobs:
             cat("URL atual:", current_url, "\n")
             cat("Título:", page_title, "\n")
             if (is.na(current_url) || current_url == "") {
-              stop("URL está vazia ou NA - falhando o job")      
+              stop("URL está vazia ou NA - falhando o job")
             }
             remDr$close()
           '
 
-      - name: Exibir log Selenium (para diagnóstico final)
+      - name: Exibir log Selenium (em caso de falha)
         if: always()
         run: cat selenium.log
