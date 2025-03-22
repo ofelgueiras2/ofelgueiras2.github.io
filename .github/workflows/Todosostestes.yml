@@ -15,13 +15,16 @@ jobs:
           # Agora você tem 'ncat' em vez de 'netcat'
 
       # Baixa e instala manualmente o Firefox (binário oficial da Mozilla)&#8203;:contentReference[oaicite:6]{index=6}
-      - name: Install Firefox (manual download)
+      - name: Install Firefox (binário .tar.bz2)
         run: |
-          wget -O firefox.tar.bz2 "https://download.mozilla.org/?product=firefox-latest&os=linux64&lang=en-US"
+          wget -O firefox.tar.bz2 "https://ftp.mozilla.org/pub/firefox/releases/118.0/linux-x86_64/en-US/firefox-118.0.tar.bz2"
+          # Verifique se veio bzip2 mesmo:
+          file firefox.tar.bz2
+          # Extrair com -xjf (bzip2)
           tar -xjf firefox.tar.bz2
           sudo mv firefox /opt/firefox
           sudo ln -s /opt/firefox/firefox /usr/bin/firefox
-          firefox --version  # Verifica versão instalada do Firefox
+          firefox --version
 
       # Baixa o Geckodriver v0.36.0 e instala no PATH&#8203;:contentReference[oaicite:7]{index=7}
       - name: Install Geckodriver 0.36.0
