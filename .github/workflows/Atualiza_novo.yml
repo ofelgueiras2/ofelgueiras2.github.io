@@ -60,10 +60,11 @@ jobs:
       - name: Instalar RSelenium (última versão estável)
         run: |
           Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
-
-      - name: Executar teste RSelenium (robusto, estável)
+          Rscript -e 'renv::activate(); renv::restore(prompt = FALSE)'
+          
+      - name: Run R script
         env:
-          DISPLAY: :99
+          DISPLAY: :99        
         run: |
           Rscript -e '
             renv::activate();
@@ -71,8 +72,23 @@ jobs:
             library(httr);
             print(installed.packages()[,1]);
             print(Sys.getenv("RENV_PATHS_ROOT"));
-            source("gs/rscript.R")
+            source("gs/rscript_teste.R")
           '
+
+      - name: Check if CSV file exists
+        run: |
+          if [ ! -f "gs/SimuladorEletricidade_OF_MN_2025_2.csv" ]; then
+            echo "::error::CSV file does not exist. Skipping commit."
+            exit 1
+          fi
+          echo "CSV file exists. Proceeding to commit."
+
+      - name: Commit new file
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: "gs/SimuladorEletricidade_OF_MN_2025_3.csv"
+          message: "Adiciona novo arquivo gerado pelo workflow"
+          github_token: ${{ secrets.PAT_TOKEN }}
 
       - name: Exibir log Selenium Server (sempre)
         if: always()
