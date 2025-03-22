@@ -21,8 +21,9 @@ jobs:
           file firefox.tar.bz2  # verifica o formato
           tar -xjf firefox.tar.bz2
           sudo mv firefox /opt/firefox
-          # sobrescreve se já existir (corrige o problema que teve)
-          sudo ln -sf /opt/firefox/firefox /usr/bin/firefox
+          # Remover explicitamente o firefox existente antes de criar o link
+          sudo rm -f /usr/bin/firefox
+          sudo ln -s /opt/firefox/firefox /usr/bin/firefox
           firefox --version
 
       # Baixa o Geckodriver v0.36.0 e instala no PATH&#8203;:contentReference[oaicite:7]{index=7}
