@@ -1,53 +1,126 @@
-name: RSelenium Firefox Test
+name: RSelenium-Firefox-Minimal
 
 on:
   workflow_dispatch:
 
 jobs:
-  test-rselenium:
+  test-selenium-firefox:
     runs-on: ubuntu-latest
-    env:
-      DISPLAY: :99
-    steps:
-      - name: Set up R
-        uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
 
-      - name: Install Firefox (via PPA) and dependencies
+    steps:
+      # 1) Checkout do repositório (se precisar de arquivos daqui)
+      - uses: actions/checkout@v3
+
+      # 2) Instalar dependências de sistema:
+      #    - Pacotes necessários para compilar o 'curl' do R
+      #    - Firefox via PPA (sem snap)
+      #    - geckodriver
+      #    - Xvfb, Java
+      #    - net-tools (para netstat) e dbus-x11 (algumas distros precisam)
+      - name: Install system deps & Firefox
         run: |
           sudo apt-get update
           sudo apt-get install -y software-properties-common
-          sudo add-apt-repository -y ppa:mozillateam/ppa
-          # Give PPA priority over Ubuntu repo to avoid Snap package
-          echo -e "Package: firefox*\nPin: release o=LP-PPA-mozillateam\nPin-Priority: 1001\nPackage: firefox*\nPin: release o=Ubuntu\nPin-Priority: -1" | sudo tee /etc/apt/preferences.d/99firefox
-          sudo apt-get update
-          sudo apt-get install -y firefox xvfb libcurl4-openssl-dev libssl-dev libxml2-dev default-jre wget
 
-      - name: Install Geckodriver 0.36.0
-        run: |
-          wget -q https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz
-          tar -xzf geckodriver-v0.36.0-linux64.tar.gz
+          # Adicionar PPA do Firefox
+          sudo add-apt-repository -y ppa:mozillateam/ppa
+          # Criar pin que prioriza deb em vez de snap
+          echo '
+          Package: firefox*
+          Pin: release o=LP-PPA-mozillateam
+          Pin-Priority: 1001
+
+          Package: firefox*
+          Pin: release o=Ubuntu
+          Pin-Priority: -1
+          ' | sudo tee /etc/apt/preferences.d/99firefox
+
+          sudo apt-get update
+          # Remover Firefox em snap (caso exista)
+          sudo snap remove firefox || true
+          # Instalar Firefox deb, e dependências
+          sudo apt-get install -y \
+            firefox \
+            xvfb \
+            dbus-x11 \
+            net-tools \
+            default-jre \
+            libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev \
+            wget tar
+
+          # Instalar geckodriver (versão 0.36.0)
+          GECKO_VER="0.36.0"
+          wget -q "https://github.com/mozilla/geckodriver/releases/download/v${GECKO_VER}/geckodriver-v${GECKO_VER}-linux64.tar.gz"
+          tar -xzf "geckodriver-v${GECKO_VER}-linux64.tar.gz"
           sudo mv geckodriver /usr/local/bin/
           sudo chmod +x /usr/local/bin/geckodriver
+          geckodriver --version
 
-      - name: Install R packages (RSelenium and curl)
-        run: Rscript -e 'install.packages(c("RSelenium", "curl"), repos="https://cloud.r-project.org")'
+          # Verificar versões
+          firefox --version
+          java -version
 
+      # 3) Instalar R e RSelenium (sem renv)
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.2.3'  # ou 4.3.1 etc.
+
+      - name: Install RSelenium in R
+        run: |
+          Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
+
+      # 4) Subir Xvfb
       - name: Start Xvfb
-        run: Xvfb :99 -ac -screen 0 1280x1024x16 > /dev/null 2>&1 &
-
-      - name: Start Selenium Server (v4.29.0)
         run: |
-          wget -q https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
-          java -jar selenium-server-4.29.0.jar > selenium.log 2>&1 &
+          Xvfb :99 -ac -screen 0 1280x1024x24 &
+          sleep 3
+          echo "DISPLAY=:99" >> $GITHUB_ENV
 
+      # 5) Baixar e iniciar Selenium Server Standalone
+      - name: Start Selenium Server
+        run: |
+          wget -q -O selenium-server.jar "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar"
+          # Exportar DISPLAY para o step atual:
+          export DISPLAY=:99
+          nohup java -jar selenium-server.jar standalone > selenium.log 2>&1 &
+          sleep 5
+
+          # Verificar se subiu
+          ps aux | grep "[s]elenium" || (echo "❌ Selenium não rodando!" && cat selenium.log && exit 1)
+          netstat -tuln | grep 4444 || (echo "❌ Porta 4444 não escutando!" && cat selenium.log && exit 1)
+
+      # 6) Teste RSelenium simples
       - name: Run RSelenium test
+        env:
+          DISPLAY: :99
         run: |
-          Rscript -e 'library(RSelenium); remDr <- remoteDriver(browserName="firefox", port=4444L); remDr$open(); remDr$navigate("https://www.google.com"); url <- remDr$getCurrentUrl()[[1]]; title <- remDr$getTitle()[[1]]; cat("URL:", url, "\n"); cat("Title:", title, "\n"); if (is.null(url) || url == "" || is.na(url)) { stop("URL is empty or NA") }; remDr$close();'
+          Rscript -e '
+            message("Carregando RSelenium...")
+            library(RSelenium)
 
-      - name: Display Selenium log
+            message("Iniciando remoteDriver (Firefox, porta 4444)...")
+            remDr <- remoteDriver(browserName="firefox", port=4444L)
+            remDr$open()
+
+            message("Navegando em https://www.google.com ...")
+            remDr$navigate("https://www.google.com")
+            Sys.sleep(3)
+
+            url <- remDr$getCurrentUrl()[[1]]
+            title <- remDr$getTitle()[[1]]
+            cat("URL atual:", url, "\n")
+            cat("Título:", title, "\n")
+
+            if (is.null(url) || is.na(url) || url == "") {
+              stop("URL veio vazia ou NA!")
+            }
+            remDr$close()
+            message("Teste finalizado com sucesso!")
+          '
+
+      - name: Show Selenium Log
         if: always()
         run: |
-          echo "------ Selenium Server log ------"
-          cat selenium.log
+          echo "------ SELENIUM LOG ------"
+          cat selenium.log || echo "(No log found)"
