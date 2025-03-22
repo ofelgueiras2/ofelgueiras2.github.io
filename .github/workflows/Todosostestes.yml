@@ -87,33 +87,45 @@ jobs:
         run: |
           Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
 
-      # Executa o teste RSelenium: abre Firefox, navega até Google, captura URL e título
-      - name: Run RSelenium test
+      # Já assumindo instalações anteriores corretas (Firefox manual, Xvfb rodando, RSelenium instalado)
+
+      - name: Iniciar Xvfb
+        run: |
+          Xvfb :99 -ac -screen 0 1280x1024x24 &
+          sleep 5
+          echo "DISPLAY=:99" >> $GITHUB_ENV
+
+      - name: Iniciar Selenium Server (Selenium Manager ativado)
+        run: |
+          wget -q -O selenium-server.jar https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
+          nohup java -jar selenium-server.jar standalone --selenium-manager true > selenium.log 2>&1 &
+          sleep 10
+
+      - name: Executar teste RSelenium (com Firefox headless e no-sandbox)
         env:
-          DISPLAY: :99   # usa o display virtual do Xvfb
+          DISPLAY: :99
         run: |
           Rscript -e '
             library(RSelenium)
-            # Conecta no Selenium em localhost:4444 usando Firefox em modo headless&#8203;:contentReference[oaicite:10]{index=10}
-            remDr <- remoteDriver(remoteServerAddr = "localhost", port = 4444L,
-                                   browserName = "firefox",
-                                   extraCapabilities = list("moz:firefoxOptions" = list(args = list("--headless"))))
+            remDr <- remoteDriver(
+              remoteServerAddr = "localhost",
+              port = 4444L,
+              browserName = "firefox",
+              extraCapabilities = list("moz:firefoxOptions" = list(args = list("--headless", "--no-sandbox")))
+            )
             remDr$open()
-            # Navega para a página do Google
             remDr$navigate("https://www.google.com")
-            # Obtém URL corrente e título da página
+            Sys.sleep(5)
             current_url <- remDr$getCurrentUrl()[[1]]
             page_title  <- remDr$getTitle()[[1]]
-            # Exibe no log os resultados
-            message("Current URL: ", current_url)
-            message("Page Title: ", page_title)
-            # Encerra o navegador
+            cat("URL atual:", current_url, "\n")
+            cat("Título:", page_title, "\n")
+            if (is.na(current_url) || current_url == "") {
+              stop("URL está vazia ou NA - falhando o job")
+            }
             remDr$close()
           '
-      
-      # Exibe o log do Selenium Server no final (sempre executar este passo)
-      - name: Show Selenium Server log
-        if: ${{ always() }}
-        run: |
-          echo "------- Selenium Server Log -------"
-          cat selenium.log
+          
+      - name: Exibir log do Selenium
+        if: always()
+        run: cat selenium.log
