@@ -97,18 +97,22 @@ jobs:
           sleep 5
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
-      - name: Baixar e iniciar Selenium Server (com Geckodriver explicitamente configurado)
+      - name: Baixar e iniciar Selenium Server (IPv4 explícito)
         run: |
-          wget -q -O selenium-server.jar https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
-          nohup java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
-          -jar selenium-server.jar standalone \
-          --port 4444 \
-          --host 127.0.0.1 \
-          --selenium-manager false \
-          > selenium.log 2>&1 &
-          sleep 10
-          netstat -tuln | grep 4444 || (echo "❌ Porta 4444 não escutando!" && cat selenium.log && exit 1)
+         wget -q -O selenium-server.jar https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
+         nohup java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
+         -jar selenium-server.jar standalone \
+         --host 127.0.0.1 --port 4444 \
+         --selenium-manager false \
+         > selenium.log 2>&1 &
+         sleep 10
+         netstat -tuln | grep '127.0.0.1:4444' || (echo "❌ Porta 4444 não escutando!" && cat selenium.log && exit 1)
 
+
+
+
+
+      
       - name: Executar teste RSelenium (Firefox headless com no-sandbox e logs explícitos)
         env:
           DISPLAY: :99
@@ -116,14 +120,13 @@ jobs:
           Rscript -e '
             library(RSelenium)
             remDr <- remoteDriver(
-            remoteServerAddr = "localhost",
-              port = 4444L,
-              browserName = "firefox",
-              extraCapabilities = list("moz:firefoxOptions" = list(
-                args = list("--headless", "--no-sandbox", "--disable-gpu"),
-                log = list(level = "trace")
-              ))
+            remoteServerAddr = "127.0.0.1",  # Força IPv4 explicitamente
+            port = 4444L,
+            browserName = "firefox",
+            extraCapabilities = list(
+            "moz:firefoxOptions" = list(args = list("--headless"))
             )
+            )               
             remDr$open()
             remDr$navigate("https://www.google.com")
             Sys.sleep(5)
