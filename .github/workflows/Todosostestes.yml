@@ -88,11 +88,11 @@ jobs:
           Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
 
       # Já assumindo instalações anteriores corretas (Firefox manual, Xvfb rodando, RSelenium instalado)
-
-      - name: Garantir Xvfb limpo e iniciar corretamente
+      - name: Garantir Xvfb limpo (remoção forçada) e iniciar corretamente
         run: |
-          sudo pkill Xvfb || true
-          rm -f /tmp/.X99-lock
+          sudo pkill -9 Xvfb || true
+          sudo rm -rf /tmp/.X99-lock /tmp/.X11-unix/X99
+          sleep 2
           Xvfb :99 -ac -screen 0 1280x1024x24 &
           sleep 5
           echo "DISPLAY=:99" >> $GITHUB_ENV
