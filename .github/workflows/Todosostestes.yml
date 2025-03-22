@@ -1,4 +1,4 @@
-name: RSelenium Firefox Test (Corrigido Definitivo)
+name: RSelenium Firefox Test (Corrigido e Estável)
 
 on:
   workflow_dispatch:
@@ -35,15 +35,15 @@ jobs:
         run: |
           wget -O selenium-server.jar "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar"
 
-      - name: Iniciar Xvfb
+      - name: Iniciar Xvfb corretamente
         run: |
           sudo pkill -9 Xvfb || true
           sudo rm -rf /tmp/.X99-lock /tmp/.X11-unix/X99
-          Xvfb :99 -screen 0 1280x1024x24 &
+          nohup Xvfb :99 -screen 0 1280x1024x24 & 
           sleep 5
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
-      - name: Iniciar Selenium Server com Firefox explícito
+      - name: Iniciar Selenium com Firefox (Caminho explícito corrigido)
         run: |
           nohup java \
             -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
@@ -64,7 +64,7 @@ jobs:
         run: |
           Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
 
-      - name: Executar teste RSelenium
+      - name: Executar teste RSelenium (Firefox headless confirmado)
         env:
           DISPLAY: :99
         run: |
@@ -78,7 +78,7 @@ jobs:
                 "moz:firefoxOptions" = list(args = list("--headless", "--no-sandbox"))
               )
             )
-            remDr$open()
+            remDr$open(silent = TRUE)
             remDr$navigate("https://www.google.com")
             Sys.sleep(5)
             current_url <- remDr$getCurrentUrl()[[1]]
@@ -91,6 +91,6 @@ jobs:
             remDr$close()
           '
 
-      - name: Exibir log Selenium (Diagnóstico)
+      - name: Exibir log Selenium (para diagnóstico final)
         if: always()
         run: cat selenium.log
