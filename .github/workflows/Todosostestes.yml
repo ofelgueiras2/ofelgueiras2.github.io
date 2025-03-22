@@ -76,48 +76,27 @@ jobs:
           sleep 3
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
-      # 9) Baixar e iniciar Selenium Server
-      - name: Start Selenium Server
+      - name: Iniciar Selenium Server 4.29.0
         run: |
-          wget -q "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar" -O selenium-server.jar
-          export DISPLAY=:99
-          nohup java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
-            -jar selenium-server.jar standalone --port 4444 --host 127.0.0.1 \
-            > selenium.log 2>&1 &
-          sleep 10
-          ps aux | grep "[s]elenium" || (echo "❌ Selenium não está rodando!" && cat selenium.log && exit 1)
-          netstat -tuln | grep 4444 || (echo "❌ Porta 4444 não está escutando!" && cat selenium.log && exit 1)
+          wget -q -O selenium-server.jar https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar
+          java -jar selenium-server.jar standalone > selenium.log 2>&1 &
+          sleep 5
 
-      # 10) Teste RSelenium mínimo
-      - name: Test with RSelenium
+      - name: Executar teste RSelenium
         run: |
-          export DISPLAY=:99
-          # Caso alguns pacotes estejam fora do renv, instala manualmente:
-          Rscript -e 'if (!requireNamespace("RSelenium", quietly=TRUE)) install.packages("RSelenium", repos="https://cloud.r-project.org")'
-          Rscript - <<EOF
-            library(RSelenium)
-            message("Conectando ao Selenium + Firefox...")
-            remDr <- remoteDriver(browserName = "firefox", port = 4444)
-            remDr$open()
+          Rscript -e "library(RSelenium); \
+                      remDr <- remoteDriver(remoteServerAddr = 'localhost', browserName = 'firefox', port = 4444L); \
+                      remDr$open(); \
+                      remDr$navigate('https://www.google.com'); \
+                      url <- remDr$getCurrentUrl()[[1]]; \
+                      title <- remDr$getTitle()[[1]]; \
+                      cat('URL:', url, '\n'); \
+                      cat('Título:', title, '\n'); \
+                      if (is.na(url) || url == '') { \
+                        stop('URL está vazia ou NA - falhando o job') \
+                      }; \
+                      remDr$close()"
 
-            message("Navegando em https://www.google.com ...")
-            remDr$navigate("https://www.google.com")
-            Sys.sleep(3)
-
-            current_url <- remDr$getCurrentUrl()[[1]]
-            page_title <- remDr$getTitle()[[1]]
-            message("URL atual: ", current_url)
-            message("Título: ", page_title)
-
-            if (is.na(current_url) || current_url == "") {
-              stop("❌ Falha ao obter a URL.")
-            }
-
-            remDr$close()
-            message("Teste finalizado com sucesso.")
-          EOF
-
-      # 11) Exibir logs do Selenium (para debug)
-      - name: Show Selenium logs
+      - name: Exibir log do Selenium
         if: always()
         run: cat selenium.log
