@@ -11,7 +11,7 @@ jobs:
       - name: Setup Ubuntu dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb openjdk-11-jre-headless libcurl4-openssl-dev libssl-dev libxml2-dev wget
+          sudo apt-get install -y xvfb openjdk-11-jre-headless libcurl4-openssl-dev libssl-dev libxml2-dev wget libdbus-glib-1-2
 
       - name: Install official Firefox 118.0
         run: |
