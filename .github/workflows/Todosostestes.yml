@@ -1,4 +1,4 @@
-name: RSelenium Firefox Test (Corrigido)
+name: RSelenium Firefox Test (Corrigido Definitivamente)
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb openjdk-11-jre-headless wget libdbus-glib-1-2 libcurl4-openssl-dev libssl-dev libxml2-dev net-tools
 
-      - name: Instalar Firefox
+      - name: Instalar Firefox (118.0)
         run: |
           wget -O firefox.tar.bz2 "https://ftp.mozilla.org/pub/firefox/releases/118.0/linux-x86_64/en-US/firefox-118.0.tar.bz2"
           tar -xjf firefox.tar.bz2
@@ -23,7 +23,7 @@ jobs:
           sudo ln -sf /opt/firefox/firefox /usr/bin/firefox
           firefox --version
 
-      - name: Instalar Geckodriver
+      - name: Instalar Geckodriver (0.36.0)
         run: |
           wget -q -O geckodriver.tar.gz "https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz"
           tar -xzf geckodriver.tar.gz
@@ -31,18 +31,19 @@ jobs:
           sudo mv geckodriver /usr/local/bin/
           geckodriver --version
 
-      - name: Baixar Selenium Server
+      - name: Baixar Selenium Server (4.29.0)
         run: |
           wget -O selenium-server.jar "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar"
 
-      - name: Iniciar Xvfb e Selenium Server
+      - name: Iniciar Xvfb e Selenium Server (Geckodriver explícito)
         run: |
-          sudo pkill Xvfb || true
-          sudo rm -rf /tmp/.X99-lock
+          sudo pkill -9 Xvfb || true
+          sudo rm -rf /tmp/.X99-lock /tmp/.X11-unix/X99
           Xvfb :99 -screen 0 1280x1024x24 &
           sleep 5
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
+          sudo pkill -9 -f selenium-server || true
           nohup java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
             -jar selenium-server.jar standalone \
             --host 127.0.0.1 --port 4444 \
@@ -57,7 +58,7 @@ jobs:
 
       - name: Instalar RSelenium
         run: |
-          Rscript -e 'install.packages(c("RSelenium"), repos="https://cloud.r-project.org")'
+          Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
 
       - name: Executar teste RSelenium
         env:
@@ -69,11 +70,13 @@ jobs:
               remoteServerAddr = "127.0.0.1",
               port = 4444L,
               browserName = "firefox",
-              extraCapabilities = list("moz:firefoxOptions" = list(args = list("--headless", "--no-sandbox")))
+              extraCapabilities = list(
+                "moz:firefoxOptions" = list(args = list("--headless", "--no-sandbox"))
+              )
             )
             remDr$open()
             remDr$navigate("https://www.google.com")
-            Sys.sleep(3)
+            Sys.sleep(5)
             current_url <- remDr$getCurrentUrl()[[1]]
             page_title <- remDr$getTitle()[[1]]
             cat("URL atual:", current_url, "\n")
@@ -84,6 +87,6 @@ jobs:
             remDr$close()
           '
 
-      - name: Exibir log Selenium
+      - name: Exibir log Selenium (Diagnóstico)
         if: always()
         run: cat selenium.log
