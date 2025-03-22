@@ -102,7 +102,7 @@ Sys.sleep(5)  # Aumentar o tempo de espera para garantir carregamento
 current_url <- remDr$getCurrentUrl()
 
             page_title <- remDr$getTitle()[[1]]
-            cat("URL atual:", current_url, "\n")
+#            cat("URL atual:", current_url, "\n")
             cat("Título:", page_title, "\n")
 
 
