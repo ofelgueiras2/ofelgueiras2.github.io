@@ -16,18 +16,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          ref: main  # Certifique-se de que seu branch é "main"
+#        with:
+#          fetch-depth: 0
+#          ref: main  # Certifique-se de que seu branch é "main"
 
-      - name: Configure git user
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+#      - name: Configure git user
+#        run: |
+#          git config user.name "github-actions[bot]"
+#          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Pull latest changes
-        run: |
-          git pull --rebase origin main
+#      - name: Pull latest changes
+#        run: |
+#          git pull --rebase origin main
 
       - name: Setup R environment
         uses: r-lib/actions/setup-r@v2
@@ -93,7 +93,6 @@ jobs:
       - name: Commit new file
         uses: EndBug/add-and-commit@v9
         with:
-          branch: main
           add: "gs/SimuladorEletricidade_OF_MN_2025_2.csv"
           message: "Adiciona novo arquivo gerado pelo workflow"
           github_token: ${{ secrets.PAT_TOKEN }}
