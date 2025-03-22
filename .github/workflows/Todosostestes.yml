@@ -1,39 +1,39 @@
-name: RSelenium Firefox Selenium Server (remoteDriver)
+name: RSelenium Firefox ESR com Selenium Server (Estável)
 
 on:
   workflow_dispatch:
 
 jobs:
-  selenium-test-remotedriver:
+  selenium-stable-test:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Instalar dependências do sistema
+      - name: Instalar dependências (Ubuntu)
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb openjdk-11-jre-headless libcurl4-openssl-dev libssl-dev libxml2-dev wget libdbus-glib-1-2 net-tools
 
-      - name: Instalar Firefox 118.0
+      - name: Instalar Firefox ESR (versão estável)
         run: |
-          wget https://ftp.mozilla.org/pub/firefox/releases/118.0/linux-x86_64/en-US/firefox-118.0.tar.bz2
-          sudo tar xjf firefox-118.0.tar.bz2 -C /opt
+          wget -O firefox-esr.tar.bz2 "https://ftp.mozilla.org/pub/firefox/releases/115.8.0esr/linux-x86_64/en-US/firefox-115.8.0esr.tar.bz2"
+          sudo tar xjf firefox-esr.tar.bz2 -C /opt
           sudo ln -sf /opt/firefox/firefox /usr/bin/firefox
           firefox --version
 
-      - name: Instalar Geckodriver v0.36.0
+      - name: Instalar Geckodriver (compatível com Firefox ESR)
         run: |
-          wget https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz
-          sudo tar xzf geckodriver-v0.36.0-linux64.tar.gz -C /usr/local/bin
+          wget -q -O geckodriver.tar.gz "https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz"
+          sudo tar -xzf geckodriver.tar.gz -C /usr/local/bin
           sudo chmod +x /usr/local/bin/geckodriver
           geckodriver --version
 
-      - name: Baixar Selenium Server 4.29.0
+      - name: Baixar Selenium Server 3.141.59 (estável)
         run: |
-          wget https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar -O selenium-server.jar
+          wget -O selenium-server.jar "https://github.com/SeleniumHQ/selenium/releases/download/selenium-3.141.59/selenium-server-standalone-3.141.59.jar"
 
-      - name: Iniciar Xvfb e Selenium Server (robusto)
+      - name: Iniciar Xvfb e Selenium Server (versão estável definitiva)
         run: |
           sudo pkill Xvfb || true
           sudo rm -rf /tmp/.X99-lock /tmp/.X11-unix/X99
@@ -44,25 +44,24 @@ jobs:
           sudo pkill -f selenium-server || true
           nohup java \
             -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
-            -Dwebdriver.firefox.bin=/usr/bin/firefox \
-            -jar selenium-server.jar standalone \
-            --host 127.0.0.1 --port 4444 \
-            --selenium-manager false \
+            -jar selenium-server.jar \
+            -host 127.0.0.1 \
+            -port 4444 \
             > selenium.log 2>&1 &
 
-          sleep 10
+          sleep 15  # Mais espera para garantir inicialização
           netstat -tuln | grep '127.0.0.1:4444' || (cat selenium.log && exit 1)
 
       - name: Setup R environment
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: '4.4.3'
+          r-version: '4.3.3'
 
-      - name: Instalar RSelenium
+      - name: Instalar RSelenium (última versão estável)
         run: |
           Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
 
-      - name: Teste RSelenium (remoteDriver)
+      - name: Executar teste RSelenium (robusto, estável)
         env:
           DISPLAY: :99
         run: |
@@ -77,7 +76,7 @@ jobs:
               )
             )
 
-            remDr$open(silent = TRUE)
+            remDr$open()
             remDr$navigate("https://www.google.com")
             Sys.sleep(5)
 
@@ -89,6 +88,6 @@ jobs:
             remDr$close()
           '
 
-      - name: Mostrar log Selenium Server (sempre)
+      - name: Exibir log Selenium Server (sempre)
         if: always()
         run: cat selenium.log
