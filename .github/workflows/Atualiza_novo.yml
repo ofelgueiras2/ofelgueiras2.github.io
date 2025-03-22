@@ -72,7 +72,7 @@ jobs:
             library(httr);
             print(installed.packages()[,1]);
             print(Sys.getenv("RENV_PATHS_ROOT"));
-            source("gs/rscript_teste.R")
+            source("gs/rscript_teste2.R")
           '
 
       - name: Check if CSV file exists
@@ -83,12 +83,12 @@ jobs:
           fi
           echo "CSV file exists. Proceeding to commit."
 
-      - name: Commit new file
-        uses: EndBug/add-and-commit@v9
-        with:
-          add: "gs/SimuladorEletricidade_OF_MN_2025_3.csv"
-          message: "Adiciona novo arquivo gerado pelo workflow"
-          github_token: ${{ secrets.PAT_TOKEN }}
+#      - name: Commit new file
+#        uses: EndBug/add-and-commit@v9
+#        with:
+#          add: "gs/SimuladorEletricidade_OF_MN_2025_3.csv"
+#          message: "Adiciona novo arquivo gerado pelo workflow"
+#          github_token: ${{ secrets.PAT_TOKEN }}
 
       - name: Exibir log Selenium Server (sempre)
         if: always()
