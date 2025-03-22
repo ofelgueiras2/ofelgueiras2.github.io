@@ -1,126 +1,105 @@
-name: RSelenium-Firefox-Minimal
+name: RSelenium Firefox Headless Test
 
 on:
   workflow_dispatch:
 
 jobs:
-  test-selenium-firefox:
+  test:
     runs-on: ubuntu-latest
-
     steps:
-      # 1) Checkout do repositório (se precisar de arquivos daqui)
-      - uses: actions/checkout@v3
-
-      # 2) Instalar dependências de sistema:
-      #    - Pacotes necessários para compilar o 'curl' do R
-      #    - Firefox via PPA (sem snap)
-      #    - geckodriver
-      #    - Xvfb, Java
-      #    - net-tools (para netstat) e dbus-x11 (algumas distros precisam)
-      - name: Install system deps & Firefox
+      # Atualiza e instala dependências do sistema: Xvfb (display virtual), Java (JRE) e netcat
+      - name: Setup system (Xvfb, Java, netcat)
         run: |
           sudo apt-get update
-          sudo apt-get install -y software-properties-common
+          sudo apt-get install -y xvfb openjdk-11-jre-headless netcat
 
-          # Adicionar PPA do Firefox
-          sudo add-apt-repository -y ppa:mozillateam/ppa
-          # Criar pin que prioriza deb em vez de snap
-          echo '
-          Package: firefox*
-          Pin: release o=LP-PPA-mozillateam
-          Pin-Priority: 1001
+      # Baixa e instala manualmente o Firefox (binário oficial da Mozilla)&#8203;:contentReference[oaicite:6]{index=6}
+      - name: Install Firefox (manual download)
+        run: |
+          wget -O firefox.tar.bz2 "https://download.mozilla.org/?product=firefox-latest&os=linux64&lang=en-US"
+          tar -xjf firefox.tar.bz2
+          sudo mv firefox /opt/firefox
+          sudo ln -s /opt/firefox/firefox /usr/bin/firefox
+          firefox --version  # Verifica versão instalada do Firefox
 
-          Package: firefox*
-          Pin: release o=Ubuntu
-          Pin-Priority: -1
-          ' | sudo tee /etc/apt/preferences.d/99firefox
+      # Baixa o Geckodriver v0.36.0 e instala no PATH&#8203;:contentReference[oaicite:7]{index=7}
+      - name: Install Geckodriver 0.36.0
+        run: |
+          wget -O geckodriver.tar.gz "https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz"
+          tar -xzf geckodriver.tar.gz
+          chmod +x geckodriver
+          sudo mv geckodriver /usr/local/bin/geckodriver
+          geckodriver --version  # Verifica versão instalada do Geckodriver
 
-          sudo apt-get update
-          # Remover Firefox em snap (caso exista)
-          sudo snap remove firefox || true
-          # Instalar Firefox deb, e dependências
-          sudo apt-get install -y \
-            firefox \
-            xvfb \
-            dbus-x11 \
-            net-tools \
-            default-jre \
-            libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev \
-            wget tar
+      # Baixa o Selenium Server standalone v4.8.0 (jar)&#8203;:contentReference[oaicite:8]{index=8}
+      - name: Download Selenium Server 4.8.0
+        run: |
+          wget -O selenium-server.jar "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.8.0/selenium-server-4.8.0.jar"
+          ls -lh selenium-server.jar  # Lista para confirmar download (aprox. 29 MB)
 
-          # Instalar geckodriver (versão 0.36.0)
-          GECKO_VER="0.36.0"
-          wget -q "https://github.com/mozilla/geckodriver/releases/download/v${GECKO_VER}/geckodriver-v${GECKO_VER}-linux64.tar.gz"
-          tar -xzf "geckodriver-v${GECKO_VER}-linux64.tar.gz"
-          sudo mv geckodriver /usr/local/bin/
-          sudo chmod +x /usr/local/bin/geckodriver
-          geckodriver --version
+      # Inicia o Xvfb e o Selenium Server em background
+      - name: Start Selenium Server (headless)
+        run: |
+          # Inicia Xvfb em display :99
+          nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+          echo "Xvfb started on display :99"
+          # Inicia o Selenium Server na porta 4444 em segundo plano, logando em selenium.log
+          nohup java -jar selenium-server.jar standalone > selenium.log 2>&1 &
+          echo "Selenium Server iniciado em background"
 
-          # Verificar versões
-          firefox --version
-          java -version
+      # Aguarda o Selenium Server ficar disponível na porta 4444 antes de prosseguir
+      - name: Wait for Selenium Server (port 4444)
+        run: |
+          for i in {1..30}; do
+            nc -z localhost 4444 && break
+            echo "Aguardando Selenium Server iniciar..."
+            sleep 1
+          done
+          if ! nc -z localhost 4444; then
+            echo "Selenium Server não iniciou na porta 4444 dentro do tempo esperado."
+            # Mostra log parcial para depuração, então falha
+            head -50 selenium.log
+            exit 1
+          fi
+          echo "Selenium Server está ouvindo na porta 4444."
 
-      # 3) Instalar R e RSelenium (sem renv)
+      # Configura o R (instalação do R no runner) – usando ação oficial do r-lib
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: '4.2.3'  # ou 4.3.1 etc.
+          r-version: '4.4.3'  # ou 'latest' para versão mais recente do R
 
-      - name: Install RSelenium in R
-        run: |
-          Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
+      # Instala o pacote RSelenium a partir do CRAN&#8203;:contentReference[oaicite:9]{index=9}
+      - name: Install RSelenium package
+        run: Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
 
-      # 4) Subir Xvfb
-      - name: Start Xvfb
-        run: |
-          Xvfb :99 -ac -screen 0 1280x1024x24 &
-          sleep 3
-          echo "DISPLAY=:99" >> $GITHUB_ENV
-
-      # 5) Baixar e iniciar Selenium Server Standalone
-      - name: Start Selenium Server
-        run: |
-          wget -q -O selenium-server.jar "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar"
-          # Exportar DISPLAY para o step atual:
-          export DISPLAY=:99
-          nohup java -jar selenium-server.jar standalone > selenium.log 2>&1 &
-          sleep 5
-
-          # Verificar se subiu
-          ps aux | grep "[s]elenium" || (echo "❌ Selenium não rodando!" && cat selenium.log && exit 1)
-          netstat -tuln | grep 4444 || (echo "❌ Porta 4444 não escutando!" && cat selenium.log && exit 1)
-
-      # 6) Teste RSelenium simples
+      # Executa o teste RSelenium: abre Firefox, navega até Google, captura URL e título
       - name: Run RSelenium test
         env:
-          DISPLAY: :99
+          DISPLAY: :99   # usa o display virtual do Xvfb
         run: |
           Rscript -e '
-            message("Carregando RSelenium...")
             library(RSelenium)
-
-            message("Iniciando remoteDriver (Firefox, porta 4444)...")
-            remDr <- remoteDriver(browserName="firefox", port=4444L)
+            # Conecta no Selenium em localhost:4444 usando Firefox em modo headless&#8203;:contentReference[oaicite:10]{index=10}
+            remDr <- remoteDriver(remoteServerAddr = "localhost", port = 4444L,
+                                   browserName = "firefox",
+                                   extraCapabilities = list("moz:firefoxOptions" = list(args = list("--headless"))))
             remDr$open()
-
-            message("Navegando em https://www.google.com ...")
+            # Navega para a página do Google
             remDr$navigate("https://www.google.com")
-            Sys.sleep(3)
-
-            url <- remDr$getCurrentUrl()[[1]]
-            title <- remDr$getTitle()[[1]]
-            cat("URL atual:", url, "\n")
-            cat("Título:", title, "\n")
-
-            if (is.null(url) || is.na(url) || url == "") {
-              stop("URL veio vazia ou NA!")
-            }
+            # Obtém URL corrente e título da página
+            current_url <- remDr$getCurrentUrl()[[1]]
+            page_title  <- remDr$getTitle()[[1]]
+            # Exibe no log os resultados
+            message("Current URL: ", current_url)
+            message("Page Title: ", page_title)
+            # Encerra o navegador
             remDr$close()
-            message("Teste finalizado com sucesso!")
           '
-
-      - name: Show Selenium Log
-        if: always()
+      
+      # Exibe o log do Selenium Server no final (sempre executar este passo)
+      - name: Show Selenium Server log
+        if: ${{ always() }}
         run: |
-          echo "------ SELENIUM LOG ------"
-          cat selenium.log || echo "(No log found)"
+          echo "------- Selenium Server Log -------"
+          cat selenium.log
