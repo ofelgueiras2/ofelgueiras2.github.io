@@ -1,4 +1,4 @@
-name: RSelenium Firefox Test (Corrigido Final)
+name: RSelenium Firefox Test (Corrigido Definitivo)
 
 on:
   workflow_dispatch:
@@ -35,7 +35,7 @@ jobs:
         run: |
           wget -O selenium-server.jar "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar"
 
-      - name: Iniciar Xvfb e Selenium Server (Firefox e Geckodriver explícitos)
+      - name: Iniciar Xvfb
         run: |
           sudo pkill -9 Xvfb || true
           sudo rm -rf /tmp/.X99-lock /tmp/.X11-unix/X99
@@ -43,14 +43,15 @@ jobs:
           sleep 5
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
-          sudo pkill -9 -f selenium-server || true
+      - name: Iniciar Selenium Server com Firefox explícito
+        run: |
           nohup java \
             -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
             -Dwebdriver.firefox.bin=/opt/firefox/firefox \
             -jar selenium-server.jar standalone \
             --host 127.0.0.1 --port 4444 \
+            --selenium-manager false \
             > selenium.log 2>&1 &
-
           sleep 10
           netstat -tuln | grep '127.0.0.1:4444' || (cat selenium.log && exit 1)
 
