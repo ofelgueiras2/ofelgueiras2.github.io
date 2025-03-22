@@ -35,16 +35,16 @@ jobs:
         run: |
           wget -O selenium-server.jar "https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar"
 
-      - name: Iniciar Xvfb corretamente
+
+      - name: Iniciar Xvfb e Selenium Server (corrigido definitivo)
         run: |
           sudo pkill -9 Xvfb || true
           sudo rm -rf /tmp/.X99-lock /tmp/.X11-unix/X99
-          nohup Xvfb :99 -screen 0 1280x1024x24 & 
+          Xvfb :99 -screen 0 1280x1024x24 &
           sleep 5
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
-      - name: Iniciar Selenium com Firefox (Caminho explícito corrigido)
-        run: |
+          sudo pkill -9 -f selenium-server || true
           nohup java \
             -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
             -Dwebdriver.firefox.bin=/opt/firefox/firefox \
@@ -52,6 +52,7 @@ jobs:
             --host 127.0.0.1 --port 4444 \
             --selenium-manager false \
             > selenium.log 2>&1 &
+
           sleep 10
           netstat -tuln | grep '127.0.0.1:4444' || (cat selenium.log && exit 1)
 
