@@ -17,16 +17,16 @@ jobs:
       # Baixa e instala manualmente o Firefox (binário oficial da Mozilla)&#8203;:contentReference[oaicite:6]{index=6}
       - name: Install Firefox (binário .tar.bz2)
         run: |
-          wget -O firefox.tar.bz2 "https://ftp.mozilla.org/pub/firefox/releases/118.0/linux-x86_64/en-US/firefox-118.0.tar.bz2"
+          sudo apt-get update
           sudo apt-get install -y libdbus-glib-1-2
+          wget -O firefox.tar.bz2 "https://ftp.mozilla.org/pub/firefox/releases/118.0/linux-x86_64/en-US/firefox-118.0.tar.bz2"
           file firefox.tar.bz2  # verifica o formato
           tar -xjf firefox.tar.bz2
           sudo mv firefox /opt/firefox
-          # Remover explicitamente o firefox existente antes de criar o link
           sudo rm -f /usr/bin/firefox
           sudo ln -s /opt/firefox/firefox /usr/bin/firefox
           firefox --version
-
+    
       # Baixa o Geckodriver v0.36.0 e instala no PATH&#8203;:contentReference[oaicite:7]{index=7}
       - name: Install Geckodriver 0.36.0
         run: |
