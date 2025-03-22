@@ -6,7 +6,6 @@ on:
 jobs:
   selenium-test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Setup Ubuntu dependencies
         run: |
