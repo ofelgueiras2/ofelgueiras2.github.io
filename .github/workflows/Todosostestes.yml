@@ -18,6 +18,7 @@ jobs:
       - name: Install Firefox (binário .tar.bz2)
         run: |
           wget -O firefox.tar.bz2 "https://ftp.mozilla.org/pub/firefox/releases/118.0/linux-x86_64/en-US/firefox-118.0.tar.bz2"
+          sudo apt-get install -y libdbus-glib-1-2
           file firefox.tar.bz2  # verifica o formato
           tar -xjf firefox.tar.bz2
           sudo mv firefox /opt/firefox
