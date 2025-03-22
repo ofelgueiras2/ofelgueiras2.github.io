@@ -1,4 +1,4 @@
-name: RSelenium Firefox Headless (Stable Fix)
+name: RSelenium Firefox Headless (rsDriver)
 
 on:
   workflow_dispatch:
@@ -8,77 +8,61 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup Ubuntu dependencies
+      - name: Checkout repositório
+        uses: actions/checkout@v3
+
+      - name: Instalar dependências do sistema
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb openjdk-11-jre-headless libcurl4-openssl-dev libssl-dev libxml2-dev wget libdbus-glib-1-2
 
-      - name: Install official Firefox 118.0
+      - name: Instalar Firefox 118.0
         run: |
           wget https://ftp.mozilla.org/pub/firefox/releases/118.0/linux-x86_64/en-US/firefox-118.0.tar.bz2
           sudo tar xjf firefox-118.0.tar.bz2 -C /opt
           sudo ln -sf /opt/firefox/firefox /usr/bin/firefox
           firefox --version
 
-      - name: Install Geckodriver v0.36.0
+      - name: Instalar Geckodriver v0.36.0
         run: |
           wget https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz
           sudo tar xzf geckodriver-v0.36.0-linux64.tar.gz -C /usr/local/bin
           sudo chmod +x /usr/local/bin/geckodriver
           geckodriver --version
 
-      - name: Download Selenium Server 4.29.0
-        run: |
-          wget https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar -O selenium-server.jar
-
-      - name: Iniciar Xvfb e Selenium Server (Robusto)
+      - name: Iniciar Xvfb
         run: |
           sudo pkill Xvfb || true
           sudo rm -rf /tmp/.X99-lock /tmp/.X11-unix/X99
           Xvfb :99 -screen 0 1280x1024x24 &
-          sleep 5
           echo "DISPLAY=:99" >> $GITHUB_ENV
+          sleep 3
 
-          sudo pkill -f selenium-server || true
-          nohup java \
-            -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
-            -Dwebdriver.firefox.bin=/opt/firefox/firefox \
-            -jar selenium-server.jar standalone \
-            --host 127.0.0.1 --port 4444 \
-            --selenium-manager false \
-            > selenium.log 2>&1 &
-    
-          sleep 10  # <-- aumente este tempo se precisar, ex. 15 ou 20 segundos
-          if ! netstat -tuln | grep '127.0.0.1:4444'; then
-            echo "❌ Selenium Server falhou na inicialização."
-            cat selenium.log
-            exit 1
-          else
-            echo "✅ Selenium Server iniciado corretamente."
-          fi
-
-      - name: Setup R environment
+      - name: Setup R
         uses: r-lib/actions/setup-r@v2
         with:
           r-version: '4.4.3'
 
-      - name: Install RSelenium
+      - name: Instalar RSelenium
         run: |
-          Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
+          Rscript -e 'install.packages("RSelenium", repos = "https://cloud.r-project.org")'
 
-     - name: Executar teste RSelenium (direto, sem standalone)
+      - name: Executar teste com rsDriver
         env:
           DISPLAY: :99
         run: |
           Rscript -e '
             library(RSelenium)
-            rD <- rsDriver(browser = "firefox", 
-                     port = 4545L, 
-                     verbose = TRUE, 
-                     extraCapabilities = list("moz:firefoxOptions" = list(args = list("--headless"))))
-      
+            rD <- rsDriver(
+              browser = "firefox",
+              port = 4545L,
+              verbose = TRUE,
+              geckover = "0.36.0",
+              extraCapabilities = list("moz:firefoxOptions" = list(args = list("--headless")))
+            )
+
             remDr <- rD$client
-            remDr$navigate("https://www.google.com")      
+            remDr$navigate("https://www.google.com")
             Sys.sleep(5)
             current_url <- remDr$getCurrentUrl()[[1]]
             page_title <- remDr$getTitle()[[1]]
@@ -88,7 +72,3 @@ jobs:
             remDr$close()
             rD$server$stop()
           '
-
-      - name: Display Selenium Log (Always)
-        if: always()
-        run: cat selenium.log
