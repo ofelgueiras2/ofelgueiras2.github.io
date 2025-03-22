@@ -31,23 +31,31 @@ jobs:
         run: |
           wget https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.29.0/selenium-server-4.29.0.jar -O selenium-server.jar
 
-      - name: Start Xvfb and Selenium Server (Final Stable Version)
+      - name: Iniciar Xvfb e Selenium Server (Robusto)
         run: |
           sudo pkill Xvfb || true
-          sudo pkill -f selenium-server || true
           sudo rm -rf /tmp/.X99-lock /tmp/.X11-unix/X99
-
           Xvfb :99 -screen 0 1280x1024x24 &
-          export DISPLAY=:99
+          sleep 5
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
-          nohup java -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
+          sudo pkill -f selenium-server || true
+          nohup java \
+            -Dwebdriver.gecko.driver=/usr/local/bin/geckodriver \
             -Dwebdriver.firefox.bin=/opt/firefox/firefox \
-            -jar selenium-server.jar standalone --host 127.0.0.1 --port 4444 \
+            -jar selenium-server.jar standalone \
+            --host 127.0.0.1 --port 4444 \
+            --selenium-manager false \
             > selenium.log 2>&1 &
-
-          sleep 10
-          nc -z 127.0.0.1 4444 || (cat selenium.log && exit 1)
+    
+          sleep 10  # <-- aumente este tempo se precisar, ex. 15 ou 20 segundos
+          if ! netstat -tuln | grep '127.0.0.1:4444'; then
+            echo "❌ Selenium Server falhou na inicialização."
+            cat selenium.log
+            exit 1
+          else
+            echo "✅ Selenium Server iniciado corretamente."
+          fi
 
       - name: Setup R environment
         uses: r-lib/actions/setup-r@v2
