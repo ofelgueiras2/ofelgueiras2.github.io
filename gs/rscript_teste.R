@@ -76,17 +76,14 @@ csv_date <- dmy(dados_csv$Fecha[1])
 
 # --- Parte 1: Extração via RSelenium e rvest -----------------
 
-# Cria o objeto remoteDriver sem imediatamente abrir a conexão
-remDr <- remoteDriver(
-  remoteServerAddr = "127.0.0.1",
-  port = 4444L,
-  browserName = "firefox",
-  extraCapabilities = list(
-    "moz:firefoxOptions" = list(
-      args = c("--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage")
-    )
-  )
-)
+            remDr <- remoteDriver(
+              remoteServerAddr = "127.0.0.1",
+              port = 4444L,
+              browserName = "firefox",
+              extraCapabilities = list(
+                "moz:firefoxOptions" = list(args = list("--headless"))
+              )
+            )
 
 # Polling para conectar
 max_wait <- 30  # tempo máximo em segundos
@@ -94,118 +91,32 @@ interval <- 2   # intervalo entre tentativas
 start_time <- Sys.time()
 connected <- FALSE
 
-while(as.numeric(Sys.time() - start_time, units = "secs") < max_wait) {
-  result <- tryCatch({
-    remDr$open()
-    TRUE
-  }, error = function(e) {
-    FALSE
-  })
-  if(result) {
-    connected <- TRUE
-    break
-  }
-  Sys.sleep(interval)
-}
+            remDr$open()
 
-if(!connected) {
-  stop("❌ Erro: Não foi possível conectar ao Selenium Server após ", max_wait, " segundos.")
-} else {
-  cat("✅ Conectado ao Selenium Server.\n")
-}
 
-# Testar navegação inicial
-print("🔍 Testando navegação inicial com o Google...")
-remDr$navigate("https://www.google.com")
-Sys.sleep(20)
+            remDr$navigate("https://www.google.com")
+            Sys.sleep(5)
 
-current_url <- remDr$getCurrentUrl()
+            current_url <- remDr$getCurrentUrl()[[1]]
+            page_title <- remDr$getTitle()[[1]]
+            cat("URL atual:", current_url, "\n")
+            cat("Título:", page_title, "\n")
 
-if (length(current_url) == 0 || is.null(current_url[[1]])) {
-  stop("❌ ERRO: Selenium não conseguiu carregar nem o Google.")
-}
-
-print(paste("🌍 URL carregada:", current_url[[1]]))
-
-print("🔍 Testando conexão com Selenium...")
-print(system("netstat -tuln | grep 4444", intern = TRUE))  # Vê se o Selenium está na porta certa
-
-# Inicia o navegador
-remDr$open()
-
-# Polling: espera ativa para obter um status válido do Selenium
-max_wait <- 180      # tempo máximo de espera em segundos (ex: 3 minutos)
-poll_interval <- 1   # intervalo entre as tentativas (1 segundo)
-start_time <- Sys.time()
-
-repeat {
-  status <- try(remDr$getStatus(), silent = TRUE)
-  if (!inherits(status, "try-error") && !is.null(status)) {
-    break
-  }
-  if (as.numeric(Sys.time() - start_time, units = "secs") > max_wait) {
-    stop("Timeout: o servidor Selenium não respondeu dentro de ", max_wait, " segundos.")
-  }
-  Sys.sleep(poll_interval)
-}
-
-print("Selenium está pronto!")
-
-# 🔄 Testar a conexão antes de navegar para omie.es
-print("🔍 Testando navegação inicial com o Google...")
-remDr$navigate("https://www.google.com")
-Sys.sleep(5)  
-
-# Verificar se o Selenium está realmente a navegar
-google_url <- remDr$getCurrentUrl()
-print(paste("🌍 URL Google carregada:", google_url))
-
-if (length(google_url) == 0 || is.null(google_url[[1]])) {
-  stop("❌ ERRO: Selenium não conseguiu carregar nem o Google. O navegador pode não ter iniciado corretamente.")
-}
-
-# 🚀 Agora tentar carregar omie.es
-url <- "https://www.omie.es"
-print("🕵️ Tentando carregar:", url)
-remDr$navigate(url)
-Sys.sleep(10)
-
-# 🔄 Tentativa de verificação (retry loop)
-tentativas <- 0
-max_tentativas <- 3
-repeat {
-  current_url <- remDr$getCurrentUrl()
-  
-  if (length(current_url) > 0 && !is.null(current_url[[1]])) {
-    break  # Se obteve uma URL válida, sai do loop
-  }
-  
-  tentativas <- tentativas + 1
-  if (tentativas >= max_tentativas) {
-    stop("❌ Erro: Selenium não retornou nenhuma URL após múltiplas tentativas.")
-  }
-  
-  print(paste("⚠️ Tentativa", tentativas, "falhou. Repetindo navegação..."))
-  remDr$navigate(url)
-  Sys.sleep(5)
-}
-
-# 🌍 Imprimir URL final
-print(paste("✅ Página carregada com sucesso:", current_url[[1]]))
-
-# Alternativa mais flexível: verificar se contém "omie.es"
-if (!grepl("omie.es", current_url[[1]])) {
-  stop(paste("A página não foi carregada corretamente. URL obtida:", current_url[[1]]))
-}
-
+            remDr$close()
+     
 
 # Navegar para a página
 url <- "https://www.omie.es"  # substitua pela URL real
 remDr$navigate(url)
-Sys.sleep(10)  # Aumentar o tempo de espera para garantir carregamento
+Sys.sleep(5)  # Aumentar o tempo de espera para garantir carregamento
 
 # Obter a URL atual (o retorno geralmente é uma lista)
 current_url <- remDr$getCurrentUrl()
+
+            page_title <- remDr$getTitle()[[1]]
+            cat("URL atual:", current_url, "\n")
+            cat("Título:", page_title, "\n")
+
 
 # 🛠️ Depuração: imprimir a URL obtida
 print("URL obtida pelo Selenium:")
