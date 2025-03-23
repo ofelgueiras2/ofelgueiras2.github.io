@@ -1,4 +1,4 @@
-name: Atualiza_novo
+name: Atualiza_novo_com_cache_renv
 
 on:
   workflow_dispatch:
@@ -49,7 +49,7 @@ jobs:
             -port 4444 \
             > selenium.log 2>&1 &
 
-          sleep 15  # Mais espera para garantir inicialização
+          sleep 15
           netstat -tuln | grep '127.0.0.1:4444' || (cat selenium.log && exit 1)
 
       - name: Setup R environment
@@ -57,21 +57,26 @@ jobs:
         with:
           r-version: '4.3.3'
 
-      - name: Instalar RSelenium (última versão estável)
+      - name: Cache renv packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/R/renv
+          key: ${{ runner.os }}-renv-${{ hashFiles('renv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-renv-
+
+      - name: Restaurar dependências com renv
         run: |
-          Rscript -e 'install.packages("RSelenium", repos="https://cloud.r-project.org")'
+          Rscript -e 'install.packages("renv", repos="https://cloud.r-project.org")'
           Rscript -e 'renv::activate(); renv::restore(prompt = FALSE)'
-          
+
       - name: Run R script
         env:
-          DISPLAY: :99        
+          DISPLAY: :99
         run: |
           Rscript -e '
             renv::activate();
-            print(.libPaths());
-            library(httr);
-            print(installed.packages()[,1]);
-            print(Sys.getenv("RENV_PATHS_ROOT"));
             source("gs/rscript_teste2.R")
           '
 
@@ -83,12 +88,12 @@ jobs:
           fi
           echo "CSV file exists. Proceeding to commit."
 
-#      - name: Commit new file
-#        uses: EndBug/add-and-commit@v9
-#        with:
-#          add: "gs/SimuladorEletricidade_OF_MN_2025_3.csv"
-#          message: "Adiciona novo arquivo gerado pelo workflow"
-#          github_token: ${{ secrets.PAT_TOKEN }}
+      # - name: Commit new file
+      #   uses: EndBug/add-and-commit@v9
+      #   with:
+      #     add: "gs/SimuladorEletricidade_OF_MN_2025_3.csv"
+      #     message: "Adiciona novo arquivo gerado pelo workflow"
+      #     github_token: ${{ secrets.PAT_TOKEN }}
 
       - name: Exibir log Selenium Server (sempre)
         if: always()
