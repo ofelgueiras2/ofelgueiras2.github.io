@@ -2,10 +2,10 @@ name: Run R Script and Commit CSV
 
 on:
   schedule:
-    - cron: '0-59/10 12 * * *'  # De 13:00 até 13:59 (de 10 em 10 minutos)
-    - cron: '0-59/10 13 * * *'   # De 14:00 até 14:30 (de 10 em 10 minutos)
-    - cron: '0-59/10 19 * * *'  # De 19:00 até 19:59 (de 10 em 10 minutos)
-    - cron: '0-30/10 20 * * *'   # De 20:00 até 20:30 (de 10 em 10 minutos)
+#    - cron: '0-59/10 12 * * *'  # De 13:00 até 13:59 (de 10 em 10 minutos)
+#    - cron: '0-59/10 13 * * *'   # De 14:00 até 14:30 (de 10 em 10 minutos)
+#    - cron: '0-59/10 19 * * *'  # De 19:00 até 19:59 (de 10 em 10 minutos)
+#    - cron: '0-30/10 20 * * *'   # De 20:00 até 20:30 (de 10 em 10 minutos)
   workflow_dispatch:  # Permite execução manual
 
 jobs:
