@@ -184,15 +184,16 @@ dados_csv <- dados_csv %>%
   filter(!is.na(Data) & !is.na(HoraD) & !is.na(Preço)) %>%
   mutate(
     Preço_Posterior = lag(Preço)
-  ) %>% 
-  filter(year(Data) == 2025)  %>%
-  mutate(
-    Nova_Coluna = if_else(Data == max(Data), Preço, Preço_Posterior)
-  )
+  ) 
+
+preco_manual=dados_csv[dados_csv$Data==page_date,3]
+print(preco_manual,n=24)
+tail(preco_manual,1)
+dados_csv[1,4]=tail(preco_manual,1)
 
 dados_agrupados <- dados_csv %>%
   group_by(Data) %>%
-  summarise(Preço = mean(Nova_Coluna, na.rm = TRUE)) %>%
+  summarise(Preço = mean(Preço_Posterior, na.rm = TRUE)) %>%
   mutate(Futuro = as.integer(if_else(Data == max(Data), 1, 0)))
 
 ### 3 – Criação do dataframe de datas e junção dos dados
@@ -333,21 +334,21 @@ dados_temp <- calendario %>%
   crossing(Quarto = 1:4)
 
 # 2. Separar as datas em duas partes, de acordo com o critério:
-#    - Para datas anteriores à data máxima de dados_csv, usar o valor de Nova_Coluna.
+#    - Para datas anteriores ou iguais à data máxima de dados_csv, usar o valor de Preço_Posterior.
 #    - Para as demais datas, usar o valor de Dia do dataframe dados_d.
 max_data_csv <- max(dados_csv$Data)
 
-# Para as datas anteriores (exclusivo) à data máxima de dados_csv:
+# Para as datas anteriores (inclusivo) à data máxima de dados_csv:
 dados_pre <- dados_temp %>%
-  filter(Data < max_data_csv) %>%
-  left_join(dados_csv %>% select(Data, HoraD, Nova_Coluna),
+  filter(Data <= max_data_csv) %>%
+  left_join(dados_csv %>% select(Data, HoraD, Preço_Posterior),
             by = c("Data", "HoraD")) %>%
-  mutate(Preço = Nova_Coluna) %>%
+  mutate(Preço = Preço_Posterior) %>%
   select(Data, Quarto, HoraD, Preço)
 
-# Para as demais datas (Data >= max_data_csv):
+# Para as demais datas (Data > max_data_csv):
 dados_pos <- dados_temp %>%
-  filter(Data >= max_data_csv) %>%
+  filter(Data > max_data_csv) %>%
   left_join(dados, by = "Data") %>%  # dados_d contém as colunas Data e Dia
   mutate(Preço = Dia) %>%
   select(Data, Quarto, HoraD, Preço)
