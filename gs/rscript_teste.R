@@ -195,6 +195,163 @@ dados_agrupados <- dados_csv %>%
   summarise(Preço = mean(Nova_Coluna, na.rm = TRUE)) %>%
   mutate(Futuro = as.integer(if_else(Data == max(Data), 1, 0)))
 
+### 3 – Criação do dataframe de datas e junção dos dados
+
+# Cria o calendário de 365 dias e adiciona o número da semana
+df <- tibble(Data = seq(as.Date("2025-01-01"), by = "day", length.out = 365)) %>%
+  mutate(Semana = if_else(month(Data) == 12 & isoweek(Data) == 1, 53L, isoweek(Data)))
+
+# Junta os dados "Dia", "Semana" e "Mês"
+df_final <- df %>%
+  left_join(dados_web %>% filter(Classificação == "Dia") %>% select(Data, Preço), by = "Data") %>%
+  rename(Dia = Preço) %>%
+  left_join(dados_agrupados %>% select(-Futuro), by = "Data") %>%
+  mutate(Dia = if_else(!is.na(Preço), Preço, Dia)) %>%
+  select(-Preço) %>%
+  left_join(
+    dados_web %>% filter(Classificação == "Semana") %>%
+      mutate(Semana = as.integer(str_extract(Nome, "\\d+"))) %>% select(Semana, Sem = Preço),
+    by = "Semana"
+  ) %>%
+  mutate(Mês = if_else(year(Data) == 2025, month(Data), NA_integer_)) %>%
+  left_join(
+    dados_web %>% filter(Classificação == "Mês") %>%
+      mutate(Mês = month(as.Date(Data))) %>% select(Mês, `Preço Spot` = Preço),
+    by = "Mês"
+  )
+
+# Junta os dados de "Trimestre" e realiza ajustes finais
+df_final <- df_final %>%
+  left_join(
+    dados_web %>% filter(Classificação == "Trimestre") %>% select(Contrato = Data, Preço),
+    by = c("Data" = "Contrato")
+  ) %>%
+  rename(Trimestre = Preço) %>%
+  arrange(Data) %>%
+  mutate(Trimestre = as.numeric(Trimestre)) %>%
+  fill(Trimestre, .direction = "down") %>%
+  mutate(
+    Tri = as.integer((Mês + 2) %/% 3),
+    MêsP = `Preço Spot`,
+    Horas = as.integer(if_else(
+      Data == (as.Date(paste0(year(Data), "-03-31")) - wday(as.Date(paste0(year(Data), "-03-31")), week_start = 7)),
+      23,
+      if_else(
+        Data == (as.Date(paste0(year(Data), "-10-31")) - wday(as.Date(paste0(year(Data), "-10-31")), week_start = 7)),
+        25, 24
+      )
+    ))
+  )
+
+# Atribuição final – se "Dia" estiver NA e "Sem" não, usa o valor de "Sem"
+dataset <- df_final
+dataset$Dia <- ifelse(is.na(dataset$Dia) & !is.na(dataset$Sem), dataset$Sem, dataset$Dia)
+
+### 4 – Ajustes Finais (Funções de correção para Semana, Mês e Trimestre)
+
+adjust_weekly <- function(df) {
+  x <- sapply(1:53, function(s) {
+    length(unique(df$Mês[df$Semana == s & !is.na(df$Sem) & !is.na(df$MêsP)]))
+  })
+  f <- which(x > 1)
+  if (length(f) > 0) {
+    week_val <- f[1]
+    m1 <- as.numeric(names(sort(table(df$Mês[df$Semana == week_val]), decreasing = TRUE))[1])
+    m2 <- m1 + 1
+    sm1 <- sum(df$Horas[df$Mês == m1 & df$Semana == week_val], na.rm = TRUE)
+    sm2 <- sum(df$Horas[df$Semana == week_val], na.rm = TRUE)
+    ds <- sum(df$Dia[df$Mês == m1 & df$Semana == week_val] * df$Horas[df$Mês == m1 & df$Semana == week_val], na.rm = TRUE)
+    ms <- sum(df$MêsP[df$Mês == m1] * df$Horas[df$Mês == m1], na.rm = TRUE)
+    ss <- sum(df$Sem[df$Semana == week_val] * df$Horas[df$Semana == week_val], na.rm = TRUE)
+    p1 <- (ms - ds) / sm1
+    p2 <- (ss - p1 * sm1) / (sm2 - sm1)
+    df$Dia[df$Mês == m1 & df$Semana == week_val] <- p1
+    df$Dia[df$Mês == m2 & df$Semana == week_val] <- p2
+  }
+  df
+}
+
+adjust_monthly <- function(df) {
+  x <- sapply(1:12, function(m) {
+    c(sum(df$Mês == m & !is.na(df$Dia)), sum(df$Mês == m & !is.na(df$MêsP)))
+  })
+  dif <- x[2, ] - x[1, ]
+  f <- which(dif > 0 & dif != x[2, ])
+  if (length(f) > 0) {
+    dn <- sum(df$Horas[df$Mês %in% f & !is.na(df$Dia)], na.rm = TRUE)
+    mn <- sum(df$Horas[df$Mês %in% f & !is.na(df$MêsP)], na.rm = TRUE)
+    ds <- sum(df$Dia[df$Mês %in% f] * df$Horas[df$Mês %in% f], na.rm = TRUE)
+    ms <- sum(df$MêsP[df$Mês %in% f] * df$Horas[df$Mês %in% f], na.rm = TRUE)
+    p <- (ms - ds) / (mn - dn)
+    df$Dia[is.na(df$Dia) & df$Mês %in% f] <- p
+  }
+  df$Dia[is.na(df$Dia)] <- df$MêsP[is.na(df$Dia)]
+  df
+}
+
+adjust_quarterly <- function(df) {
+  x <- sapply(1:4, function(q) {
+    c(sum(df$Tri == q & !is.na(df$Dia)), sum(df$Tri == q & !is.na(df$Trimestre)))
+  })
+  dif <- x[2, ] - x[1, ]
+  f <- which(dif > 0 & dif != x[2, ])
+  if (length(f) > 0) {
+    dn <- sum(df$Horas[df$Tri %in% f & !is.na(df$MêsP)], na.rm = TRUE)
+    mn <- sum(df$Horas[df$Tri %in% f & !is.na(df$Trimestre)], na.rm = TRUE)
+    ds <- sum(df$Dia[df$Tri %in% f & !is.na(df$MêsP)] * df$Horas[df$Tri %in% f & !is.na(df$MêsP)], na.rm = TRUE)
+    ms <- sum(df$Trimestre[df$Tri %in% f & !is.na(df$Tri)] * df$Horas[df$Tri %in% f & !is.na(df$Tri)], na.rm = TRUE)
+    p <- (ms - ds) / (mn - dn)
+    df$Dia[is.na(df$MêsP) & df$Tri %in% f & !is.na(df$Tri)] <- p
+    df$Dia[is.na(df$Dia)] <- df$Trimestre[is.na(df$Dia)]
+  }
+  df$Dia[is.na(df$Dia)] <- df$Trimestre[is.na(df$Dia)]
+  df
+}
+
+# Aplicar os ajustes
+dataset <- adjust_weekly(dataset)
+dataset <- adjust_monthly(dataset)
+dataset <- adjust_quarterly(dataset)
+
+### 5 – Obter o dataset final
+
+dados <- dataset[, c("Data", "Dia")]
+
+# 1. Criar um dataframe com todos os dias de 2025 e, para cada dia,
+#    gerar as horas de 1 até o número indicado em df_final$Horas.
+#    Em seguida, para cada combinação de Data e HoraD, replicar para Quarto de 1 a 4.
+
+# Supondo que df_final possua uma linha por Data de 2025 e a coluna Horas indica quantas horas há naquele dia.
+calendario <- df_final %>% 
+  select(Data, Horas)
+
+dados_temp <- calendario %>%
+  # Cria para cada Data uma lista com seq(1, Horas)
+  mutate(HoraD = map(Horas, ~ seq(1, .x))) %>%
+  unnest(HoraD) %>%
+  # Para cada Data e HoraD, replicar para Quarto de 1 a 4
+  crossing(Quarto = 1:4)
+
+# 2. Separar as datas em duas partes, de acordo com o critério:
+#    - Para datas anteriores à data máxima de dados_csv, usar o valor de Nova_Coluna.
+#    - Para as demais datas, usar o valor de Dia do dataframe dados_d.
+max_data_csv <- max(dados_csv$Data)
+
+# Para as datas anteriores (exclusivo) à data máxima de dados_csv:
+dados_pre <- dados_temp %>%
+  filter(Data < max_data_csv) %>%
+  left_join(dados_csv %>% select(Data, HoraD, Nova_Coluna),
+            by = c("Data", "HoraD")) %>%
+  mutate(Preço = Nova_Coluna) %>%
+  select(Data, Quarto, HoraD, Preço)
+
+# Para as demais datas (Data >= max_data_csv):
+dados_pos <- dados_temp %>%
+  filter(Data >= max_data_csv) %>%
+  left_join(dados, by = "Data") %>%  # dados_d contém as colunas Data e Dia
+  mutate(Preço = Dia) %>%
+  select(Data, Quarto, HoraD, Preço)
+
 # 3. Combinar os dois conjuntos e ordenar conforme solicitado:
 #    - Data decrescente, depois HoraD decrescente e depois Quarto decrescente.
 Dados <- bind_rows(dados_pre, dados_pos) %>%
