@@ -144,6 +144,8 @@ page_date_str <- html %>%
 
 page_date <- dmy(page_date_str)
 print(paste("Data extraída da página:", page_date))
+print(portugal_data)
+print(espanha_data)
 
 remDr$close()
 
