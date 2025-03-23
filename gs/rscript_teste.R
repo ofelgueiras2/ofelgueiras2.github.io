@@ -120,6 +120,12 @@ if (!grepl("omie.es", current_url[[1]])) {
   stop(paste("A página não foi carregada corretamente. URL obtida:", current_url[[1]]))
 }
 
+# Aguardar o carregamento da página (ajuste o tempo se necessário)
+Sys.sleep(3)
+
+# Obter o HTML renderizado
+page_source <- remDr$getPageSource()[[1]]
+html <- read_html(page_source)
 
 # Extração dos dados
 data_chart <- html %>%
