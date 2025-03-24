@@ -4,6 +4,7 @@ library(lubridate)
 library(readr)
 library(tidyr)
 library(purrr)
+library(httr)
 
 
 ### 1 – Extração e processamento dos dados da web
