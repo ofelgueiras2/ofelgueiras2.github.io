@@ -5,7 +5,7 @@ library(readr)
 library(tidyr)
 library(purrr)
 library(httr)
-
+library(rvest)
 
 ### 1 – Extração e processamento dos dados da web
 
