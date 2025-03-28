@@ -201,15 +201,17 @@ df_final <- df_final %>%
   mutate(
     Tri = as.integer((Mês + 2) %/% 3),
     MêsP = `Preço Spot`,
-    Horas = as.integer(if_else(
-      Data == (as.Date(paste0(year(Data), "-03-31")) - wday(as.Date(paste0(year(Data), "-03-31")), week_start = 7)),
-      23,
-      if_else(
-        Data == (as.Date(paste0(year(Data), "-10-31")) - wday(as.Date(paste0(year(Data), "-10-31")), week_start = 7)),
-        25, 24
-      )
-    ))
-  )
+    # Novo cálculo: último dia do mês e último domingo
+    ultimo_dia_mes = ceiling_date(Data, "month") - 1,
+    ultimo_domingo = ultimo_dia_mes - wday(ultimo_dia_mes, week_start = 1) %% 7,
+    
+    Horas = case_when(
+      Data == ultimo_domingo & month(Data) == 3 ~ 23,
+      Data == ultimo_domingo & month(Data) == 10 ~ 25,
+      TRUE ~ 24
+    )
+  ) %>%
+  select(-ultimo_dia_mes, -ultimo_domingo)  # limpa colunas auxiliares
 
 # Atribuição final – se "Dia" estiver NA e "Sem" não, usa o valor de "Sem"
 dataset <- df_final
