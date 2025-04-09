@@ -644,4 +644,3 @@ function alternarAba(abaSelecionada) {
         document.getElementById("conteudo" + aba).classList.toggle("ativa", aba === abaSelecionada);
     });
 }
-

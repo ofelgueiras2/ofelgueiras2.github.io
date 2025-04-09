@@ -197,13 +197,40 @@
 
     <div id="listaTarifarios"></div>
 
-    <div style="text-align: center; margin-top: 20px;">
-    <!-- Botão para baixar Excel -->
-    <a href="https://docs.google.com/spreadsheets/d/1PhbpG35wn4aF4XA-FQHKgowr3iCvEprp/export?format=xlsx" class="botao-excel">📥 Descarregar Excel</a>
-    
-    <!-- Botão para abrir Google Sheets -->
-    <a href="https://docs.google.com/spreadsheets/d/1PhbpG35wn4aF4XA-FQHKgowr3iCvEprp" target="_blank" class="botao-sheet">📂 Abrir Google Sheets</a>
+        
+      
+
+      <!-- Caixa de título com cantos arredondados -->
+<div style="
+background-color: #f3e29f;
+padding: 12px;
+font-family: sans-serif;
+text-align: center;
+border-radius: 12px;
+margin-bottom: 0px;
+box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+
+<div style="font-weight: bold; font-size: 16px;">Preços OMIE em €/MWh</div>
+<div style="font-size: 14px; font-style: italic;">(corrigidos para a hora portuguesa)</div>
+<div style="font-weight: bold; font-size: 16px;">
+   Valor médio do ciclo mensal até cada data
 </div>
+</div>
+
+<!-- Gráfico -->
+<div style="position: relative; padding-top: 56.25%; height: 0; overflow: hidden;">
+<iframe 
+  src="grafico_omie_sem_euro.html"
+  title="OMIE e Projeção"
+  style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;">
+</iframe>
+</div>
+
+  
+  
+      
+
+
 
 
     <footer style="text-align: center; margin-top: 30px; font-size: 14px; color: #666;">
