@@ -380,7 +380,7 @@ df_pad <- tibble(Data = seq(min(dt$Data) - padding, max(dt$Data) + padding, by =
   arrange(Data)
 
 # Valor médio para pontos invisíveis
-ym <- mean(dt$OMIE_real, na.rm = TRUE)
+ym <- max(dt$OMIE_real, na.rm = TRUE)+20
 
 # Criar gráfico
 fig <- plot_ly(df_pad, x = ~Data) %>%
@@ -412,7 +412,7 @@ fig <- plot_ly(df_pad, x = ~Data) %>%
       showgrid = TRUE, gridcolor = "rgba(220,220,220,0.5)"
     ),
     legend = list(
-      orientation = "h", x = 0.2, xanchor = "center", y = 1.25
+      orientation = "h", x = 0.5, xanchor = "center", y = 1.1
     ),
     hovermode = "closest",
     plot_bgcolor = "white",
