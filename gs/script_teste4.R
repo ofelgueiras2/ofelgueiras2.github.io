@@ -412,7 +412,7 @@ fig <- plot_ly(df_pad, x = ~Data) %>%
       showgrid = TRUE, gridcolor = "rgba(220,220,220,0.5)"
     ),
     legend = list(
-      orientation = "h", x = 0.5, xanchor = "center", y = 1.05
+      orientation = "h", x = 0.2, xanchor = "center", y = 1.25
     ),
     hovermode = "closest",
     plot_bgcolor = "white",
