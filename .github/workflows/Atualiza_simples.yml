@@ -50,7 +50,7 @@ jobs:
         run: |
           Rscript -e '
             renv::activate();
-            source("gs/rscript_teste3.R")
+            source("gs/script_teste4.R")
           '
 
       - name: Check if CSV file exists
