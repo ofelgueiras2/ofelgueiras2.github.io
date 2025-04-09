@@ -9,7 +9,7 @@ library(rvest)
 library(data.table)
 library(arrow)
 library(htmlwidgets)
-
+library(plotly)
 
 ### 1 – Extração e processamento dos dados da web
 
