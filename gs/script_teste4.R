@@ -417,7 +417,7 @@ fig <- plot_ly(df_pad, x = ~Data) %>%
     hovermode = "closest",
     plot_bgcolor = "white",
     paper_bgcolor = "white",
-    margin = list(t = 40, b = 40, l = 40, r = 40)
+    margin = list(t = 50, b = 40, l = 20, r = 20)
   )
 
 fig
