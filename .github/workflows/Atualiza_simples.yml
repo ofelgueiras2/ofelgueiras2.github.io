@@ -4,15 +4,15 @@ on:
   schedule:
     # Verificações frequentes à hora da publicação dos dados (OMIE ~12h Lisboa)
     # → Corresponde a:
-    #    - 10:00–12:59 hora de Lisboa no inverno (UTC+0)
-    #    - 11:00–13:59 hora de Lisboa no verão (UTC+1)
-    - cron: '*/6 10-12 * * *'  # 10:00–12:59 UTC
+    #    - 10:00–11:59 hora de Lisboa no inverno (UTC+0)
+    #    - 11:00–12:59 hora de Lisboa no verão (UTC+1)
+    - cron: '*/6 10-11 * * *'  # 10:00–12:59 UTC
 
     # Verificações ao final do dia (ex: validação, dados em atraso)
     # → Corresponde a:
-    #    - 18:00–19:59 hora de Lisboa no inverno (UTC+0)
-    #    - 19:00–20:59 hora de Lisboa no verão (UTC+1)
-    - cron: '*/6 18-19 * * *'  # 18:00–19:59 UTC
+    #    - 17:00–18:59 hora de Lisboa no inverno (UTC+0)
+    #    - 18:00–19:59 hora de Lisboa no verão (UTC+1)
+    - cron: '*/6 17-18 * * *'  # 18:00–19:59 UTC
 
   workflow_dispatch:
 
