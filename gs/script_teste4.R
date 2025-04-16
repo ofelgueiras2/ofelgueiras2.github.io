@@ -136,7 +136,7 @@ if(page_date == csv_date + 1) {
 print(dados_csv,n=30)
 # Alterado
 
-df_old <- read_parquet("gs/Precos_20100101_20250331.parquet")
+df_old <- read_parquet("gs/Precos_20100101_20250415.parquet")
 
 dados_old <- df_old %>%
   group_by(Data) %>%
