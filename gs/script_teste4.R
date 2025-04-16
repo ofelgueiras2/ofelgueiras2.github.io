@@ -155,7 +155,7 @@ dados_parquet <- bind_rows(df_old, dados_csv2)
 # (Opcional) Gravar ficheiro combinado
 write_parquet(
   dados_parquet,
-  "Precos_20100101_hoje.parquet",
+  "gs/Precos_20100101_hoje.parquet",
   compression = "snappy",
   use_dictionary = TRUE
 )
