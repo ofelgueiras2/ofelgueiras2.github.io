@@ -59,19 +59,7 @@ dados_web <- bind_rows(
   ))
 
 
-### 2 – Leitura e processamento dos dados CSV
-
-url_csv <- "https://www.omie.es/sites/default/files/dados/NUEVA_SECCION/INT_PBC_EV_H_ACUM.TXT"
-dados_csv <- read_delim(url_csv, delim = ";", col_names = FALSE,
-                        locale = locale(encoding = "windows-1252"),
-                        col_types = cols(.default = col_character()),
-                        skip = 2)
-dados_csv <- dados_csv[-1,1:4]
-dados_csv <- dados_csv[,1:4]
-names(dados_csv)=c("Fecha","Hora",
-                   "Precio marginal en el sistema español (EUR/MWh)",
-                   "Precio marginal en el sistema portugués (EUR/MWh)")
-csv_date <- dmy(dados_csv$Fecha[1])
+### Leitura e processamento dos dados CSV
 
 # --- Parte 1: Extração -----------------
 
@@ -113,35 +101,21 @@ page_date <- dmy(page_date_str)
 print(paste("Data extraída da página:", page_date))
 
 
-if(page_date == csv_date + 1) {
   # Criar um data frame com 24 linhas para cada hora (supondo 24 horas)
-  novo_registo <- tibble(
-    Fecha = rep(page_date_str, 24),
+  dados_csv <- tibble(
+    Fecha = rep(page_date_str, length(portugal_data)),
     Hora = as.character(horas),
     `Precio marginal en el sistema español (EUR/MWh)` = as.character(espanha_data),
     `Precio marginal en el sistema portugués (EUR/MWh)` = as.character(portugal_data)
   )
   # Visualizar os novos registros
   print("Novos registros extraídos da página:")
-  print(novo_registo)
+  print(dados_csv)
   
-  # Acrescentar esses registros no início do data frame original
-  dados_csv <- bind_rows(novo_registo, dados_csv)
-  
-} else {
-  message("A data da página não é igual à data do CSV acrescida de 1 dia; não foram acrescentadas novas linhas.")
-}
 
-
-print(dados_csv,n=30)
 # Alterado
 
 df_old <- read_parquet("gs/Precos_20100101_20250415.parquet")
-
-dados_old <- df_old %>%
-  group_by(Data) %>%
-  summarise(Dia = mean(Preço, na.rm = TRUE)) %>%
-  ungroup()
 
 df_old_convertido <- df_old %>%
   mutate(
@@ -151,6 +125,44 @@ df_old_convertido <- df_old %>%
     `Precio marginal en el sistema portugués (EUR/MWh)` = as.character(Preço)
   ) 
 
+csv_date0 <- dmy(tail(df_old_convertido$Fecha,1)[1])
+csv_date0=csv_date0+1
+csv_date0
+
+url2=paste0("https://datahub.ren.pt/service/download/csv/1534?startDateString=",csv_date0,"&endDateString=",
+page_date,"&culture=pt-PT")
+url2
+dados_csv2 <- read_delim(
+  url2, 
+  delim = ";", 
+  skip = 2,
+  locale = locale(decimal_mark = ","),
+  show_col_types = FALSE
+)
+# Remover a coluna Espanha e converter nomes
+dados_csv2 <- dados_csv2 %>%
+  select(Data, Hora, Portugal) %>%
+  rename(Preço = Portugal) %>%
+  mutate(
+    Data = as.Date(Data),         # já vem em yyyy-mm-dd
+    Hora = as.integer(Hora),
+    Preço = as.numeric(Preço)
+  )
+
+df_old_convertido2 <- dados_csv2 %>%
+  mutate(
+    Fecha = format(Data, "%d/%m/%Y"),
+    Hora = as.character(Hora),
+    `Precio marginal en el sistema español (EUR/MWh)` = NA_character_,
+    `Precio marginal en el sistema portugués (EUR/MWh)` = as.character(Preço)
+  ) 
+
+df_old_convertido <- bind_rows(df_old_convertido, df_old_convertido2)
+
+
+###############################################
+
+                       
 # Filtrar eficientemente
 dados_csv_filtrado <- anti_join(dados_csv, df_old_convertido, by = c("Fecha", "Hora"))
 
