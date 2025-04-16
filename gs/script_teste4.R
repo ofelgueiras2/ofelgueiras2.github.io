@@ -115,7 +115,7 @@ print(paste("Data extraída da página:", page_date))
 
 # Alterado
 
-df_old <- read_parquet("gs/Precos_20100101_20250415.parquet")
+df_old <- read_parquet("gs/Precos_20100101_hoje.parquet")
 
 df_old_convertido <- df_old %>%
   mutate(
