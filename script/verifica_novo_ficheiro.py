@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from urllib.parse import unquote
 import os
 import requests
 
@@ -8,22 +9,22 @@ URL = "https://simuladorprecos.erse.pt/"
 PASTA_DESTINO = "ERSE"
 
 options = Options()
-options.add_argument('--headless')  # executa sem abrir janela
+options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+
 driver = webdriver.Chrome(options=options)
 
 try:
     driver.get(URL)
-
-    # Esperar até 10 segundos pelo elemento com a classe 'csvPath'
     driver.implicitly_wait(10)
     link = driver.find_element(By.CLASS_NAME, 'csvPath')
-
     url_zip = link.get_attribute("href")
 
     if not url_zip or url_zip == "#":
         print("❌ Link ZIP inválido ou não encontrado.")
     else:
-        nome_ficheiro = url_zip.split("/")[-1].replace(" ", "_")
+        nome_ficheiro = unquote(url_zip.split("/")[-1]).replace(" ", "_")
         caminho_ficheiro = os.path.join(PASTA_DESTINO, nome_ficheiro)
 
         if os.path.exists(caminho_ficheiro):
@@ -37,3 +38,4 @@ try:
 
 finally:
     driver.quit()
+
