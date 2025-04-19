@@ -218,6 +218,7 @@ function atualizarResultados() {
     let incluirContinente = document.getElementById("incluirContinente").checked;
     let incluirMeo = document.getElementById("incluirMeo").checked;
     let restringir = document.getElementById("restringir").checked;
+    let incluirEDP = document.getElementById("incluirEDP").checked;
 
     const mesSelecionadoIndex = document.getElementById("mesSelecionado").selectedIndex;
     
@@ -291,7 +292,7 @@ function atualizarResultados() {
     }
     const colPotencia = colIndex * 2;
     const colSimples = colPotencia + 1;
-    
+
     const luzigasFeeTabela = obterTabela("LuzigazFee")?.flat() || [];
     let luzigasFeeS = luzigasFeeTabela[colIndex] || "0";
     luzigasFeeS = parseFloat(luzigasFeeS.replace("€", "").replace(",", ".").trim()) || 0;
@@ -308,13 +309,23 @@ function atualizarResultados() {
     
     // --- Criação do array de tarifários a partir dos dados CSV ---
     // MODIFICAÇÃO 1: Marcação dos tarifários indexados (empresas entre C19 e C25)
-    let tarifarios = nomesTarifarios.map((nome, i) => {
-        let isIndexado = false;
+    let tarifarios = nomesTarifarios
+    .map((nome, i) => {
+    // --- filtrar potências não numéricas ---
+    const rawPot = tarifariosDados[i]?.[colPotencia];
+    const parsedPot = parseFloat(String(rawPot).replace(",", "."));
+    if (isNaN(parsedPot)) return null;
+    let potencia = parsedPot;
+
+    // --- determinar se é indexado (está entre as linhas C19 a C25) ---
+    // como há offset de 5 (a tabela começa em C5), a condição é i+5 ∈ [19,25]
+    let isIndexado = (i + 5 >= 19 && i + 5 <= 25);
+
+
         if (i + 5 >= 19 && i + 5 <= 25) { // Como a tabela começa em C5
             isIndexado = true;
         }
         
-        let potencia = parseFloat(tarifariosDados[i]?.[colPotencia]) || 0;
         let simples;
 
         if (nome === "Luzboa indexado") {
@@ -341,6 +352,20 @@ function atualizarResultados() {
             simples -= 0.01;
         }
 
+        // —> só aplica desconto se o usuário marcou EDP e potência ≥ 3,45 kVA
+        let descontoEDP = 0;
+        if (incluirEDP) {
+        // extrai número da string "X,XX kVA"
+        const potenciaNum = parseFloat(
+        potenciaSelecionada
+         .replace(" kVA", "")
+         .replace(",", ".")
+        );
+        if (potenciaNum >= 3.45) {
+        descontoEDP = -10;  // valor original do desconto
+        }
+   }
+
         const nomeExibido = mostrarNomesAlternativos && nomesTarifariosDetalhados[i] ? nomesTarifariosDetalhados[i] : nome;
 
         let custo = (potencia * diasS * (1 + IVABaseSimples)) +
@@ -358,6 +383,10 @@ function atualizarResultados() {
         if (nome.startsWith("Goldenergy ACP")) {
             custo += precoACPS;
         }
+
+        if (nome.startsWith("EDP indexado")) {
+            custo += descontoEDP;
+        }
     
         return {
             nome: nomeExibido,
@@ -366,7 +395,9 @@ function atualizarResultados() {
             custo: parseFloat(custo.toFixed(2)),
             isIndexado // Propriedade adicionada para identificar tarifários indexados
         };
-    });
+    })
+    // remove os nulos gerados acima
+   .filter(t => t !== null);
     
     if (!restringir) {
         const nomesTarifariosExtra = obterTabela("tarifariosExtra")?.flat() || [];
@@ -374,8 +405,17 @@ function atualizarResultados() {
         const tarifariosDadosExtra = obterTabela("preçosSimplesExtra");
 
         nomesTarifariosExtra.forEach((nome, i) => {
-            let potencia = parseFloat(tarifariosDadosExtra[i]?.[colPotencia]) || 0;
-            let simples = parseFloat(tarifariosDadosExtra[i]?.[colSimples]) || 0;
+        // 1) lemos raw, convertendo em string
+        const rawPot = tarifariosDadosExtra[i]?.[colPotencia];
+        const parsedPot = parseFloat(String(rawPot).replace(",", "."));
+        // 2) se não for número, saltamos este tarifário
+        if (isNaN(parsedPot)) return;
+        // 3) caso OK, usamos parsedPot
+        let potencia = parsedPot;
+        let simples = parseFloat(
+          String(tarifariosDadosExtra[i]?.[colSimples])
+            .replace(",", ".")
+        ) || 0;
 
             if (nome === "Galp Continente" && incluirContinente) {
                 potencia *= 0.9;
@@ -593,6 +633,7 @@ document.getElementById("incluirACP")?.addEventListener("change", atualizarResul
 document.getElementById("incluirContinente")?.addEventListener("change", atualizarResultados);
 document.getElementById("incluirMeo")?.addEventListener("change", atualizarResultados);
 document.getElementById("restringir")?.addEventListener("change", atualizarResultados);
+document.getElementById("incluirEDP")?.addEventListener("change", atualizarResultados);
 
 window.onload = async function () {
     console.log("🔄 Iniciando carregamento do CSV...");
