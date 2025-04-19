@@ -1,29 +1,22 @@
 import requests
-import re
+from bs4 import BeautifulSoup
 import os
 
 URL = "https://simuladorprecos.erse.pt/"
 PASTA_DESTINO = "ERSE"
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 }
 
 def obter_url_zip():
-    try:
-        res = requests.get(URL, headers=headers, timeout=10)
-        res.raise_for_status()
-    except Exception as e:
-        print(f"❌ Erro ao aceder à página da ERSE: {e}")
-        return None
-
-    padrao = r'https://simuladorprecos\.erse\.pt/Admin/csvs/\d{8} \d{6} CSV\.zip'
-    zip_links = re.findall(padrao, res.text)
-
-    if zip_links:
-        return zip_links[0]
+    res = requests.get(URL, headers=headers)
+    soup = BeautifulSoup(res.text, "html.parser")
+    link = soup.find('a', class_='csvPath')
+    if link:
+        return link['href']
     else:
-        print("❌ Nenhum link ZIP encontrado no HTML.")
+        print("❌ Link ZIP não encontrado no HTML.")
         return None
 
 def main():
@@ -39,14 +32,12 @@ def main():
         return
 
     print(f"🆕 Novo ficheiro encontrado: {nome_ficheiro}")
-    try:
-        conteudo = requests.get(url_zip, headers=headers).content
-        os.makedirs(PASTA_DESTINO, exist_ok=True)
-        with open(caminho_ficheiro, "wb") as f:
-            f.write(conteudo)
-        print(f"✅ Guardado em {caminho_ficheiro}")
-    except Exception as e:
-        print(f"❌ Erro ao transferir o ficheiro: {e}")
+    conteudo = requests.get(url_zip, headers=headers).content
+    os.makedirs(PASTA_DESTINO, exist_ok=True)
+    with open(caminho_ficheiro, "wb") as f:
+        f.write(conteudo)
+    print(f"✅ Guardado em {caminho_ficheiro}")
 
 if __name__ == "__main__":
     main()
+
