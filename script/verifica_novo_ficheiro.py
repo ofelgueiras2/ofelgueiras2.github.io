@@ -1,45 +1,39 @@
-import requests
-from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
 import os
+import requests
 
 URL = "https://simuladorprecos.erse.pt/"
 PASTA_DESTINO = "ERSE"
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-}
+options = Options()
+options.add_argument('--headless')  # executa sem abrir janela
+driver = webdriver.Chrome(options=options)
 
-def obter_url_zip():
-    res = requests.get(URL, headers=headers)
-    soup = BeautifulSoup(res.text, "html.parser")
-    links = soup.find_all('a', class_='csvPath')
-    
-    for link in links:
-        href = link.get('href', '')
-        if href and "CSV.zip" in href and href != "#":
-            return href
-        
-    print("❌ Nenhum link válido ZIP encontrado.")
-    return None
+try:
+    driver.get(URL)
 
-def main():
-    url_zip = obter_url_zip()
-    if not url_zip:
-        return
+    # Esperar até 10 segundos pelo elemento com a classe 'csvPath'
+    driver.implicitly_wait(10)
+    link = driver.find_element(By.CLASS_NAME, 'csvPath')
 
-    nome_ficheiro = url_zip.split("/")[-1].replace(" ", "_")
-    caminho_ficheiro = os.path.join(PASTA_DESTINO, nome_ficheiro)
+    url_zip = link.get_attribute("href")
 
-    if os.path.exists(caminho_ficheiro):
-        print(f"✔ Já existe localmente: {nome_ficheiro}")
-        return
+    if not url_zip or url_zip == "#":
+        print("❌ Link ZIP inválido ou não encontrado.")
+    else:
+        nome_ficheiro = url_zip.split("/")[-1].replace(" ", "_")
+        caminho_ficheiro = os.path.join(PASTA_DESTINO, nome_ficheiro)
 
-    print(f"🆕 Novo ficheiro encontrado: {nome_ficheiro}")
-    conteudo = requests.get(url_zip, headers=headers).content
-    os.makedirs(PASTA_DESTINO, exist_ok=True)
-    with open(caminho_ficheiro, "wb") as f:
-        f.write(conteudo)
-    print(f"✅ Guardado em {caminho_ficheiro}")
+        if os.path.exists(caminho_ficheiro):
+            print(f"✔ Já existe localmente: {nome_ficheiro}")
+        else:
+            conteudo = requests.get(url_zip).content
+            os.makedirs(PASTA_DESTINO, exist_ok=True)
+            with open(caminho_ficheiro, "wb") as f:
+                f.write(conteudo)
+            print(f"✅ Guardado em {caminho_ficheiro}")
 
-if __name__ == "__main__":
-    main()
+finally:
+    driver.quit()
