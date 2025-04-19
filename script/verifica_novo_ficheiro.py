@@ -14,8 +14,8 @@ def obter_url_zip():
         print(f"❌ Erro ao aceder à página da ERSE: {e}")
         return None
 
-    # Procura padrão exato de URL ZIP
-    padrao = r'https://simuladorprecos\.erse\.pt/Admin/csvs/\d{8}%20\d{6}%20CSV\.zip'
+    # Novo padrão: espaços reais (não %20)
+    padrao = r'https://simuladorprecos\.erse\.pt/Admin/csvs/\d{8} \d{6} CSV\.zip'
     zip_links = re.findall(padrao, res.text)
 
     if zip_links:
