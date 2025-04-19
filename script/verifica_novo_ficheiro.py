@@ -1,6 +1,8 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from urllib.parse import unquote
 import os
 import requests
@@ -17,11 +19,21 @@ driver = webdriver.Chrome(options=options)
 
 try:
     driver.get(URL)
-    driver.implicitly_wait(10)
 
-    # Pega o primeiro elemento com a classe, tal como no teu script original
-    link = driver.find_element(By.CLASS_NAME, 'csvPath')
-    url_zip = link.get_attribute("href")
+    # Esperar até que o href do elemento csvPath contenha "CSV.zip"
+    wait = WebDriverWait(driver, 20)
+    element = wait.until(
+        EC.presence_of_element_located((By.CLASS_NAME, "csvPath"))
+    )
+
+    url_zip = element.get_attribute("href")
+
+    # Repetir espera até o href mudar de "#" para algo útil
+    for _ in range(10):
+        if url_zip and "CSV.zip" in url_zip:
+            break
+        driver.implicitly_wait(1)
+        url_zip = element.get_attribute("href")
 
     if not url_zip or "CSV.zip" not in url_zip:
         print(f"❌ Link inválido ou ausente: {url_zip}")
