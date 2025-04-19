@@ -13,24 +13,18 @@ options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 
-driver = None
+driver = webdriver.Chrome(options=options)
 
 try:
-    driver = webdriver.Chrome(options=options)
     driver.get(URL)
     driver.implicitly_wait(10)
 
-    # Procurar todos os links com a classe csvPath
-    links = driver.find_elements(By.CLASS_NAME, 'csvPath')
-    url_zip = None
-    for link in links:
-        href = link.get_attribute("href")
-        if href and "CSV.zip" in href:
-            url_zip = href
-            break
+    # Pega o primeiro elemento com a classe, tal como no teu script original
+    link = driver.find_element(By.CLASS_NAME, 'csvPath')
+    url_zip = link.get_attribute("href")
 
-    if not url_zip:
-        print("❌ Link ZIP válido não encontrado.")
+    if not url_zip or "CSV.zip" not in url_zip:
+        print(f"❌ Link inválido ou ausente: {url_zip}")
     else:
         nome_ficheiro = unquote(url_zip.split("/")[-1]).replace(" ", "_")
         caminho_ficheiro = os.path.join(PASTA_DESTINO, nome_ficheiro)
@@ -44,9 +38,5 @@ try:
                 f.write(conteudo)
             print(f"✅ Guardado em {caminho_ficheiro}")
 
-except Exception as e:
-    print(f"❌ Erro ao executar o script: {e}")
-
 finally:
-    if driver:
-        driver.quit()
+    driver.quit()
