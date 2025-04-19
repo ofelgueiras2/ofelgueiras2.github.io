@@ -1,4 +1,4 @@
-name: Verifica novo ficheiro ERSE
+name: Verifica novo ficheiro ERSE com Selenium
 
 on:
   schedule:
@@ -9,19 +9,30 @@ on:
 jobs:
   check-erse:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
 
-      - name: Instala dependências
-        run: pip install requests beautifulsoup4
+      - name: Instalar dependências
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser
+          pip install selenium requests
 
-      - name: Executa script de verificação
-        run: python script/verifica_novo_ficheiro.py
+      - name: Definir variável de ambiente para Chrome
+        run: |
+          echo "CHROME_BIN=$(which chromium-browser)" >> $GITHUB_ENV
+
+      - name: Executar script de verificação
+        env:
+          PATH: /usr/bin:$PATH
+        run: python3 script/verifica_novo_ficheiro.py
 
       - name: Commit e push se houver ficheiro novo
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git add ERSE/*.zip || echo "Nada para adicionar"
-          git commit -m "Novo ficheiro ERSE encontrado automaticamente" || echo "Sem alterações"
+          git commit -m "Novo ficheiro ERSE guardado automaticamente" || echo "Sem alterações"
           git push
