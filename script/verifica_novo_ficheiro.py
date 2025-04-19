@@ -13,12 +13,14 @@ options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 
-driver = webdriver.Chrome(options=options)
+driver = None
 
 try:
+    driver = webdriver.Chrome(options=options)
     driver.get(URL)
     driver.implicitly_wait(10)
 
+    # Procurar todos os links com a classe csvPath
     links = driver.find_elements(By.CLASS_NAME, 'csvPath')
     url_zip = None
     for link in links:
@@ -42,10 +44,9 @@ try:
                 f.write(conteudo)
             print(f"✅ Guardado em {caminho_ficheiro}")
 
+except Exception as e:
+    print(f"❌ Erro ao executar o script: {e}")
+
 finally:
-    driver.quit()
-
-
-finally:
-    driver.quit()
-
+    if driver:
+        driver.quit()
