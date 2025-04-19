@@ -1,0 +1,27 @@
+name: Verifica novo ficheiro ERSE
+
+on:
+  schedule:
+    - cron: '00 10 * * *'  # todos os dias às 10h UTC (11h em Portugal)
+    - cron: '00 16 * * *'  # todos os dias às 16h UTC (17h em Portugal)
+  workflow_dispatch:
+
+jobs:
+  check-erse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Instala dependências
+        run: pip install requests
+
+      - name: Executa script de verificação
+        run: python script/verifica_novo_ficheiro.py
+
+      - name: Commit e push se houver ficheiro novo
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add ERSE/*.zip || echo "Nada para adicionar"
+          git commit -m "Novo ficheiro ERSE encontrado automaticamente" || echo "Sem alterações"
+          git push
