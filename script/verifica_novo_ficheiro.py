@@ -12,12 +12,15 @@ headers = {
 def obter_url_zip():
     res = requests.get(URL, headers=headers)
     soup = BeautifulSoup(res.text, "html.parser")
-    link = soup.find('a', class_='csvPath')
-    if link:
-        return link['href']
-    else:
-        print("❌ Link ZIP não encontrado no HTML.")
-        return None
+    links = soup.find_all('a', class_='csvPath')
+    
+    for link in links:
+        href = link.get('href', '')
+        if href and "CSV.zip" in href and href != "#":
+            return href
+        
+    print("❌ Nenhum link válido ZIP encontrado.")
+    return None
 
 def main():
     url_zip = obter_url_zip()
@@ -40,4 +43,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
