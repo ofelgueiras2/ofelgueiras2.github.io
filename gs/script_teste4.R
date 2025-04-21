@@ -173,6 +173,64 @@ df_old_convertido <- bind_rows(df_old_convertido, df_old_convertido2)
 
 ###############################################
 
+
+tail(df_old_convertido)
+
+url_csv <- "https://www.omie.es/sites/default/files/dados/NUEVA_SECCION/INT_PBC_EV_H_ACUM.TXT"
+dados_csv_ano <- read_delim(url_csv, delim = ";", col_names = FALSE,
+                        locale = locale(encoding = "windows-1252"),
+                        col_types = cols(.default = col_character()),
+                        skip = 2)
+dados_csv_ano <- dados_csv_ano[-1,1:4]
+dados_csv_ano <- dados_csv_ano[,1:4]
+names(dados_csv_ano)=c("Fecha","Hora",
+                   "Precio marginal en el sistema español (EUR/MWh)",
+                   "Precio marginal en el sistema portugués (EUR/MWh)")
+csv_date_ano <- dmy(dados_csv_ano$Fecha[1])
+
+dados_csv_ano <- dados_csv_ano %>%
+  mutate(across(
+    c(
+      `Precio marginal en el sistema español (EUR/MWh)`,
+      `Precio marginal en el sistema portugués (EUR/MWh)`
+    ),
+    ~ str_replace_all(.x, ",", ".")
+  ))
+
+dados_csv_ano_convertido <- dados_csv_ano %>%
+  # cria as colunas Data e Preço
+  mutate(
+    Data = dmy(Fecha),  # converte "22/04/2025" em Date
+    Preço = as.numeric(`Precio marginal en el sistema portugués (EUR/MWh)`)
+  ) %>%
+  # ajusta a ordem das colunas
+  select(
+    Data,
+    Hora,
+    Preço,
+    Fecha,
+    `Precio marginal en el sistema español (EUR/MWh)`,
+    `Precio marginal en el sistema portugués (EUR/MWh)`
+  )
+
+dados_csv_filtrado2 <- anti_join(dados_csv_ano_convertido, df_old_convertido, by = c("Fecha", "Hora"))
+dados_csv_filtrado2 <- dados_csv_filtrado2 %>%
+  filter(!if_all(everything(), is.na))
+dados_csv_filtrado2 <- dados_csv_filtrado2 %>%
+  arrange(Data, as.integer(Hora))
+
+
+tail(df_old_convertido)
+
+print(head(dados_csv_ano_convertido,49),n=49)
+print(head(dados_csv_filtrado2,49),n=49)
+#print(tail(df_old_convertido,49),n=49)
+
+df_old_convertido <- bind_rows(df_old_convertido, dados_csv_filtrado2)                       
+
+                       
+###############################################
+
                        
 # Filtrar eficientemente
 dados_csv_filtrado <- anti_join(dados_csv, df_old_convertido, by = c("Fecha", "Hora"))
