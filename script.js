@@ -383,8 +383,14 @@ function atualizarResultados() {
         if (nome.startsWith("Goldenergy ACP")) {
             custo += precoACPS;
         }
+        
         if (nome.startsWith("Goldenergy")) {
             custo += consumo * FTSS * (1 + IVABaseSimples);
+        }
+        
+        if (nome === "Repsol"  || nome === "G9") {
+            custo += (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
+            Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS)) * FTSS;
         }
 
         if (nome.startsWith("EDP indexado")) {
