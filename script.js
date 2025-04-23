@@ -383,6 +383,9 @@ function atualizarResultados() {
         if (nome.startsWith("Goldenergy ACP")) {
             custo += precoACPS;
         }
+        if (nome.startsWith("Goldenergy")) {
+            custo += consumo * FTSS * (1 + IVABaseSimples);
+        }
 
         if (nome.startsWith("EDP indexado")) {
             custo += descontoEDP;
