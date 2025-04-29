@@ -337,6 +337,12 @@ dataset$Dia <- ifelse(is.na(dataset$Dia) & !is.na(dataset$Sem), dataset$Sem, dat
 
 ### 4 – Ajustes Finais (Funções de correção para Semana, Mês e Trimestre)
 
+dataset0 <- dataset %>%
+  filter(year(Data) < 2025)
+
+dataset <- dataset %>%
+  filter(year(Data) >= 2025)
+
 adjust_weekly <- function(df) {
   x <- sapply(1:53, function(s) {
     length(unique(df$Mês[df$Semana == s & !is.na(df$Sem) & !is.na(df$MêsP)]))
@@ -344,11 +350,11 @@ adjust_weekly <- function(df) {
   f <- which(x > 1)
   if (length(f) > 0) {
     week_val <- f[1]
-    m1 <- as.numeric(names(sort(table(df$Mês[df$Semana == week_val]), decreasing = TRUE))[1])
+    m1 <- as.numeric((df$Mês[df$Semana == week_val]))[1]
     m2 <- m1 + 1
     sm1 <- sum(df$Horas[df$Mês == m1 & df$Semana == week_val], na.rm = TRUE)
     sm2 <- sum(df$Horas[df$Semana == week_val], na.rm = TRUE)
-    ds <- sum(df$Dia[df$Mês == m1 & df$Semana == week_val] * df$Horas[df$Mês == m1 & df$Semana == week_val], na.rm = TRUE)
+    ds <- sum(df$Dia[df$Mês == m1 & df$Semana != week_val] * df$Horas[df$Mês == m1 & df$Semana != week_val], na.rm = TRUE)
     ms <- sum(df$MêsP[df$Mês == m1] * df$Horas[df$Mês == m1], na.rm = TRUE)
     ss <- sum(df$Sem[df$Semana == week_val] * df$Horas[df$Semana == week_val], na.rm = TRUE)
     p1 <- (ms - ds) / sm1
@@ -402,7 +408,8 @@ dataset <- adjust_monthly(dataset)
 dataset <- adjust_quarterly(dataset)
 
 ### 5 – Obter o dataset final
-
+                       
+dataset<-rbind(dataset0,dataset)
 dados <- dataset[, c("Data", "Dia")]
 
 # dados tem tudo desde 2010 até fim de 2025#
