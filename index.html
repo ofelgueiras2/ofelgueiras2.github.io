@@ -19,240 +19,253 @@
 <body>
     <h1>Comparador de Tarifários 2025</h1>
 
-<div style="display: flex; align-items: center; justify-content: space-between; font-size: 18px; gap: 20px; width: 100%;">
-        <div style="display: flex; align-items: center; flex: 1;">
-            <label for="mesSelecionado" style="margin-right: 10px;">Mês:</label>
-            <select id="mesSelecionado" style="flex: 1; font-size: 18px; height: 30px;"></select>
+    <div class="parent">
+        <!-- 1) Mês + Dias -->
+        <div class="div1">
+            <div class="month-days-container">
+                <div class="monthBlock form-group">
+                    <label for="mesSelecionado">Mês</label>
+                    <select id="mesSelecionado" class="form-control">
+                    </select>
+                </div>
+                <div class="daysBlock form-group">
+                    <label for="dias">Dias</label>
+                    <input type="number" id="dias" min="0" class="form-control" />
+                </div>
+            </div>
         </div>
-
-        <div style="display: flex; align-items: center; flex: 1;">
-            <label for="dias" style="margin-right: 10px;">Dias:</label>
-            <input type="number" id="dias" min="0" style="flex: 1; font-size: 18px; height: 10px;">
-        </div>
-    </div>
-
+        <!-- 3) .btnDias com o único btnDias -->
+        
+        <button 
+            id="btnDias" 
+            class="btn-icon" 
+            title="OMIE / Intervalo de datas"
+            style="width:50px;height:30px;border:1px solid #ccc;
+            border-radius:5px;
+            display:flex;align-items:center;justify-content:center;
+            gap:4px;cursor:pointer;"
+        >
+            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+            <i class="fa-solid fa-bars    burger-icon"></i>
+        </button>
         
     
-    <div style="margin-top: 10px; display: flex; align-items: center; font-size: 18px;">
-        <label for="potenciac" style="margin-right: 10px;">Potência Contratada:</label>
-        <select id="potenciac" style="flex: 1; font-size: 18px; height: 30px;">
-            <option value="1,15 kVA">1,15 kVA</option>
-            <option value="2,3 kVA">2,3 kVA</option>
-            <option value="3,45 kVA">3,45 kVA</option>
-            <option value="4,6 kVA">4,6 kVA</option>
-            <option value="5,75 kVA">5,75 kVA</option>
-            <option value="6,9 kVA" selected>6,9 kVA</option>
-            <option value="10,35 kVA">10,35 kVA</option>
-            <option value="13,8 kVA">13,8 kVA</option>
-            <option value="17,25 kVA">17,25 kVA</option>
-            <option value="20,7 kVA">20,7 kVA</option>
-        </select>
-    </div>
-
-    <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px; font-size: 18px; width: 100%;">
-        <label for="consumo" style="margin-right: 10px; font-size: 18px;">Consumo (kWh):</label>
-        <input type="number" id="consumo" value="250" min="0" style="flex: 1; font-size: 18px; height: 10px;">
-        <!-- Botão de definições com ícones -->
-        <button id="btnDefinicoes" style="width: 50px; height: 30px; 
-        border: 1px solid #bbb; display: flex; justify-content: space-between;
-         align-items: center; padding: 0 5px; background: #fff; cursor: pointer;
-         margin-left: 10px;">
-            <i id="arrowIcon" class="fa-solid fa-chevron-down" style="font-size: 18px;"></i>
-            <i id="hamburgerIcon" class="fa-solid fa-bars" style="font-size: 18px;"></i>
-        </button>  
-      </div>
-      
-
-<div id="secaoDefinicoes" style="display: none;">
-    <div style="
-        position: relative;
-        margin-top: 40px; 
-        background-color: #e0e0e0;
-        border: 1px solid #bbb;
-        border-bottom-left-radius: 4px;
-        border-bottom-right-radius: 4px;
-        border-top-right-radius: 4px;
-        padding: 10px 50px 10px 10px;">
-
-        <!-- Abas lado a lado -->
-        <div style="display: flex;">
-            <div id="abaMeuTarifario" class="aba ativa">Meu tarifário</div>
-            <div id="abaOutrasOpcoes" class="aba">Outras opções</div>
-        </div>
-
-        <!-- Conteúdo Meu Tarifário -->
-        <div id="conteudoMeuTarifario" class="conteudo-aba ativa">
-            <!-- Campo Fixo (€/dia) -->
-            <div style="display: flex; align-items: center; margin-bottom: 5px;">
-              <label for="fixo" style="margin-right: 10px;">Potência (€/dia):</label>
-              <input type="number" id="fixo" min="0" step="0.01" style="flex: 1; font-size: 18px; height: 10px;">
+        <!-- 2) Potência + Consumo -->
+        <div class="div2">
+            <!-- Potência contratada -->
+            <div class="form-group">
+                <label for="potenciac">Potência Contratada</label>
+                <select id="potenciac" class="form-control"  style="background-color: #375623; color:white;font-weight: bold;">
+                    <option>1,15 kVA</option>
+                    <option>2,3 kVA</option>
+                    <option>3,45 kVA</option>
+                    <option>4,6 kVA</option>
+                    <option>5,75 kVA</option>
+                    <option selected>6,9 kVA</option>
+                    <option>10,35 kVA</option>
+                    <option>13,8 kVA</option>
+                    <option>17,25 kVA</option>
+                    <option>20,7 kVA</option>
+                </select>
             </div>
-
-            <!-- Campo Variável (€/kWh) -->
-            <div style="display: flex; align-items: center;">
-              <label for="variavel" style="margin-right: 10px;">Simples (€/kWh):</label>
-              <input type="number" id="variavel" min="0" step="0.01" style="flex: 1; font-size: 18px; height: 10px;">
+    
+            <!-- Consumo -->
+            <div class="form-group">
+                <label for="consumo">Consumo (kWh)</label>
+                <input type="number" id="consumo" class="form-control" style="background-color: #FFC000;font-weight: bold;" value="250" min="0" />
             </div>
-
-            <!-- Botão de limpeza -->
-            <button id="btnLimpar" class="btn-limpar">
-              <i class="fa-solid fa-broom"></i>
-            </button>
         </div>
-        
-        <!-- Conteúdo Outras Opções (inicialmente oculto) -->
-<div id="conteudoOutrasOpcoes" class="conteudo-aba">
-    <div style="display: flex; align-items: center; gap: 2px;">
-        <input type="checkbox" id="mostrarNomes" style="margin: 0; padding: 0; width: 16px; height: 16px;">
-        <label for="mostrarNomes" style="margin: 4px;">Exibir nomes completos dos tarifários</label>
-    </div>
-    <div style="display: flex; align-items: center; gap: 2px;">     
-        <input type="checkbox" id="incluirACP" style="margin: 0; padding: 0; width: 16px; height: 16px;">
-        <label for="incluirACP" style="margin: 4px;">Incluir quota mensal no Goldenergy ACP</label>
-    </div>
-    <div style="display: flex; align-items: center; gap: 2px;">     
-        <input type="checkbox" id="incluirContinente" style="margin: 0; padding: 0; width: 16px; height: 16px;">
-        <label for="incluirContinente" style="margin: 4px;">Incluir desconto em Cartão Continente no tarifário Galp Continente</label>
-    </div>
-    <div style="display: flex; align-items: center; gap: 2px;">     
-        <input type="checkbox" id="incluirMeo" style="margin: 0; padding: 0; width: 16px; height: 16px;">
-        <label for="incluirMeo" style="margin: 4px;">Incluir desconto para clientes MEO no tarifário MEO</label>
-    </div>
-    <div style="display: flex; align-items: center; gap: 2px;">     
-        <input type="checkbox" id="restringir" style="margin: 0; padding: 0; width: 16px; height: 16px;">
-        <label for="restringir" style="margin: 4px;">Restringir aos tarifários do simulador Excel</label>
-    </div>
-    <div style="display: flex; align-items: center; gap: 2px;">     
-        <input type="checkbox" id="incluirEDP" style="margin: 0; padding: 0; width: 16px; height: 16px;">
-        <label for="restringir" style="margin: 4px;">Incluir desconto mensal de 10€ no EDP indexado</label>
-    </div>
-
-
-
-</div>
-
-    </div>
-</div>
-
-<div id="secaoDefinicoes" style="display: none;">
-    <div style="
-        position: relative;
-        margin-top: 40px; 
-        background-color: #e0e0e0;
-        border: 1px solid #bbb;
-        border-bottom-left-radius: 4px;
-        border-bottom-right-radius: 4px;
-        border-top-right-radius: 4px;
-        /* Aumentamos o padding direito para reservar espaço para o ícone */
-        padding: 10px 50px 10px 10px;">
-        
-        <!-- Aba superior esquerda com sua própria borda -->
-        <div style="
-            position: absolute;
-            top: -24px;
-            left: -.5px;
-            background-color: #e0e0e0;
-            padding: 5px 40px 2px 10px;
-            font-size: 14px;
-            font-weight: bold;
-            border: 1px solid #bbb;
-            border-bottom: none;
-            border-top-left-radius: 4px;
-            border-top-right-radius: 4px;">
-          Meu tarifário
+    
+        <!-- 4) div3: esconde à partida, e dentro vem os dois botões + campos -->
+        <div class="div3 hidden">
+            <!-- 4.1) botões OMIE + Calendário -->
+            <div class="switch-buttons">
+                <button id="btnShowOmie" class="btn-icon" title="OMIE (€/kWh)">
+                    <img src="omie-logo.png" alt="OMIE" />
+                </button>
+                <button id="btnShowCalendar" class="btn-icon" title="Intervalo de datas">
+                    <i class="fa-solid fa-calendar-days"></i>
+                </button>
+                <button id="btnClearForms" class="btn-limpar-inline" title="Limpar OMIE / Intervalo de datas">
+                    <i class="fa-solid fa-broom"></i>
+                </button>
+            </div>
         </div>
-        
-        <!-- Campo Fixo (€/dia) -->
-        <div style="display: flex; align-items: center; margin-bottom: 5px;">
-          <label for="fixo" style="margin-right: 10px;">Potência (€/dia):</label>
-          <input type="number" id="fixo" min="0" step="0.01" style="flex: 1; font-size: 18px; height: 10px;">
+            
+        <!-- 4) div4: painel OMIE -->
+        <div class="div4 hidden">
+            <div id="omieField" class="form-group">
+                <label for="omieInput">OMIE (€/kWh)</label>
+                <input type="number" id="omieInput" class="form-control" step="0.0001" />
+            </div>
         </div>
-        
-        <!-- Campo Variável (€/kWh) -->
-        <div style="display: flex; align-items: center;">
-          <label for="variavel" style="margin-right: 10px;">Simples (€/kWh):</label>
-          <input type="number" id="variavel" min="0" step="0.01" style="flex: 1; font-size: 18px; height: 10px;">
+
+        <!-- 5) div5: painel Datas -->
+        <div class="div5 hidden" id="dateRangeFields">
+            <div class="date-cell form-group">
+                <label for="startDate">Data Início</label>
+                <input type="date" id="startDate" class="form-control" min="2025-01-01" max="2025-12-31" />
+            </div>
+            <div class="date-cell form-group">
+                <label for="endDate">Data Fim</label>
+                <input type="date" id="endDate"   class="form-control" min="2025-01-01" max="2025-12-31" />
+            </div>
         </div>
+
         
-        <!-- Botão de limpeza com ícone de vassoura -->
-        <button id="btnLimpar" style="
-        position: absolute;
-        bottom: 10px;
-        right: 10px;
-        width: 30px;
-        height: 30px;
-        border: 1px solid #bbb;
-        border-radius: 4px;
-        background-color: #fff;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;">
-        <!-- Ícone de vassoura com um toque diferenciado -->
-        <i class="fa-solid fa-broom" style="font-size: 20px; color: #333; transform: rotate(-10deg);"></i>
+        <button id="btnDefinicoes" class="btn-icon" title="Meu tarifário / Outras opções" data-target="secaoDefinicoes"
+            style="width:50px;height:30px;border:1px solid #ccc;border-radius:5px;
+                                                 display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;">
+            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+            <i class="fa-solid fa-bars    burger-icon"></i>
         </button>
     </div>
-  </div>
-  
       
 
 
-    <div id="resultado"></div>   
-
-    <div id="listaTarifarios"></div>
+   
+    
+    
+    
+        <div id="secaoDefinicoes" style="display: none;">
+            <div style="
+                    position: relative;
+                    margin-top: 10px; 
+                    background-color: #e0e0e0;
+                    border: 1px solid #bbb;
+                    border-bottom-left-radius: 8px;
+                    border-top-left-radius: 8px;
+                    border-bottom-right-radius: 8px;
+                    border-top-right-radius: 8px;
+                    padding: 10px 50px 10px 10px;">
+        
+                <!-- Abas lado a lado -->
+                <div style="display: flex;">
+                    <div id="abaMeuTarifario" class="aba ativa">Meu tarifário</div>
+                    <div id="abaOutrasOpcoes" class="aba">Outras opções</div>
+                </div>
+        
+                <!-- Conteúdo Meu Tarifário -->
+                <div id="conteudoMeuTarifario" class="conteudo-aba ativa">
+                    <!-- novo: container com 2 colunas -->
+                    <div class="form-row-duas-colunas">
+                        <div class="form-group">
+                            <label for="fixo">Potência (€/dia)</label>
+                            <input type="number" id="fixo" class="form-control" min="0" step="0.01" />
+                        </div>
+                        <div class="form-group">
+                            <label for="variavel">Simples (€/kWh)</label>
+                            <input type="number" id="variavel" class="form-control" min="0" step="0.01" />
+                        </div>
+                    </div>
+        
+                    <!-- Botão de limpeza -->
+                    <button id="btnLimpar" class="btn-limpar" title="Limpar Meu tarifário">
+                        <i class="fa-solid fa-broom"></i>
+                    </button>
+                </div>
+        
+                <!-- Conteúdo Outras Opções (inicialmente oculto) -->
+                <div id="conteudoOutrasOpcoes" class="conteudo-aba">
+                    <div style="display: flex; align-items: center; gap: 2px;">
+                        <input type="checkbox" id="mostrarNomes" style="margin: 0; padding: 0; width: 16px; height: 16px;">
+                        <label for="mostrarNomes" style="margin: 4px;">Exibir nomes completos dos tarifários</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 2px;">
+                        <input type="checkbox" id="incluirACP" style="margin: 0; padding: 0; width: 16px; height: 16px;">
+                        <label for="incluirACP" style="margin: 4px;">Incluir quota mensal no Goldenergy ACP</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 2px;">
+                        <input type="checkbox" id="incluirContinente" style="margin: 0; padding: 0; width: 16px; height: 16px;">
+                        <label for="incluirContinente" style="margin: 4px;">Incluir desconto em Cartão Continente no
+                            tarifário Galp Continente</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 2px;">
+                        <input type="checkbox" id="incluirMeo" style="margin: 0; padding: 0; width: 16px; height: 16px;">
+                        <label for="incluirMeo" style="margin: 4px;">Incluir desconto para clientes MEO no tarifário
+                            MEO</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 2px;">
+                        <input type="checkbox" id="restringir" style="margin: 0; padding: 0; width: 16px; height: 16px;">
+                        <label for="restringir" style="margin: 4px;">Restringir aos tarifários do simulador Excel</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 2px;">
+                        <input type="checkbox" id="incluirEDP" style="margin: 0; padding: 0; width: 16px; height: 16px;">
+                        <label for="restringir" style="margin: 4px;">Incluir desconto mensal de 10€ no EDP indexado</label>
+                    </div>
+        
+        
+        
+                </div>
+        
+            </div>
+        </div>
+        
 
         
-      
-
-      <!-- Caixa de título com cantos arredondados -->
-<div style="
-background-color: #f3e29f;
-padding: 12px;
-font-family: sans-serif;
-text-align: center;
-border-radius: 12px;
-margin-bottom: 0px;
-box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-
-<div style="font-weight: bold; font-size: 16px;">Preços OMIE em €/MWh</div>
-<div style="font-size: 14px; font-style: italic;">(corrigidos para a hora portuguesa)</div>
-<div style="font-weight: bold; font-size: 16px;">
-   Valor médio do ciclo mensal até cada data
-</div>
-</div>
-
-<!-- Gráfico -->
-<div style="position: relative; padding-top: 56.25%; height: 0; overflow: hidden;">
-<iframe 
-  src="gs/grafico_omie_plotly.html"
-  title="OMIE e Projeção"
-  style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;">
-</iframe>
-</div>
-
-<div style="text-align: center; margin-top: 20px;">
-    <!-- Botão para baixar Excel -->
-    <a href="https://docs.google.com/spreadsheets/d/1PhbpG35wn4aF4XA-FQHKgowr3iCvEprp/export?format=xlsx" class="botao-excel">📥 Descarregar Excel</a>
-    
-    <!-- Botão para abrir Google Sheets -->
-    <a href="https://docs.google.com/spreadsheets/d/1PhbpG35wn4aF4XA-FQHKgowr3iCvEprp" target="_blank" class="botao-sheet">📂 Abrir Google Sheets</a>
-</div>
-  
-    <footer style="text-align: center; margin-top: 30px; font-size: 14px; color: #666;">
-    <div>
-        <a href="https://www.youtube.com/@oscarfelgueiras8837" target="_blank" style="text-decoration: none; margin-right: 15px;">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg" alt="YouTube" style="height: 25px;">
-        </a>
-        <a href="https://x.com/ofelgueiras2" target="_blank" style="text-decoration: none;">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/2/21/1690643591twitter-x-logo-png.webp" alt="X (Twitter)" style="height: 25px;">
-        </a>
-    </div>
-    <div style="margin-top: 10px;">
-        <img src="https://ofelgueiras2.github.io/favicon-32x32.png" alt="Ícone de Óscar Felgueiras" style="width: 32px; height: 32px; border-radius: 50%; vertical-align: middle;">
-        <span style="margin-left: 8px;">© 2025 Óscar Felgueiras</span>
-    </div>
-</footer>
-    
-    <script src="script.js"></script>
-</body>
-</html>
+        
+        
+        <div id="resultado"></div>
+        
+        <div id="listaTarifarios"></div>
+        
+        
+        
+        
+        <!-- Caixa de título com cantos arredondados -->
+        <div style="
+        background-color: #f3e29f;
+        padding: 12px;
+        font-family: sans-serif;
+        text-align: center;
+        border-radius: 12px;
+        margin-bottom: 0px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        
+            <div style="font-weight: bold; font-size: 16px;">Preços OMIE em €/MWh</div>
+            <div style="font-size: 14px; font-style: italic;">(corrigidos para a hora portuguesa)</div>
+            <div style="font-weight: bold; font-size: 16px;">
+                Valor médio do ciclo mensal até cada data
+            </div>
+        </div>
+        
+        <!-- Gráfico -->
+        <div style="position: relative; padding-top: 56.25%; height: 0; overflow: hidden;">
+            <iframe src="gs/grafico_omie_plotly.html" title="OMIE e Projeção"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;">
+            </iframe>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <!-- Botão para baixar Excel -->
+            <a href="https://docs.google.com/spreadsheets/d/1PhbpG35wn4aF4XA-FQHKgowr3iCvEprp/export?format=xlsx"
+                class="botao-excel">📥 Descarregar Excel</a>
+        
+            <!-- Botão para abrir Google Sheets -->
+            <a href="https://docs.google.com/spreadsheets/d/1PhbpG35wn4aF4XA-FQHKgowr3iCvEprp" target="_blank"
+                class="botao-sheet">📂 Abrir Google Sheets</a>
+        </div>
+        
+        <footer style="text-align: center; margin-top: 30px; font-size: 14px; color: #666;">
+            <div>
+                <a href="https://www.youtube.com/@oscarfelgueiras8837" target="_blank"
+                    style="text-decoration: none; margin-right: 15px;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg" alt="YouTube"
+                        style="height: 25px;">
+                </a>
+                <a href="https://x.com/ofelgueiras2" target="_blank" style="text-decoration: none;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/21/1690643591twitter-x-logo-png.webp"
+                        alt="X (Twitter)" style="height: 25px;">
+                </a>
+            </div>
+            <div style="margin-top: 10px;">
+                <img src="https://ofelgueiras2.github.io/favicon-32x32.png" alt="Ícone de Óscar Felgueiras"
+                    style="width: 32px; height: 32px; border-radius: 50%; vertical-align: middle;">
+                <span style="margin-left: 8px;">© 2025 Óscar Felgueiras</span>
+            </div>
+        </footer>
+        
+        <script src="script.js"></script>
+        </body>
+        
+        </html>
