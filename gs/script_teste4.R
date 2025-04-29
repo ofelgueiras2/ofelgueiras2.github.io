@@ -132,22 +132,38 @@ csv_date0
 url2=paste0("https://datahub.ren.pt/service/download/csv/1534?startDateString=",csv_date0,"&endDateString=",
 page_date,"&culture=pt-PT")
 url2
-dados_csv2 <- read_delim(
-  url2, 
-  delim = ";", 
-  skip = 2,
-  locale = locale(decimal_mark = ","),
-  show_col_types = FALSE
-)
-# Remover a coluna Espanha e converter nomes
-dados_csv2 <- dados_csv2 %>%
-  select(Data, Hora, Portugal) %>%
-  rename(Preço = Portugal) %>%
-  mutate(
-    Data = as.Date(Data),         # já vem em yyyy-mm-dd
-    Hora = as.integer(Hora),
-    Preço = as.numeric(Preço)
+
+dados_csv2 <- tryCatch({
+  
+  # tentativa de ler e processar CSV
+  read_delim(
+    url2,
+    delim = ";",
+    skip = 2,
+    locale = locale(decimal_mark = ","),
+    show_col_types = FALSE
+  ) %>%
+    select(Data, Hora, Portugal) %>%
+    rename(Preço = Portugal) %>%
+    mutate(
+      Data  = as.Date(Data),
+      Hora  = as.integer(Hora),
+      Preço = as.numeric(Preço)
+    )
+  
+}, error = function(e) {
+  
+  # mensagem de warning (opcional)
+  warning("Falha ao ler CSV em ", url2, ":\n  ", e$message)
+  
+  # tibble vazio com as mesmas colunas
+  tibble(
+    Data  = as.Date(character()),
+    Hora  = integer(),
+    Preço = double()
   )
+})                      
+                  
 
 # Juntar os dados
 dados_parquet <- bind_rows(df_old, dados_csv2)
