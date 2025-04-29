@@ -12,7 +12,10 @@ const tabelas = {
     strDias: { inicio: "AU14", fim: "AU32" },
     Ciclos: { inicio: "AV5", fim: "BC1" },
     TData: { inicio: "AV2", fim: "AV35041" },
-    Tudo: { inicio: "AV2", fim: "BC35041" },
+    TBTN_A: { inicio: "AZ2", fim: "AZ35041" },
+    TBTN_B: { inicio: "BA2", fim: "BA35041" },
+    TBTN_C: { inicio: "BB2", fim: "BB35041" },
+    TPreco: { inicio: "BC2", fim: "BC35041" },
     TBD: { inicio: "AW2", fim: "AW35041" },
     TBS: { inicio: "AW2", fim: "BC35041" },
     TPT: { inicio: "AY2", fim: "AY35041" },
@@ -81,18 +84,22 @@ const variaveis = {
 let sortField = "price";   // Valores possíveis: "default", "price", "tariff", "power", "simple"
 let sortDirection = "asc";     // "asc" ou "desc"
 
+// Armazena estado dos paineis
+let estadoOmieAberto = false;
+let estadoCalendarioAberto = false;
+  
+// Nova variável DataS
+let DataS = false;
+
+let esquemaAtual = "azul-vermelho"; // pode ser "azul-vermelho" ou "azul-creme-vermelho"
+
+
 function setSort(field, direction) {
     sortField = field;
     sortDirection = direction;
     atualizarResultados();
 }
 
-
-
-// Obter referências aos elementos do botão e da seção
-const btnDefinicoes = document.getElementById('btnDefinicoes');
-const arrowIcon = document.getElementById('arrowIcon');
-const secao = document.getElementById("secaoDefinicoes");
 
 // 🔹 Função para converter referência A1 para índices numéricos (linha e coluna)
 function converterReferencia(ref) {
@@ -218,20 +225,7 @@ function atualizarResultados() {
     let incluirContinente = document.getElementById("incluirContinente").checked;
     let incluirMeo = document.getElementById("incluirMeo").checked;
     let restringir = document.getElementById("restringir").checked;
-    let incluirEDP = document.getElementById("incluirEDP").checked;
-
-    const mesSelecionadoIndex = document.getElementById("mesSelecionado").selectedIndex;
-    
-    let diasInput = document.getElementById("dias").value.trim();
-    diasInput = diasInput === "" ? NaN : parseFloat(diasInput.replace(",", "."));
-    const diasMesesTabela = obterTabela("diasMeses")?.flat() || [];
-    const strDiasTabela = obterTabela("strDias")?.flat() || [];
-    let diasS = !isNaN(diasInput) ? diasInput : parseFloat(diasMesesTabela[mesSelecionadoIndex]);
-    console.log(`🔎 diasS determinado: ${diasS}`);
-    console.log(`🔎 diasInput determinado: ${diasInput}`);
-    let strDiasSimples = (!isNaN(diasInput) ? String(diasS) : (strDiasTabela[mesSelecionadoIndex]));
-    console.log(`🔎 strDias determinado: ${strDiasTabela[mesSelecionadoIndex]}`);
-    console.log(`🔎 strDiasSimples determinado: ${strDiasSimples}`);
+    let incluirEDP = document.getElementById("incluirEDP").checked;    
 
     const potencias = obterTabela("kVAs")?.map(row => row[0]) || [];
     console.log("🔍 Conteúdo de potencias:", potencias);
@@ -248,6 +242,52 @@ function atualizarResultados() {
         console.error("Erro ao carregar tarifários.");
         return;
     }
+    // extrai número da string "X,XX kVA"
+    const potenciaNum = parseFloat(
+        potenciaSelecionada
+         .replace(" kVA", "")
+         .replace(",", ".")
+        );
+
+    const diasMesesTabela = obterTabela("diasMeses")?.flat() || [];
+    const strDiasTabela = obterTabela("strDias")?.flat() || [];
+
+    const mesSelecionadoIndex = document.getElementById("mesSelecionado").selectedIndex;
+
+    let diasS;
+    let strDiasSimples;
+
+    if (DataS) {
+        const dataInicio = new Date(startDate.value);
+        const dataFim = new Date(endDate.value);
+
+        if (!isNaN(dataInicio) && !isNaN(dataFim)) {
+            const diffMs = dataFim - dataInicio;
+            diasS = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+            strDiasSimples = `${diasS}`;
+            console.log(`🔎 DataS = true: diasS calculado = ${diasS}`);
+        } else {
+            console.warn("❗ Datas inválidas mesmo com DataS true — fallback para mês selecionado.");
+            diasS = parseFloat(diasMesesTabela[mesSelecionadoIndex]) || 30;
+            strDiasSimples = strDiasTabela[mesSelecionadoIndex] || "30";
+        }
+    } else {
+        let diasInput = document.getElementById("dias").value.trim();
+        diasInput = diasInput === "" ? NaN : parseFloat(diasInput.replace(",", "."));
+
+        if (!isNaN(diasInput)) {
+            diasS = diasInput;
+            strDiasSimples = String(diasS);
+        } else {
+            diasS = parseFloat(diasMesesTabela[mesSelecionadoIndex]) || 30;
+            strDiasSimples = strDiasTabela[mesSelecionadoIndex] || "30";
+        }       
+
+        console.log(`🔎 DataS = false: diasS = ${diasS}`);
+    }
+
+    console.log(`✅ diasS final: ${diasS}, strDiasSimples: ${strDiasSimples}`);
+
     
     let IVABaseSimples = parseFloat(obterVariavel("IVABase").replace("%", "")) / 100 || 0;
     let AudiovisualS = parseFloat(obterVariavel("Audiovisual").replace("€", "").replace(",", ".").trim()) || 0;
@@ -261,6 +301,7 @@ function atualizarResultados() {
     let IVAPromocionalS = parseFloat(obterVariavel("IVAPromocional").replace("%", "")) / 100 || 0;
     let FTSS = parseFloat(obterVariavel("FTS").replace("€", "").replace(",", ".").trim()) || 0;
     let TARSimplesS = parseFloat(obterVariavel("TARSimples").replace("€", "").replace(",", ".").trim()) || 0;
+    let MedioS = parseFloat(obterVariavel("Medio")) || 0;
     let luzboaCGSS = parseFloat(obterVariavel("luzboaCGS")) || 0;
     let luzboaFAS = parseFloat(obterVariavel("luzboaFA")) || 0;
     let luzboaKS = parseFloat(obterVariavel("luzboaK")) || 0;
@@ -283,9 +324,134 @@ function atualizarResultados() {
     let EDPK1S = parseFloat(obterVariavel("EDPK1")) || 0;
     let EDPK2S = parseFloat(obterVariavel("EDPK2")) || 0;
     
-    let OMIESSelecionadoS = OMIES[mesSelecionadoIndex]?.[0] || 0;
-    let PerdasSelecionadoS = PerdasS[mesSelecionadoIndex]?.[0] || 0;
+    // já tens as variáveis mesSelecionadoIndex, OMIES, DataS, startDate, endDate disponíveis dentro de atualizarResultados()
+
     
+
+    let OMIESSelecionadoS;
+    let PerdasSelecionadoS;
+    let dataInicio, dataFim;
+    let tudoTabela, tudoTPT, tDataTabela;
+    let tBtnA, tBtnB, tBtnC;
+
+    if (!DataS) {
+        OMIESSelecionadoS  = OMIES[mesSelecionadoIndex]?.[0]  || 0;
+        PerdasSelecionadoS = PerdasS[mesSelecionadoIndex]?.[0] || 0;
+      } else {
+        dataInicio   = new Date(startDate.value);
+        dataFim      = new Date(endDate.value);
+        tudoTabela   = obterTabela("TPreco").map(r => parseFloat(r[0]));
+        tudoTPT      = obterTabela("TPT").map(r => parseFloat(r[0]));
+        tDataTabela  = obterTabela("TData").map(raw => {
+          if (!raw[0]) return new Date("Invalid Date");
+          const [d, m, a] = raw[0].split('/');
+          return new Date(`${a}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
+        });
+
+        // Acumuladores para OMIES
+        let somaOMIES = 0, contaOMIES = 0;
+        // Acumuladores para Perdas
+        let somaPerdas = 0, contaPerdas = 0;
+
+        for (let i = 0; i < tDataTabela.length; i++) {
+            if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
+                somaOMIES += tudoTabela[i];
+                contaOMIES++;
+                somaPerdas += tudoTPT[i];
+                contaPerdas++;
+            }
+        }
+
+        // Média e tratamento de divisão por zero — espelhando o /1000 e toFixed(5)
+        OMIESSelecionadoS = contaOMIES > 0
+            ? +(somaOMIES / contaOMIES / 1000).toFixed(5)
+            : (OMIES[mesSelecionadoIndex]?.[0] || 0);
+
+        PerdasSelecionadoS = contaPerdas > 0
+            ? +(somaPerdas / contaPerdas).toFixed(5)
+            : (PerdasS[mesSelecionadoIndex]?.[0] || 0);
+    }
+
+    console.log("🔎 OMIESSelecionadoS atualizado:", OMIESSelecionadoS);
+    console.log("🔎 PerdasSelecionadoS atualizado:", PerdasSelecionadoS);
+
+    let U3;
+
+    if (DataS) {
+        // carrega a coluna TBTN_C
+        tBtnC = obterTabela("TBTN_C")
+            .map(row => parseFloat(row[0]));
+
+        // soma só os valores entre as datas
+        let somaBtn = 0;
+        for (let i = 0; i < tDataTabela.length; i++) {
+            if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
+                somaBtn += tBtnC[i];
+            }
+        }
+
+        // equivale ao SE(Data_S="Sim"; Consumo_Simples/SOMA(...) * 1000; "")
+        U3 = somaBtn > 0
+            ? consumo / somaBtn * 1000
+            : 0;            // ou outro fallback que faz sentido pra ti
+
+    } else {
+        U3 = "";            // DataS = false → retorna string vazia como no Excel
+    }
+
+    console.log("Valor de U3:", U3);
+
+    let PerfilS;
+
+    try {
+        // equivalente a SE(potenciaNum>13.8;"BTN A";SE(U3>=7140;"BTN B";"BTN C"))
+        if (potenciaNum > 13.8) {
+            PerfilS = "BTN A";
+        } else if (U3 >= 7140) {
+            PerfilS = "BTN B";
+        } else {
+            PerfilS = "BTN C";
+        }
+    }
+    catch (e) {
+        // SE.ERRO → em qualquer erro durante a comparação, cai aqui
+        PerfilS = "BTN C";
+    }
+
+    
+    console.log("🔎 PerfilS:", PerfilS);
+
+    let PerfilM_S;
+
+    if (DataS) {
+        let somaBtns = 0;
+        let contaBtns = 0;
+
+        for (let i = 0; i < tDataTabela.length; i++) {
+            if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
+                // escolhe o valor de TBTN_X conforme o PerfilS
+                const btnVal =
+                    PerfilS === "BTN A" ? tBtnA[i] :
+                        PerfilS === "BTN B" ? tBtnB[i] :
+                            tBtnC[i];
+
+                somaBtns += btnVal;
+                contaBtns++;
+            }
+        }
+
+        // média ou string vazia (""), tal como no Excel
+        PerfilM_S = contaBtns > 0
+            ? somaBtns / contaBtns
+            : "";
+    } else {
+        // DataS = false → mesmo comportamento do "" no Excel
+        PerfilM_S = "";
+    }
+
+    console.log("🔎 PerfilM_S:", PerfilM_S);
+
+
     const colIndex = potencias.indexOf(potenciaSelecionada);
     if (colIndex === -1) {
         throw new Error("Potência selecionada inválida.");
@@ -296,8 +462,17 @@ function atualizarResultados() {
     const luzigasFeeTabela = obterTabela("LuzigazFee")?.flat() || [];
     let luzigasFeeS = luzigasFeeTabela[colIndex] || "0";
     luzigasFeeS = parseFloat(luzigasFeeS.replace("€", "").replace(",", ".").trim()) || 0;
-    luzigasFeeS = parseFloat((luzigasFeeS * (1 + IVABaseSimples)).toFixed(2));
-
+    const multiplicador = DataS === true
+    ? diasS / MedioS // SE(DataS=true; diasS/MedioS; 1)
+    : 1;
+    luzigasFeeS = parseFloat(
+        (
+          luzigasFeeS
+          * multiplicador
+          * (1 + IVABaseSimples)
+        ).toFixed(2)
+      );
+    
     let IVAFixoS;
     console.log("Potência:", potenciaSelecionada, IVAFixoS, kVAsTarSocialS)
     if (kVAsTarSocialS.includes(potenciaSelecionada)) {
@@ -306,7 +481,15 @@ function atualizarResultados() {
         IVAFixoS = IVABaseSimples;
     }
     console.log("IVAFixoS:", IVAFixoS)
-    
+
+    console.log("OMIE:", OMIESSelecionadoS)
+    const omieInputValue = parseFloat(document.getElementById('omieInput')?.value);
+    if (!isNaN(omieInputValue)) {
+    OMIESSelecionadoS = omieInputValue;
+    }
+    console.log("OMIE:", OMIESSelecionadoS, omieInputValue, DataS)
+    console.log("potenciaNum:", potenciaNum)
+
     // --- Criação do array de tarifários a partir dos dados CSV ---
     // MODIFICAÇÃO 1: Marcação dos tarifários indexados (empresas entre C19 e C25)
     let tarifarios = nomesTarifarios
@@ -329,7 +512,41 @@ function atualizarResultados() {
         let simples;
 
         if (nome === "Luzboa indexado") {
-            simples = parseFloat(((OMIESSelecionadoS + luzboaCGSS) * (1 + PerdasSelecionadoS) * luzboaFAS + luzboaKS + TARSimplesS).toFixed(4)) + FTSS;
+            if (DataS) {
+                // Média do intervalo (com TPreço/tudoTabel a, TPT/tudoTPT, etc.)
+                let soma = 0, conta = 0;
+                for (let i = 0; i < tDataTabela.length; i++) {
+                    if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
+                        soma += (tudoTabela[i] / 1000 + luzboaCGSS)
+                              * luzboaFAS
+                              * (1 + tudoTPT[i])
+                              + luzboaKS;
+                        conta++;
+                    }
+                }
+        
+                if (conta > 0) {
+                    const media = soma / conta;
+                    simples = parseFloat((media + TARSimplesS).toFixed(4)) + FTSS;
+                } else {
+                    // fallback para simples padrão
+                    const base = (OMIESSelecionadoS + luzboaCGSS)
+                               * (1 + PerdasSelecionadoS)
+                               * luzboaFAS
+                               + luzboaKS
+                               + TARSimplesS;
+                    simples = parseFloat(base.toFixed(4)) + FTSS;
+                }
+        
+            } else {
+                // DataS === false: apenas o cálculo simples
+                const base = (OMIESSelecionadoS + luzboaCGSS)
+                           * (1 + PerdasSelecionadoS)
+                           * luzboaFAS
+                           + luzboaKS
+                           + TARSimplesS;
+                simples = parseFloat(base.toFixed(4)) + FTSS;
+            }   
         } else if (nome === "Ibelectra indexado") {
             simples = parseFloat(((OMIESSelecionadoS + ibelectraCSS) * (1 + perdas2024S) + ibelectraKS + TARSimplesS).toFixed(5)) + FTSS;
         } else if (nome.startsWith("Luzigás Energy 8.8")) {
@@ -337,12 +554,149 @@ function atualizarResultados() {
         } else if (nome === "EDP indexado") {
             simples = parseFloat((OMIESSelecionadoS * EDPK1S + EDPK2S + TARSimplesS).toFixed(4));
         } else if (nome === "Repsol indexado") {
-            simples = parseFloat((OMIESSelecionadoS * (1 + PerdasSelecionadoS) * repsolFAS + repsolQTarifaS + TARSimplesS).toFixed(6)) + FTSS;
+            if (DataS) {
+              // 1) soma os valores só no intervalo
+              let soma = 0, conta = 0;
+              for (let i = 0; i < tDataTabela.length; i++) {
+                if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
+                  // escolhe o TBTN_X correto conforme PerfilS
+                  const fatorBtn = 
+                    PerfilS === "BTN A" ? tBtnA[i] :
+                    PerfilS === "BTN B" ? tBtnB[i] :
+                                         tBtnC[i];
+          
+                  // (TPreço/1000*(1+TPT)*RepsolFA + RepsolQTarifa) * fatorBtn
+                  const valor = 
+                    (tudoTabela[i] / 1000 * (1 + tudoTPT[i]) * repsolFAS
+                      + repsolQTarifaS)
+                    * fatorBtn;
+          
+                  soma += valor;
+                  conta++;
+                }
+              }
+          
+              if (conta > 0) {
+                // 2) calcula a média e divide por PerfilM_S
+                const media = soma / conta / PerfilM_S;
+                // 3) arredonda a 6 casas e adiciona TARSimplesS e FTSS
+                simples = parseFloat((media + TARSimplesS).toFixed(6)) + FTSS;
+              } else {
+                // fallback idêntico ao “simples” quando não há dados no intervalo
+                const base = 
+                  OMIESSelecionadoS * (1 + PerdasSelecionadoS) * repsolFAS
+                  + repsolQTarifaS
+                  + TARSimplesS;
+                simples = parseFloat(base.toFixed(6)) + FTSS;
+              }
+          
+            } else {
+              // DataS === false → sempre o cálculo simples
+              const base =
+                OMIESSelecionadoS * (1 + PerdasSelecionadoS) * repsolFAS
+                + repsolQTarifaS
+                + TARSimplesS;
+              simples = parseFloat(base.toFixed(6)) + FTSS;
+            }
         } else if (nome === "Coopérnico") {
-            simples = parseFloat(((OMIESSelecionadoS + coopernicoCGSS + coopernicoKS) * (1 + PerdasSelecionadoS) + TARSimplesS).toFixed(6)) + FTSS;
+            if (DataS) {
+              // 1) Calcula soma e conta dos valores no intervalo
+              let soma = 0, conta = 0;
+              for (let i = 0; i < tDataTabela.length; i++) {
+                if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
+                  // escolhe o TBTN_X correto segundo o PerfilS
+                  const fatorBtn =
+                    PerfilS === "BTN A" ? tBtnA[i] :
+                    PerfilS === "BTN B" ? tBtnB[i] :
+                                          tBtnC[i];
+          
+                  // ((TPreço/1000 + CoopernicoCGS + CoopernicoK) * (1+TPT)) * fatorBtn
+                  const valor =
+                    (tudoTabela[i] / 1000
+                     + coopernicoCGSS
+                     + coopernicoKS)
+                    * (1 + tudoTPT[i])
+                    * fatorBtn;
+          
+                  soma += valor;
+                  conta++;
+                }
+              }
+          
+              if (conta > 0) {
+                // 2) média normalizada por PerfilM_S
+                const media = soma / conta / PerfilM_S;
+                // 3) arredonda a 6 casas, soma TARSimplesS antes do .toFixed e FTSS depois
+                simples = parseFloat((media + TARSimplesS).toFixed(6)) + FTSS;
+              } else {
+                // fallback “simples” quando não houver dados no intervalo
+                simples = parseFloat(
+                  (
+                    (OMIESSelecionadoS + coopernicoCGSS + coopernicoKS)
+                    * (1 + PerdasSelecionadoS)
+                    + TARSimplesS
+                  ).toFixed(6)
+                ) + FTSS;
+              }
+          
+            } else {
+              // DataS = false → sempre o cálculo simples de fallback
+              simples = parseFloat(
+                (
+                  (OMIESSelecionadoS + coopernicoCGSS + coopernicoKS)
+                  * (1 + PerdasSelecionadoS)
+                  + TARSimplesS
+                ).toFixed(6)
+              ) + FTSS;
+            }
         } else if (nome === "Plenitude indexado") {
-            simples = parseFloat(((OMIESSelecionadoS + plenitudeCGSS + plenitudeGDOSS) * (1 + PerdasSelecionadoS) 
-            + plenitudeFeeS + TARSimplesS).toFixed(4));
+            if (DataS) {
+              // 1) calculo da soma ponderada no intervalo
+              let soma = 0, conta = 0;
+              for (let i = 0; i < tDataTabela.length; i++) {
+                if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
+                  // escolhe o TBTN_X consoante o Perfil
+                  const fatorBtn =
+                    PerfilS === "BTN A" ? tBtnA[i] :
+                    PerfilS === "BTN B" ? tBtnB[i] :
+                                          tBtnC[i];
+          
+                  // ((TPreço/1000 + CGS + GDOs) * (1+TPT) + Fee)
+                  const componente =
+                    (tudoTabela[i] / 1000
+                      + plenitudeCGSS
+                      + plenitudeGDOSS)
+                    * (1 + tudoTPT[i])
+                    + plenitudeFeeS;
+          
+                  soma += componente * fatorBtn;
+                  conta++;
+                }
+              }
+          
+              if (conta > 0) {
+                // 2) média normalizada por PerfilM_S
+                const media = soma / conta / PerfilM_S;
+                // 3) arredonda a 4 decimais e soma TARSimplesS
+                simples = parseFloat((media + TARSimplesS).toFixed(4));
+              } else {
+                // fallback: cálculo simples igual ao Excel + TARSimplesS
+                const base =
+                  (OMIESSelecionadoS + plenitudeCGSS + plenitudeGDOSS)
+                  * (1 + PerdasSelecionadoS)
+                  + plenitudeFeeS;
+                simples = parseFloat((base + TARSimplesS).toFixed(4));
+              }
+          
+            } else {
+              // DataS = false → sempre o simples de fallback + TARSimplesS
+              const base =
+                (OMIESSelecionadoS + plenitudeCGSS + plenitudeGDOSS)
+                * (1 + PerdasSelecionadoS)
+                + plenitudeFeeS;
+              simples = parseFloat((base + TARSimplesS).toFixed(4));
+            }
+          
             console.log("Plenitude indexado:", simples);
         } else {                            
             simples = parseFloat(tarifariosDados[i]?.[colSimples]) || 0;
@@ -355,12 +709,6 @@ function atualizarResultados() {
         // —> só aplica desconto se o usuário marcou EDP e potência ≥ 3,45 kVA
         let descontoEDP = 0;
         if (incluirEDP) {
-        // extrai número da string "X,XX kVA"
-        const potenciaNum = parseFloat(
-        potenciaSelecionada
-         .replace(" kVA", "")
-         .replace(",", ".")
-        );
         if (potenciaNum >= 3.45) {
         descontoEDP = -10;  // valor original do desconto
         }
@@ -383,11 +731,11 @@ function atualizarResultados() {
         if (nome.startsWith("Goldenergy ACP")) {
             custo += precoACPS;
         }
-        
+
         if (nome.startsWith("Goldenergy")) {
             custo += consumo * FTSS * (1 + IVABaseSimples);
         }
-        
+
         if (nome === "Repsol"  || nome === "G9") {
             custo += (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
             Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS)) * FTSS;
@@ -518,27 +866,76 @@ function atualizarResultados() {
         const maxSimples = Math.max(...tarifarios.map(t => t.simples));
         const minCusto = Math.min(...tarifarios.map(t => t.custo));
         const maxCusto = Math.max(...tarifarios.map(t => t.custo));
+
+        // dentro de calcularPreco(), antes de montar tabelaResultados:
+        const iconColor = esquemaAtual === "azul-vermelho"
+        ? "#FFFFFF"
+        : "#FFF6E5";
+
+        // LOGO NO INÍCIO DE calcularPreco, antes de montar tabelaResultados:
+        const headerPrimary = esquemaAtual === "azul-creme-vermelho" ? "#003D77" : "#00B050";
+        // — o “verde de cima” passa a azul escuro ou fica o verde original
+
+        const headerSecondary = esquemaAtual === "azul-creme-vermelho" ? "#007A1E" : "#375623";
+        // — a linha que era escura (o fundo do botão + Consumo) passa a este tom de azul ou ao original
+
+        const consumoBg = esquemaAtual === "azul-creme-vermelho" ? "#F0B000" : "#FFC000";
+        // — o laranja original (FFC000) passa a amarelo suave (FFFF66)
+
     
+        // Funções auxiliares
         function calcularCor(valor, min, max) {
-            const corMin = [90, 138, 198];
-            const corMed = [252, 252, 255];
-            const corMax = [248, 105, 107];
+            if (min === max) {
+                return "rgb(255, 255, 255)"; // evita divisões por zero
+            }
+        
+            let t = (valor - min) / (max - min); // normalizar para [0,1]
+        
+            let corMin, corMed, corMax;
+        
+            if (esquemaAtual === "azul-creme-vermelho") {
+                corMin = [90, 138, 198];     // Azul médio
+                corMed = [255, 246, 229];    // Creme
+                corMax = [248, 106, 108];    // Coral suave
+            } else {
+                corMin = [90, 138, 198];     // Azul médio
+                corMed = [252, 252, 255];    // Branco azulado
+                corMax = [248, 105, 107];    // Coral avermelhado
+            }
+        
             let corFinal;
-            if (valor <= (min + max) / 2) {
-                const percent = (valor - min) / (((min + max) / 2) - min || 1);
+            if (t <= 0.5) {
+                let percent = t * 2;
                 corFinal = corMin.map((c, i) => Math.round(c + percent * (corMed[i] - c)));
             } else {
-                const percent = (valor - ((min + max) / 2)) / (max - ((min + max) / 2) || 1);
+                let percent = (t - 0.5) * 2;
                 corFinal = corMed.map((c, i) => Math.round(c + percent * (corMax[i] - c)));
             }
+        
             return `rgb(${corFinal[0]}, ${corFinal[1]}, ${corFinal[2]})`;
         }
+        
+        
+
     
         
         let tabelaResultados = `<table>
-        <tr>
-          <th colspan="3" rowspan="2" style="background-color:#375623; color:white; text-align:center; vertical-align:middle; position:relative;
+        <tr> 
+          <th colspan="3" rowspan="2" 
+               style="background-color:${headerSecondary}; color:white; text-align:center; vertical-align:middle; position:relative;
           font-weight: normal;line-height:1;">
+            <button id="btnEsquema" style="position:absolute;top:5px;left:5px;
+            width: 30px;      /* nova largura */
+            height: 30px;     /* altura igual */
+            padding: 0;       /* sem espaço interior */
+            text-align:center;background:none;border:none;cursor:pointer;">
+            <i id="iconeRaio"
+            class="fa-solid fa-bolt" title="Alterar cores"
+            style="color:${iconColor}; font-size:20px; transition: color .3s;">
+            </i>
+
+            </button>
+
             <div style="font-weight: bold;margin-top: 15px;margin-bottom: 10px;">Potência contratada ${potenciaSelecionada}</div>
             <br>
             <div style="font-size: 14px;margin-bottom: -10px;">${strDiasSimples} dia${(typeof diasS === 'number' && diasS !== 1 ? 's' : '')}</div>
@@ -549,39 +946,39 @@ function atualizarResultados() {
               <span class="sort-arrow ${sortField==='default' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('default','desc')">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:#375623; color:white; text-align:center;">
+          <th style="background-color:${headerSecondary}; color:white; text-align:center;">
             Consumo (kWh)
           </th>
         </tr>
 
         <tr>
-          <td style="background-color:#FFC000; font-weight:bold; color:black; text-align:center;">
+          <td style="background-color:${consumoBg}; font-weight:bold; color:black; text-align:center;">
             ${consumo || 0}
           </td>
         </tr>
         <tr>
-          <th style="background-color:#00B050; font-weight:bold; color:white; text-align:center; position:relative;">
+          <th style="background-color:${headerPrimary}; font-weight:bold; color:white; text-align:center; position:relative;">
             Tarifário
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='tariff' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('tariff','asc')">&#9650;</span>
               <span class="sort-arrow ${sortField==='tariff' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('tariff','desc')">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:#00B050; font-weight:bold; color:white; text-align:center; position:relative;">
+          <th style="background-color:${headerPrimary}; font-weight:bold; color:white; text-align:center; position:relative;">
             Potência (€/dia)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='power' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('power','asc')">&#9650;</span>
               <span class="sort-arrow ${sortField==='power' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('power','desc')">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:#00B050; font-weight:bold; color:white; text-align:center; position:relative;">
+          <th style="background-color:${headerPrimary}; font-weight:bold; color:white; text-align:center; position:relative;">
             Simples (€/kWh)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='simple' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('simple','asc')">&#9650;</span>
               <span class="sort-arrow ${sortField==='simple' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('simple','desc')">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:#00B050; font-weight:bold; color:white; text-align:center; position:relative;">
+          <th style="background-color:${headerPrimary}; font-weight:bold; color:white; text-align:center; position:relative;">
             Preço (€)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='price' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('price','asc')">&#9650;</span>
@@ -606,8 +1003,15 @@ function atualizarResultados() {
             // MODIFICAÇÃO 2: Se for "Meu tarifário" ou tarifário indexado, aplicar fundo amarelo
             let nomeStyle = "";
             if (tarifa.nome === "Meu tarifário") {
-                nomeStyle = "background-color:#FFC000; font-weight:bold; color:black;";
+                if (esquemaAtual === "azul-vermelho") {
+                  // o teu amarelo original
+                  nomeStyle = "background-color:#FFC000; font-weight:bold; color:black;";
+                } else {
+                  // quando estiver no esquema creme, usa um creme suave
+                  nomeStyle = "background-color:#F0B000; font-weight:bold; color:black;";
                 }
+            }
+              
             if (tarifa.isIndexado) {
                 nomeStyle = "background-color:#FFF2CC;";
                 if (tarifa.nome === "Repsol indexado" || tarifa.nome === "Coopérnico" || tarifa.nome === "Plenitude indexado" ||
@@ -628,6 +1032,42 @@ function atualizarResultados() {
     
         tabelaResultados += "</table>";
         document.getElementById("resultado").innerHTML = tabelaResultados;
+        // Agora que a tabela foi desenhada, o botão já existe — associar o evento!
+        document.getElementById("btnEsquema")?.addEventListener("click", () => {
+            // inverte o esquema
+            esquemaAtual = (esquemaAtual === "azul-vermelho")
+                ? "azul-creme-vermelho"
+                : "azul-vermelho";
+
+            // atualiza o ícone
+            const icone = document.getElementById("iconeRaio");
+            if (icone) {
+                icone.style.color = esquemaAtual === "azul-vermelho" ? "#FFFFFF" : "#FFF6E5";
+                icone.classList.add("pulsar");
+                setTimeout(() => icone.classList.remove("pulsar"), 600);
+            }
+
+            // **NOVO**: troca também as cores do select de potência e do input de consumo
+            const pot = document.getElementById("potenciac");
+            const con = document.getElementById("consumo");
+            if (esquemaAtual === "azul-creme-vermelho") {
+                pot.style.backgroundColor = "#007A1E";  // azul escuro
+                pot.style.color = "#FFFFFF";
+                con.style.backgroundColor = "#F0B000";  // creme
+                con.style.color = "#000000";
+            } else {
+                pot.style.backgroundColor = "#375623";  // verde original
+                pot.style.color = "#FFFFFF";
+                con.style.backgroundColor = "#FFC000";  // amarelo original
+                con.style.color = "#000000";
+            }
+
+            // finalmente, redesenha tudo com o novo esquema de heat-map
+            atualizarResultados();
+        });
+        
+        
+
     }
 }
 
@@ -637,6 +1077,7 @@ document.getElementById("consumo")?.addEventListener("input", atualizarResultado
 document.getElementById("potenciac")?.addEventListener("change", atualizarResultados);
 document.getElementById("fixo")?.addEventListener("input", atualizarResultados);
 document.getElementById("variavel")?.addEventListener("input", atualizarResultados);
+document.getElementById("omieInput")?.addEventListener("input", atualizarResultados);
 document.getElementById("mostrarNomes")?.addEventListener("change", atualizarResultados);
 document.getElementById("incluirACP")?.addEventListener("change", atualizarResultados);
 document.getElementById("incluirContinente")?.addEventListener("change", atualizarResultados);
@@ -647,6 +1088,26 @@ document.getElementById("incluirEDP")?.addEventListener("change", atualizarResul
 window.onload = async function () {
     console.log("🔄 Iniciando carregamento do CSV...");
     await carregarDadosCSV();
+    // depois de await carregarDadosCSV() e antes de atualizarResultados()
+    const pot = document.getElementById("potenciac");
+    const con = document.getElementById("consumo");
+    const esquema = esquemaAtual;  // "azul-vermelho" por defeito
+    if (pot && con) {
+        // repete o bloco de styling acima, sem o pulsar
+        if (esquema === "azul-creme-vermelho") {
+            pot.style.backgroundColor = "#007A1E";
+            pot.style.color = "#FFFFFF";
+            con.style.backgroundColor = "#FFF6E5";
+            con.style.color = "#000000";
+        } else {
+            pot.style.backgroundColor = "#375623";
+            pot.style.color = "#FFFFFF";
+            con.style.backgroundColor = "#FFC000";
+            con.style.color = "#000000";
+        }
+    }
+
+
     preencherSelecaoMeses();
     console.log("📊 Dados carregados! Atualizando interface...");
     atualizarResultados();
@@ -654,17 +1115,206 @@ window.onload = async function () {
     atualizarResultados()
 };
 
-btnDefinicoes.addEventListener("click", function() {
-    if (secao.style.display === "none" || secao.style.display === "") {
-      secao.style.display = "block";
-      arrowIcon.classList.remove('fa-chevron-down');
-      arrowIcon.classList.add('fa-chevron-up');
+
+// Listener isolado para botão Definições
+const btnDefinicoes = document.getElementById("btnDefinicoes");
+const secaoDefinicoes = document.getElementById(btnDefinicoes.dataset.target);
+const arrowDef = btnDefinicoes.querySelector(".arrow-icon");
+
+btnDefinicoes.addEventListener("click", () => {
+    const isHidden = secaoDefinicoes.style.display === "none" ||
+                     getComputedStyle(secaoDefinicoes).display === "none";
+
+    secaoDefinicoes.style.display = isHidden ? "block" : "none";
+    arrowDef.classList.toggle("fa-chevron-down", !isHidden);
+    arrowDef.classList.toggle("fa-chevron-up", isHidden);
+});
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    const btnDias = document.getElementById("btnDias");
+    const div3 = document.querySelector(".div3");
+    const div4 = document.querySelector(".div4");
+    const div5 = document.querySelector(".div5");
+  
+    const btnOmie = document.getElementById("btnShowOmie");
+    const btnCal = document.getElementById("btnShowCalendar");
+    const btnClear = document.getElementById("btnClearForms");
+  
+    const arrowDias = btnDias.querySelector(".arrow-icon");
+  
+    const omieInput = document.getElementById("omieInput");
+    const startDate = document.getElementById("startDate");
+    const endDate = document.getElementById("endDate");
+
+    document.getElementById("btnEsquema")?.addEventListener("click", () => {
+        esquemaAtual = (esquemaAtual === "azul-vermelho")
+          ? "azul-creme-vermelho"
+          : "azul-vermelho";
+      
+        // ícone
+        const icone = document.getElementById("iconeRaio");
+        if (icone) {
+          icone.style.color = esquemaAtual === "azul-vermelho" ? "#FFFFFF" : "#FFF6E5";
+          icone.classList.add("pulsar");
+          setTimeout(() => icone.classList.remove("pulsar"), 600);
+        }
+      
+        // **AQUI**: muda também o fundo e cor do select e input
+        const pot = document.getElementById("potenciac");
+        const con = document.getElementById("consumo");
+        if (pot && con) {
+          if (esquemaAtual === "azul-creme-vermelho") {
+            pot.style.backgroundColor = "#005A9C"; // azul escuro
+            pot.style.color           = "#FFFFFF";
+            con.style.backgroundColor = "#FFF6E5"; // creme
+            con.style.color           = "#000000";
+          } else {
+            pot.style.backgroundColor = "#007A1E"; // verde original
+            pot.style.color           = "#FFFFFF";
+            con.style.backgroundColor = "#F0B000"; // amarelo original
+            con.style.color           = "#000000";
+          }
+        }
+      
+        atualizarResultados();
+    });
+      
+
+
+    // Função para atualizar DataS
+    function atualizarEstadoDatas() {
+        const inicioValido = startDate.value !== "";
+        const fimValido = endDate.value !== "";
+        const ordemValida = inicioValido && fimValido && (startDate.value <= endDate.value);
+
+        DataS = inicioValido && fimValido && ordemValida;
+        console.log(`🔍 DataS:`, DataS);
+    }
+
+    // Listeners para atualizar DataS automaticamente
+    startDate.addEventListener("input", () => {
+        atualizarEstadoDatas();
+        atualizarResultados();   // <- acrescenta aqui
+    });
+    
+    endDate.addEventListener("input", () => {
+        atualizarEstadoDatas();
+        atualizarResultados();   // <- acrescenta aqui
+    });
+    
+
+    // Atualizar logo no início
+    atualizarEstadoDatas();
+
+    // BtnDias mostra/esconde todo o bloco (div3, div4, div5)
+    btnDias.addEventListener("click", () => {
+      const aberto = !div3.classList.contains("hidden");
+      div3.classList.toggle("hidden", aberto);
+  
+      arrowDias.classList.toggle("fa-chevron-down", aberto);
+      arrowDias.classList.toggle("fa-chevron-up", !aberto);
+  
+      if (aberto) {
+        estadoOmieAberto = !div4.classList.contains("hidden");
+        estadoCalendarioAberto = !div5.classList.contains("hidden");
+  
+        div4.classList.add("hidden");
+        div5.classList.add("hidden");
+      } else {
+        div4.classList.toggle("hidden", !estadoOmieAberto);
+        div5.classList.toggle("hidden", !estadoCalendarioAberto);
+      }
+    });
+  
+    // Btn Omie: toggle Omie e limpa calendário
+    btnOmie.addEventListener("click", () => {
+      const abrirOmie = div4.classList.contains("hidden");
+  
+      if (abrirOmie) {
+        // Mostrar OMIE, esconder e limpar datas
+        div4.classList.remove("hidden");
+        div5.classList.add("hidden");
+        startDate.value = "";
+        endDate.value = "";
+      } else {
+        div4.classList.add("hidden");
+      }
+  
+      estadoOmieAberto = abrirOmie;
+      estadoCalendarioAberto = false;
+      atualizarResultados();
+    });
+  
+    // Btn Calendário: toggle Calendário e limpa OMIE
+    btnCal.addEventListener("click", () => {
+      const abrirCalendario = div5.classList.contains("hidden");
+  
+      if (abrirCalendario) {
+        // Mostrar calendário, esconder e limpar OMIE
+        div5.classList.remove("hidden");
+        div4.classList.add("hidden");
+        omieInput.value = "";
+      } else {
+        div5.classList.add("hidden");
+      }
+  
+      estadoCalendarioAberto = abrirCalendario;
+      estadoOmieAberto = false;
+      atualizarResultados();
+    });
+  
+    // Btn Limpar: esconde tudo e limpa todos os campos
+    btnClear.addEventListener("click", () => {
+        omieInput.value = "";
+        startDate.value = "";
+        endDate.value = "";
+        
+        startDate.min = "2010-01-01";
+        startDate.max = "2025-12-31";
+        endDate.min = "2010-01-01";
+        endDate.max = "2025-12-31";
+    
+        atualizarResultados();
+        atualizarEstadoDatas();
+    });
+    
+
+    
+  
+
+
+
+
+  
+
+  startDate.addEventListener("change", () => {
+    if (startDate.value) {
+        endDate.min = startDate.value;
     } else {
-      secao.style.display = "none";
-      arrowIcon.classList.remove('fa-chevron-up');
-      arrowIcon.classList.add('fa-chevron-down');
+        endDate.min = "2025-01-01"; // Se limpar a data de início, volta ao mínimo geral
     }
 });
+
+endDate.addEventListener("change", () => {
+    if (endDate.value) {
+        startDate.max = endDate.value;
+    } else {
+        startDate.max = "2025-12-31"; // Se limpar a data de fim, volta ao máximo geral
+    }
+});
+
+}); // <--- fecha aqui o DOMContentLoaded!!
+
+
+
+
+
+
+  
+  
+  
+  
 
 document.getElementById("btnLimpar").addEventListener("click", function() {
     document.getElementById("fixo").value = "";
@@ -688,7 +1338,7 @@ document.getElementById("abaOutrasOpcoes").addEventListener("click", function() 
 
 function alternarAba(abaSelecionada) {
     const abas = ["MeuTarifario", "OutrasOpcoes"];
-    
+
     abas.forEach(aba => {
         document.getElementById("aba" + aba).classList.toggle("ativa", aba === abaSelecionada);
         document.getElementById("conteudo" + aba).classList.toggle("ativa", aba === abaSelecionada);
