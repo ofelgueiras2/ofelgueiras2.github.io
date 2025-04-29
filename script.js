@@ -217,7 +217,13 @@ function preencherSelecaoMeses() {
 
 function atualizarResultados() {
     let consumo = parseFloat(document.getElementById("consumo").value);
-    let potenciaSelecionada = document.getElementById("potenciac").value;
+    const raw = document.getElementById("potenciac").value;        // ex: "6.9"
+    const potenciaSelecionada2 = raw + " kVA";                // → "6.9 kVA"
+    const withComma = raw.replace('.', ',');                       // → "6,9"
+    const potenciaSelecionada = withComma + ' kVA';                // → "6,9 kVA"
+
+    console.log(potenciaSelecionada);
+
     if (isNaN(consumo)) consumo = 0;
     if (!potenciaSelecionada) potenciaSelecionada = "6,9 kVA";
     let mostrarNomesAlternativos = document.getElementById("mostrarNomes").checked;
@@ -936,7 +942,7 @@ function atualizarResultados() {
 
             </button>
 
-            <div style="font-weight: bold;margin-top: 15px;margin-bottom: 10px;">Potência contratada ${potenciaSelecionada}</div>
+            <div style="font-weight: bold;margin-top: 15px;margin-bottom: 10px;">Potência contratada ${potenciaSelecionada2}</div>
             <br>
             <div style="font-size: 14px;margin-bottom: -10px;">${strDiasSimples} dia${(typeof diasS === 'number' && diasS !== 1 ? 's' : '')}</div>
             <br>
