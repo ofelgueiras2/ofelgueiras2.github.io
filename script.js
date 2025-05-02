@@ -234,6 +234,16 @@ function atualizarResultados() {
     let incluirEDP = document.getElementById("incluirEDP").checked;    
 
     const potencias = obterTabela("kVAs")?.map(row => row[0]) || [];
+    const idx = potencias.indexOf(potenciaSelecionada);
+    const tarPot = obterTabela("TARPotencias")?.map(row => row[0]) || [];
+    const tarPotSraw = tarPot[idx];            // ex: "0,3174 €"
+    const tarPotSnum = parseFloat(
+        tarPotSraw
+        .replace("€", "")     // remove o símbolo
+        .trim()               // tira espaços em branco
+        .replace(",", ".")    // troca vírgula por ponto
+    );
+    
     console.log("🔍 Conteúdo de potencias:", potencias);
     const nomesTarifarios = obterTabela("empresasSimples")?.flat().map(nome => nome.replace(/\*+$/, "").trim()) || [];
     const nomesTarifariosDetalhados = obterTabela("detalheTarifarios")?.flat().map(nome => nome.replace(/\*+$/, "").trim()) || [];
@@ -700,6 +710,10 @@ function atualizarResultados() {
                     (AudiovisualS * (1 + IVA_AudiovisualSimples)) +
                     (DGEGS * (1 + IVA_DGEGSimples)) +
                     consumo * (IESS * (1 + IVA_IESS));
+
+        if (tarPotSnum<=3.45){
+            custo += -tarPotSnum * diasS * (IVABaseSimples - IVAFixoS);
+        }
     
         if (nome.startsWith("Luzigás Energy 8.8") && diasS > 0) {
             potencia += luzigasFeeS / diasS / (1 + IVABaseSimples);
@@ -765,6 +779,10 @@ function atualizarResultados() {
                     (AudiovisualS * (1 + IVA_AudiovisualSimples)) +
                     (DGEGS * (1 + IVA_DGEGSimples)) +
                     consumo * (IESS * (1 + IVA_IESS));
+
+            if (tarPotSnum<=3.45){
+                custo += -tarPotSnum * diasS * (IVABaseSimples - IVAFixoS);
+            }
 
             if (nome.startsWith("G9 Net Promo 7x7")) {
                         custo += (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
