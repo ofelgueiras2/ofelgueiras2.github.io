@@ -384,77 +384,49 @@ function atualizarResultados() {
     let U3;
 
     if (DataS) {
-        // carrega a coluna TBTN_C
-        tBtnC = obterTabela("TBTN_C")
-            .map(row => parseFloat(row[0]));
+    // 1) Carrega todas as colunas de uma só vez
+    tBtnA = obterTabela("TBTN_A").map(r => parseFloat(r[0])) || [];
+    tBtnB = obterTabela("TBTN_B").map(r => parseFloat(r[0])) || [];
+    tBtnC = obterTabela("TBTN_C").map(r => parseFloat(r[0])) || [];
 
-        // soma só os valores entre as datas
-        let somaBtn = 0;
-        for (let i = 0; i < tDataTabela.length; i++) {
-            if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
-                somaBtn += tBtnC[i];
-            }
+    // 2) Calcula U3
+    let somaBtnC = 0, cntBtnC = 0;
+    for (let i = 0; i < tDataTabela.length; i++) {
+        if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
+            somaBtnC += tBtnC[i];
+            cntBtnC++;
         }
+    }
+    U3 = cntBtnC > 0 ? consumo / somaBtnC * 1000 : 0;
 
-        // equivale ao SE(Data_S="Sim"; Consumo_Simples/SOMA(...) * 1000; "")
-        U3 = somaBtn > 0
-            ? consumo / somaBtn * 1000
-            : 0;            // ou outro fallback que faz sentido pra ti
-
+    // 3) Decide o Perfil (BTN A, B ou C)
+    if (potenciaNum > 13.8) {
+        PerfilS = "BTN A";
+    } else if (U3 >= 7140) {
+        PerfilS = "BTN B";
     } else {
-        U3 = "";            // DataS = false → retorna string vazia como no Excel
-    }
-
-    console.log("Valor de U3:", U3);
-
-    let PerfilS;
-
-    try {
-        // equivalente a SE(potenciaNum>13.8;"BTN A";SE(U3>=7140;"BTN B";"BTN C"))
-        if (potenciaNum > 13.8) {
-            PerfilS = "BTN A";
-        } else if (U3 >= 7140) {
-            PerfilS = "BTN B";
-        } else {
-            PerfilS = "BTN C";
-        }
-    }
-    catch (e) {
-        // SE.ERRO → em qualquer erro durante a comparação, cai aqui
         PerfilS = "BTN C";
     }
 
-    
-    console.log("🔎 PerfilS:", PerfilS);
-
-    let PerfilM_S;
-
-    if (DataS) {
-        let somaBtns = 0;
-        let contaBtns = 0;
-
-        for (let i = 0; i < tDataTabela.length; i++) {
-            if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
-                // escolhe o valor de TBTN_X conforme o PerfilS
-                const btnVal =
-                    PerfilS === "BTN A" ? tBtnA[i] :
-                        PerfilS === "BTN B" ? tBtnB[i] :
-                            tBtnC[i];
-
-                somaBtns += btnVal;
-                contaBtns++;
-            }
+    // 4) Calcula a média do perfil
+    let somaBtns = 0, contaBtns = 0;
+    for (let i = 0; i < tDataTabela.length; i++) {
+        if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
+            const btnVal =
+                PerfilS === "BTN A" ? tBtnA[i] :
+                PerfilS === "BTN B" ? tBtnB[i] :
+                                     tBtnC[i];
+            somaBtns += btnVal;
+            contaBtns++;
         }
-
-        // média ou string vazia (""), tal como no Excel
-        PerfilM_S = contaBtns > 0
-            ? somaBtns / contaBtns
-            : "";
-    } else {
-        // DataS = false → mesmo comportamento do "" no Excel
-        PerfilM_S = "";
     }
-
+    PerfilM_S = contaBtns > 0 ? somaBtns / contaBtns : "";
+    } else {
+    U3 = "";
+    PerfilS = (potenciaNum > 13.8) ? "BTN A" : "BTN C"; // mantém lógica de fallback
+    PerfilM_S = "";
+    }
+    
     console.log("🔎 PerfilM_S:", PerfilM_S);
 
 
