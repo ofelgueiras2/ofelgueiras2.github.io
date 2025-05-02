@@ -1130,6 +1130,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const startDate = document.getElementById("startDate");
     const endDate = document.getElementById("endDate");
 
+    const mesSelecionado = document.getElementById("mesSelecionado");
+    const diasInput      = document.getElementById("dias");
+
     document.getElementById("btnEsquema")?.addEventListener("click", () => {
         esquemaAtual = (esquemaAtual === "azul-vermelho")
           ? "azul-creme-vermelho"
@@ -1173,6 +1176,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         DataS = inicioValido && fimValido && ordemValida;
         console.log(`🔍 DataS:`, DataS);
+        mesSelecionado.disabled = DataS;
+        diasInput.disabled      = DataS;
     }
 
     // Listeners para atualizar DataS automaticamente
