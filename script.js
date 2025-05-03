@@ -711,7 +711,7 @@ function atualizarResultados() {
                     (DGEGS * (1 + IVA_DGEGSimples)) +
                     consumo * (IESS * (1 + IVA_IESS));
 
-        if (tarPotSnum<=3.45){
+        if (potenciaNum<=3.45){
             custo += -tarPotSnum * diasS * (IVABaseSimples - IVAFixoS);
         }
     
@@ -780,7 +780,7 @@ function atualizarResultados() {
                     (DGEGS * (1 + IVA_DGEGSimples)) +
                     consumo * (IESS * (1 + IVA_IESS));
 
-            if (tarPotSnum<=3.45){
+            if (potenciaNum<=3.45){
                 custo += -tarPotSnum * diasS * (IVABaseSimples - IVAFixoS);
             }
 
