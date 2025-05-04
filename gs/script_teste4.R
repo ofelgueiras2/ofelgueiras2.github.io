@@ -129,44 +129,44 @@ csv_date0 <- dmy(tail(df_old_convertido$Fecha,1)[1])
 csv_date0=csv_date0+1
 csv_date0
 
-url2=paste0("https://datahub.ren.pt/service/download/csv/1534?startDateString=",csv_date0,"&endDateString=",
-page_date,"&culture=pt-PT")
-url2
+#url2=paste0("https://datahub.ren.pt/service/download/csv/1534?startDateString=",csv_date0,"&endDateString=",
+#page_date,"&culture=pt-PT")
+#url2
 
-dados_csv2 <- tryCatch({
+#dados_csv2 <- tryCatch({
   
   # tentativa de ler e processar CSV
-  read_delim(
-    url2,
-    delim = ";",
-    skip = 2,
-    locale = locale(decimal_mark = ","),
-    show_col_types = FALSE
-  ) %>%
-    select(Data, Hora, Portugal) %>%
-    rename(Preço = Portugal) %>%
-    mutate(
-      Data  = as.Date(Data),
-      Hora  = as.integer(Hora),
-      Preço = as.numeric(Preço)
-    )
-  
-}, error = function(e) {
+#  read_delim(
+#    url2,
+#    delim = ";",
+#    skip = 2,
+#    locale = locale(decimal_mark = ","),
+#    show_col_types = FALSE
+#  ) %>%
+#    select(Data, Hora, Portugal) %>%
+#    rename(Preço = Portugal) %>%
+#    mutate(
+#      Data  = as.Date(Data),
+#      Hora  = as.integer(Hora),
+#      Preço = as.numeric(Preço)
+#    )
+#  
+#}, error = function(e) {
   
   # mensagem de warning (opcional)
-  warning("Falha ao ler CSV em ", url2, ":\n  ", e$message)
-  
-  # tibble vazio com as mesmas colunas
-  tibble(
-    Data  = as.Date(character()),
-    Hora  = integer(),
-    Preço = double()
-  )
-})                      
+#  warning("Falha ao ler CSV em ", url2, ":\n  ", e$message)
+#  
+#  # tibble vazio com as mesmas colunas
+#  tibble(
+#    Data  = as.Date(character()),
+#    Hora  = integer(),
+#    Preço = double()
+#  )
+#})                      
                   
 
 # Juntar os dados
-dados_parquet <- bind_rows(df_old, dados_csv2)
+#dados_parquet <- bind_rows(df_old, dados_csv2)
 
 # (Opcional) Gravar ficheiro combinado
 write_parquet(
@@ -176,15 +176,15 @@ write_parquet(
   use_dictionary = TRUE
 )
                        
-df_old_convertido2 <- dados_csv2 %>%
-  mutate(
-    Fecha = format(Data, "%d/%m/%Y"),
-    Hora = as.character(Hora),
-    `Precio marginal en el sistema español (EUR/MWh)` = NA_character_,
-    `Precio marginal en el sistema portugués (EUR/MWh)` = as.character(Preço)
-  ) 
+#df_old_convertido2 <- dados_csv2 %>%
+#  mutate(
+#    Fecha = format(Data, "%d/%m/%Y"),
+#    Hora = as.character(Hora),
+#    `Precio marginal en el sistema español (EUR/MWh)` = NA_character_,
+#    `Precio marginal en el sistema portugués (EUR/MWh)` = as.character(Preço)
+#  ) 
 
-df_old_convertido <- bind_rows(df_old_convertido, df_old_convertido2)
+#df_old_convertido <- bind_rows(df_old_convertido, df_old_convertido2)
 
 
 ###############################################
