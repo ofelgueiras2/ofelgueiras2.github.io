@@ -86,7 +86,10 @@
                 <button id="btnShowCalendar" class="btn-icon" title="Intervalo de datas">
                     <i class="fa-solid fa-calendar-days"></i>
                 </button>
-                <button id="btnClearForms" class="btn-limpar-inline" title="Limpar OMIE / Intervalo de datas">
+                <button id="btnShowTs" class="btn-icon" title="Descontos sociais">
+                    <i class="fa-regular fa-heart"></i>
+                </button>
+                <button id="btnClearForms" class="btn-limpar-inline" title="Limpar OMIE / Intervalo de datas / Descontos sociais">
                     <i class="fa-solid fa-broom"></i>
                 </button>
             </div>
@@ -99,7 +102,7 @@
                 <input type="number" id="omieInput" class="form-control" step="0.0001" />
             </div>
         </div>
-
+        
         <!-- 5) div5: painel Datas -->
         <div class="div5 hidden" id="dateRangeFields">
             <div class="date-cell form-group">
@@ -108,9 +111,55 @@
             </div>
             <div class="date-cell form-group">
                 <label for="endDate">Data Fim</label>
-                <input type="date" id="endDate"   class="form-control" min="2025-01-01" max="2025-12-31" />
+                <input type="date" id="endDate" class="form-control" min="2025-01-01" max="2025-12-31" />
             </div>
         </div>
+        
+        <!-- 6) div6: painel Descontos sociais -->
+        <div class="div6 hidden">
+            <div id="tsField" class="form-group">
+                <label class="form-label">Descontos Sociais</label>
+                <div id="conteudoTs" class="conteudo-ts" style="background: rgba(255,255,255,0.9); display: block;">
+                    <div style="display: flex; align-items: center; gap: 2px;">
+                        <input type="radio" name="tsType" value="none" id="tsNone" checked
+                            style="margin:0; padding:0; width:16px; height:16px;">
+                        <label for="tsNone" style="margin:4px;">Sem tarifa social</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 2px;">
+                        <input type="radio" name="tsType" value="ts" id="tsTS"
+                            style="margin:0; padding:0; width:16px; height:16px;">
+                        <label for="tsTS" style="margin:4px;">Tarifa social</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 2px;">
+                        <input type="radio" name="tsType" value="ts-partial" id="tsPartial"
+                            style="margin:0; padding:0; width:16px; height:16px;">
+                        <label for="tsPartial" style="margin:4px;">
+                            Tarifa social + Isenção parcial CAV (1,85 €/mês)
+                        </label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 2px;">
+                        <input type="checkbox" id="familiasNumerosas" style="margin:0; padding:0; width:16px; height:16px;">
+                        <label for="familiasNumerosas" style="margin:4px;">Famílias numerosas</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+          
+        <!-- dentro do teu .parent, ao lado de div4 -->
+        <button id="btnClearOmie" class="btn-limpar-inline hidden" title="Limpar OMIE">
+            <i class="fa-solid fa-broom"></i>
+        </button>
+        
+        <!-- ao lado de div5 -->
+        <button id="btnClearDates" class="btn-limpar-inline hidden" title="Limpar Datas">
+            <i class="fa-solid fa-broom"></i>
+        </button>
+        
+        <!-- ao lado de div6 -->
+        <button id="btnClearTs" class="btn-limpar-inline hidden" title="Limpar Descontos Sociais">
+            <i class="fa-solid fa-broom"></i>
+        </button>
+
 
         
         <button id="btnDefinicoes" class="btn-icon" title="Meu tarifário / Outras opções" data-target="secaoDefinicoes"
@@ -154,7 +203,7 @@
                             <input type="number" id="fixo" class="form-control" min="0" step="0.01" />
                         </div>
                         <div class="form-group">
-                            <label for="variavel">Simples (€/kWh)</label>
+                            <label for="variavel">Energia (€/kWh)</label>
                             <input type="number" id="variavel" class="form-control" min="0" step="0.01" />
                         </div>
                     </div>
