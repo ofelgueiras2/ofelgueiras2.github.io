@@ -87,13 +87,28 @@ let sortDirection = "asc";     // "asc" ou "desc"
 // Armazena estado dos paineis
 let estadoOmieAberto = false;
 let estadoCalendarioAberto = false;
+let estadoTsAberto = false;
   
 // Nova variável DataS
 let DataS = false;
 
 let esquemaAtual = "azul-vermelho"; // pode ser "azul-vermelho" ou "azul-creme-vermelho"
 
+// 1) Função utilitária para converter "0,0323 €" em número
+function parseEuro(str) {
+    return parseFloat(
+      str
+        .replace("€", "")
+        .replace(",", ".")
+        .trim()
+    ) || 0;
+  }
 
+// utilitária para percentagens “23%” → 0.23
+function parsePercent(str) {
+    return (parseFloat(str.replace("%", "").trim()) || 0) / 100;
+  }
+  
 function setSort(field, direction) {
     sortField = field;
     sortDirection = direction;
@@ -196,7 +211,6 @@ async function carregarDadosCSV() {
 
 console.log("🔍 Testando extração de tabelas...");
 console.log("📌 Tabela kVAs:", obterTabela("kVAs"));
-console.log("📌 Variável perdas2024:", obterVariavel("perdas2024"));
 
 function preencherSelecaoMeses() {
     const meses = obterTabela("Meses")?.flat() || [];
@@ -221,8 +235,8 @@ function atualizarResultados() {
     const potenciaSelecionada2 = raw + " kVA";                // → "6.9 kVA"
     const withComma = raw.replace('.', ',');                       // → "6,9"
     const potenciaSelecionada = withComma + ' kVA';                // → "6,9 kVA"
-
-    console.log(potenciaSelecionada);
+    //const idx = potenciasArray.indexOf(potenciaNum);
+    console.log("📌 Potência selecionada:",potenciaSelecionada);
 
     if (isNaN(consumo)) consumo = 0;
     if (!potenciaSelecionada) potenciaSelecionada = "6,9 kVA";
@@ -231,20 +245,34 @@ function atualizarResultados() {
     let incluirContinente = document.getElementById("incluirContinente").checked;
     let incluirMeo = document.getElementById("incluirMeo").checked;
     let restringir = document.getElementById("restringir").checked;
-    let incluirEDP = document.getElementById("incluirEDP").checked;    
+    let incluirEDP = document.getElementById("incluirEDP").checked;
 
     const potencias = obterTabela("kVAs")?.map(row => row[0]) || [];
+    // idx definido apóes conta potencias em atualizarResultados
     const idx = potencias.indexOf(potenciaSelecionada);
     const tarPot = obterTabela("TARPotencias")?.map(row => row[0]) || [];
     const tarPotSraw = tarPot[idx];            // ex: "0,3174 €"
-    const tarPotSnum = parseFloat(
-        tarPotSraw
-        .replace("€", "")     // remove o símbolo
-        .trim()               // tira espaços em branco
-        .replace(",", ".")    // troca vírgula por ponto
-    );
+    const tarPotSnum = parseEuro(tarPotSraw);
+
+    console.log("📌 Potência selecionada, idx:",potenciaSelecionada,idx,raw);
+    console.log("🔍 Conteúdo de potencias:", potencias);   
+    console.log("🔍 Conteúdo de TARpotencias:", tarPot,tarPotSnum);
     
-    console.log("🔍 Conteúdo de potencias:", potencias);
+    // lê as duas tabelas (coluna única com strings “X,XXXX €”)
+    const rawPotTS = obterTabela("descKVAsTarSocial")?.map(r => r[0]) || [];
+    // seleciona o valor correspondente à potência escolhida
+    const rawDescontoPotTS = rawPotTS[idx] || "0";
+    // 2) desconto no kWh: vem da variável descKWhTarSocial (célula V36)
+    const rawDescontoKwh = obterVariavel("descKWhTarSocial") || "0,00 €";
+
+    // converte em número
+    const descontoPotTS = parseEuro(rawDescontoPotTS);  // €/dia de potência
+    const descontoKwhTS  = parseEuro(rawDescontoKwh);  // €/kWh de consumo
+
+    console.log("Desconto potência TS:", descontoPotTS);
+    console.log("Desconto kWh TS:", descontoKwhTS);
+
+
     const nomesTarifarios = obterTabela("empresasSimples")?.flat().map(nome => nome.replace(/\*+$/, "").trim()) || [];
     const nomesTarifariosDetalhados = obterTabela("detalheTarifarios")?.flat().map(nome => nome.replace(/\*+$/, "").trim()) || [];
     console.log("Tabela detalheTarifarios:", nomesTarifariosDetalhados);
@@ -264,6 +292,30 @@ function atualizarResultados() {
          .replace(" kVA", "")
          .replace(",", ".")
         );
+    
+    const famCheckbox = document.querySelector('#tsField input[type="checkbox"]#familiasNumerosas');
+    famCheckbox.disabled = potenciaNum > 6.9;
+        
+
+    // desativa todos os radios se potência > 6.9 kVA
+    document
+        .querySelectorAll('input[name="tsType"]')
+        .forEach(r => r.disabled = potenciaNum > 6.9);
+
+    // (opcional) desativa também o checkbox de famílias numerosas se não houver TS
+    const tsType = document.querySelector('input[name="tsType"]:checked').value;
+    const hasTspartial = tsType === "ts-partial";
+
+    // agora o tsFlag = 1 se for Tarifa Social OU Tarifa Social + isenção
+    const tsFlag = (['ts', 'ts-partial'].includes(tsType) && potenciaNum <= 6.9)
+        ? 1
+        : 0;
+    // agora o famFlag
+    // só vale 1 se o checkbox estiver marcado e a potência for ≤ 6.9
+    const famFlag = (famCheckbox.checked && potenciaNum <= 6.9) ? 1 : 0;
+
+    console.log("Aplicar desconto tarifa social?", tsFlag);
+    console.log("Aplicar desconto famílias numerosas?", famFlag);
 
     const diasMesesTabela = obterTabela("diasMeses")?.flat() || [];
     const strDiasTabela = obterTabela("strDias")?.flat() || [];
@@ -305,18 +357,26 @@ function atualizarResultados() {
     console.log(`✅ diasS final: ${diasS}, strDiasSimples: ${strDiasSimples}`);
 
     
-    let IVABaseSimples = parseFloat(obterVariavel("IVABase").replace("%", "")) / 100 || 0;
-    let AudiovisualS = parseFloat(obterVariavel("Audiovisual").replace("€", "").replace(",", ".").trim()) || 0;
-    let DGEGS = parseFloat(obterVariavel("DGEG").replace("€", "").replace(",", ".").trim()) || 0;
-    let IESS = parseFloat(obterVariavel("IES").replace("€", "").replace(",", ".").trim()) || 0;
-    let IVA_AudiovisualSimples = parseFloat(obterVariavel("IVA_Audiovisual").replace("%", "")) / 100 || 0;
-    let IVA_DGEGSimples = parseFloat(obterVariavel("IVA_DGEG").replace("%", "")) / 100 || 0;
-    let IVA_IESS = parseFloat(obterVariavel("IVA_IES").replace("%", "")) / 100 || 0;
+    let IVABaseSimples = parsePercent(obterVariavel("IVABase"));
+    let AudiovisualS = parseEuro(obterVariavel("Audiovisual"));
+    if (hasTspartial){
+        AudiovisualS -=1.85;
+    }
+    let DGEGS = parseEuro(obterVariavel("DGEG"));
+    let IESS = parseEuro(obterVariavel("IES")) * (1 - tsFlag);
+
+    console.log(`✅ IEC: ${IESS}`);
+    let IVA_AudiovisualSimples = parsePercent(obterVariavel("IVA_Audiovisual"));
+    let IVA_DGEGSimples        = parsePercent(obterVariavel("IVA_DGEG"));
+    let IVA_IESS               = parsePercent(obterVariavel("IVA_IES"));
     let kWhIVAPromocionalS = parseFloat(obterVariavel("kWhIVAPromocional")) || 0;
+    if (famFlag){
+        kWhIVAPromocionalS +=100;
+    }
     kWhIVAPromocionalS = Math.round((kWhIVAPromocionalS * diasS) / 30);
-    let IVAPromocionalS = parseFloat(obterVariavel("IVAPromocional").replace("%", "")) / 100 || 0;
-    let FTSS = parseFloat(obterVariavel("FTS").replace("€", "").replace(",", ".").trim()) || 0;
-    let TARSimplesS = parseFloat(obterVariavel("TARSimples").replace("€", "").replace(",", ".").trim()) || 0;
+    let IVAPromocionalS = parsePercent(obterVariavel("IVAPromocional"));
+    let FTSS = parseEuro(obterVariavel("FTS"));
+    let TARSimplesS = parseEuro(obterVariavel("TARSimples"));
     let MedioS = parseFloat(obterVariavel("Medio")) || 0;
     let luzboaCGSS = parseFloat(obterVariavel("luzboaCGS")) || 0;
     let luzboaFAS = parseFloat(obterVariavel("luzboaFA")) || 0;
@@ -324,7 +384,7 @@ function atualizarResultados() {
     let ibelectraCSS = parseFloat(obterVariavel("ibelectraCS")) || 0;
     let ibelectraKS = parseFloat(obterVariavel("ibelectraK")) || 0;
     let perdas2024S = parseFloat(obterVariavel("perdas2024")) || 0;
-    let precoACPS = parseFloat(obterVariavel("precoACP").replace("€", "").replace(",", ".").trim()) || 0;
+    let precoACPS = parseEuro(obterVariavel("precoACP"));
     if (!incluirACP) {
         precoACPS = 0;
     }
@@ -394,49 +454,49 @@ function atualizarResultados() {
     let U3;
 
     if (DataS) {
-    // 1) Carrega todas as colunas de uma só vez
-    tBtnA = obterTabela("TBTN_A").map(r => parseFloat(r[0])) || [];
-    tBtnB = obterTabela("TBTN_B").map(r => parseFloat(r[0])) || [];
-    tBtnC = obterTabela("TBTN_C").map(r => parseFloat(r[0])) || [];
-
-    // 2) Calcula U3
-    let somaBtnC = 0, cntBtnC = 0;
-    for (let i = 0; i < tDataTabela.length; i++) {
-        if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
-            somaBtnC += tBtnC[i];
-            cntBtnC++;
-        }
-    }
-    U3 = cntBtnC > 0 ? consumo / somaBtnC * 1000 : 0;
-
-    // 3) Decide o Perfil (BTN A, B ou C)
-    if (potenciaNum > 13.8) {
-        PerfilS = "BTN A";
-    } else if (U3 >= 7140) {
-        PerfilS = "BTN B";
-    } else {
-        PerfilS = "BTN C";
-    }
-
-    // 4) Calcula a média do perfil
-    let somaBtns = 0, contaBtns = 0;
-    for (let i = 0; i < tDataTabela.length; i++) {
-        if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
-            const btnVal =
-                PerfilS === "BTN A" ? tBtnA[i] :
-                PerfilS === "BTN B" ? tBtnB[i] :
-                                     tBtnC[i];
-            somaBtns += btnVal;
-            contaBtns++;
-        }
-    }
-    PerfilM_S = contaBtns > 0 ? somaBtns / contaBtns : "";
-    } else {
-    U3 = "";
-    PerfilS = (potenciaNum > 13.8) ? "BTN A" : "BTN C"; // mantém lógica de fallback
-    PerfilM_S = "";
-    }
+        // 1) Carrega todas as colunas de uma só vez
+        tBtnA = obterTabela("TBTN_A").map(r => parseFloat(r[0])) || [];
+        tBtnB = obterTabela("TBTN_B").map(r => parseFloat(r[0])) || [];
+        tBtnC = obterTabela("TBTN_C").map(r => parseFloat(r[0])) || [];
     
+        // 2) Calcula U3
+        let somaBtnC = 0, cntBtnC = 0;
+        for (let i = 0; i < tDataTabela.length; i++) {
+            if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
+                somaBtnC += tBtnC[i];
+                cntBtnC++;
+            }
+        }
+        U3 = cntBtnC > 0 ? consumo / somaBtnC * 1000 : 0;
+    
+        // 3) Decide o Perfil (BTN A, B ou C)
+        if (potenciaNum > 13.8) {
+            PerfilS = "BTN A";
+        } else if (U3 >= 7140) {
+            PerfilS = "BTN B";
+        } else {
+            PerfilS = "BTN C";
+        }
+    
+        // 4) Calcula a média do perfil
+        let somaBtns = 0, contaBtns = 0;
+        for (let i = 0; i < tDataTabela.length; i++) {
+            if (tDataTabela[i] >= dataInicio && tDataTabela[i] <= dataFim) {
+                const btnVal =
+                    PerfilS === "BTN A" ? tBtnA[i] :
+                    PerfilS === "BTN B" ? tBtnB[i] :
+                                         tBtnC[i];
+                somaBtns += btnVal;
+                contaBtns++;
+            }
+        }
+        PerfilM_S = contaBtns > 0 ? somaBtns / contaBtns : "";
+    } else {
+        U3 = "";
+        PerfilS = (potenciaNum > 13.8) ? "BTN A" : "BTN C"; // mantém lógica de fallback
+        PerfilM_S = "";
+    }
+
     console.log("🔎 PerfilM_S:", PerfilM_S);
 
 
@@ -462,7 +522,7 @@ function atualizarResultados() {
       );
     
     let IVAFixoS;
-    console.log("Potência:", potenciaSelecionada, IVAFixoS, kVAsTarSocialS)
+    console.log("Potência, IVA, TS:", potenciaSelecionada, IVAFixoS, kVAsTarSocialS)
     if (kVAsTarSocialS.includes(potenciaSelecionada)) {
         IVAFixoS = IVAPromocionalS;
     } else {
@@ -487,7 +547,7 @@ function atualizarResultados() {
     const parsedPot = parseFloat(String(rawPot).replace(",", "."));
     if (isNaN(parsedPot)) return null;
     let potencia = parsedPot;
-
+    
     // --- determinar se é indexado (está entre as linhas C19 a C25) ---
     // como há offset de 5 (a tabela começa em C5), a condição é i+5 ∈ [19,25]
     let isIndexado = (i + 5 >= 19 && i + 5 <= 25);
@@ -703,6 +763,15 @@ function atualizarResultados() {
    }
 
         const nomeExibido = mostrarNomesAlternativos && nomesTarifariosDetalhados[i] ? nomesTarifariosDetalhados[i] : nome;
+        console.log("Potência, IVA, TS:", potenciaSelecionada, IVAFixoS, kVAsTarSocialS)
+        console.log("Potência, IVA, TS:", potenciaSelecionada, potenciaSelecionada2, potenciaNum)
+
+        // —> IVA de 6% para potência <= 3,45 kVA
+        //if (potenciaNum <= 3.45) {
+        //IVABaseSimples = 0.06;  // valor original do desconto
+        //}
+        potencia -= tsFlag * descontoPotTS;
+        simples -= tsFlag * descontoKwhTS;   
 
         let custo = (potencia * diasS * (1 + IVABaseSimples)) +
                     simples * (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
@@ -710,11 +779,11 @@ function atualizarResultados() {
                     (AudiovisualS * (1 + IVA_AudiovisualSimples)) +
                     (DGEGS * (1 + IVA_DGEGSimples)) +
                     consumo * (IESS * (1 + IVA_IESS));
-
-        if (potenciaNum<=3.45){
-            custo += -tarPotSnum * diasS * (IVABaseSimples - IVAFixoS);
+        //Desconto de baixas potências
+        if (potenciaNum <= 3.45) {
+            custo -= (tarPotSnum - tsFlag * descontoPotTS) * diasS * (IVABaseSimples - IVAFixoS);
         }
-    
+
         if (nome.startsWith("Luzigás Energy 8.8") && diasS > 0) {
             potencia += luzigasFeeS / diasS / (1 + IVABaseSimples);
             custo += luzigasFeeS;
@@ -772,17 +841,20 @@ function atualizarResultados() {
             }
             
             const nomeExibido = mostrarNomesAlternativos && nomesTarifariosDetalhadosExtra[i] ? nomesTarifariosDetalhadosExtra[i] : nome;
-
+            potencia -= tsFlag * descontoPotTS;
+            simples -= tsFlag * descontoKwhTS;  
+            
             let custo = (potencia * diasS * (1 + IVABaseSimples)) +
                     simples * (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
                                Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS)) +
                     (AudiovisualS * (1 + IVA_AudiovisualSimples)) +
                     (DGEGS * (1 + IVA_DGEGSimples)) +
                     consumo * (IESS * (1 + IVA_IESS));
-
-            if (potenciaNum<=3.45){
-                custo += -tarPotSnum * diasS * (IVABaseSimples - IVAFixoS);
-            }
+                    
+                    //Desconto de baixas potências
+                    if (potenciaNum <= 3.45) {
+                        custo -= (tarPotSnum - tsFlag * descontoPotTS) * diasS * (IVABaseSimples - IVAFixoS);
+                    }
 
             if (nome.startsWith("G9 Net Promo 7x7")) {
                         custo += (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
@@ -973,7 +1045,7 @@ function atualizarResultados() {
             </span>
           </th>
           <th style="background-color:${headerPrimary}; font-weight:bold; color:white; text-align:center; position:relative;">
-            Simples (€/kWh)
+            Energia (€/kWh)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='simple' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('simple','asc')">&#9650;</span>
               <span class="sort-arrow ${sortField==='simple' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('simple','desc')">&#9660;</span>
@@ -1072,275 +1144,81 @@ function atualizarResultados() {
     }
 }
 
-document.getElementById("mesSelecionado")?.addEventListener("change", atualizarResultados);
-document.getElementById("dias")?.addEventListener("input", atualizarResultados);
-document.getElementById("consumo")?.addEventListener("input", atualizarResultados);
-document.getElementById("potenciac")?.addEventListener("change", atualizarResultados);
-document.getElementById("fixo")?.addEventListener("input", atualizarResultados);
-document.getElementById("variavel")?.addEventListener("input", atualizarResultados);
-document.getElementById("omieInput")?.addEventListener("input", atualizarResultados);
-document.getElementById("mostrarNomes")?.addEventListener("change", atualizarResultados);
-document.getElementById("incluirACP")?.addEventListener("change", atualizarResultados);
-document.getElementById("incluirContinente")?.addEventListener("change", atualizarResultados);
-document.getElementById("incluirMeo")?.addEventListener("change", atualizarResultados);
-document.getElementById("restringir")?.addEventListener("change", atualizarResultados);
-document.getElementById("incluirEDP")?.addEventListener("change", atualizarResultados);
+// --------------------------------------------------
+// 1) Funções utilitárias (suas definições anteriores seguem intactas: parseEuro, parsePercent, 
+// converterReferencia, obterTabela, obterVariavel, carregarDadosCSV, preencherSelecaoMeses, atualizarResultados, calcularPreco, alternarAba, atualizarEstadoDatas)
 
-window.onload = async function () {
-    console.log("🔄 Iniciando carregamento do CSV...");
-    await carregarDadosCSV();
-    // depois de await carregarDadosCSV() e antes de atualizarResultados()
+
+// --------------------------------------------------
+// 2) Aplica o esquema de cores ao select de potência e input de consumo
+function aplicarEsquema(esquema) {
     const pot = document.getElementById("potenciac");
     const con = document.getElementById("consumo");
-    const esquema = esquemaAtual;  // "azul-vermelho" por defeito
-    if (pot && con) {
-        // repete o bloco de styling acima, sem o pulsar
-        if (esquema === "azul-creme-vermelho") {
-            pot.style.backgroundColor = "#007A1E";
-            pot.style.color = "#FFFFFF";
-            con.style.backgroundColor = "#FFF6E5";
-            con.style.color = "#000000";
-        } else {
-            pot.style.backgroundColor = "#375623";
-            pot.style.color = "#FFFFFF";
-            con.style.backgroundColor = "#FFC000";
-            con.style.color = "#000000";
+    if (!pot || !con) return;
+    const temas = {
+        "azul-vermelho": {
+            potBg: "#375623", potFg: "#FFFFFF",
+            conBg: "#FFC000", conFg: "#000000"
+        },
+        "azul-creme-vermelho": {
+            potBg: "#007A1E", potFg: "#FFFFFF",
+            conBg: "#FFF6E5", conFg: "#000000"
         }
-    }
+    }[esquema] || {};
+    pot.style.backgroundColor = temas.potBg;
+    pot.style.color           = temas.potFg;
+    con.style.backgroundColor = temas.conBg;
+    con.style.color           = temas.conFg;
+}
 
 
-    preencherSelecaoMeses();
-    console.log("📊 Dados carregados! Atualizando interface...");
-    atualizarResultados();
-    document.getElementById("incluirACP").checked = true;
-    atualizarResultados()
-};
-
-
-// Listener isolado para botão Definições
-const btnDefinicoes = document.getElementById("btnDefinicoes");
-const secaoDefinicoes = document.getElementById(btnDefinicoes.dataset.target);
-const arrowDef = btnDefinicoes.querySelector(".arrow-icon");
-
-btnDefinicoes.addEventListener("click", () => {
-    const isHidden = secaoDefinicoes.style.display === "none" ||
-                     getComputedStyle(secaoDefinicoes).display === "none";
-
-    secaoDefinicoes.style.display = isHidden ? "block" : "none";
-    arrowDef.classList.toggle("fa-chevron-down", !isHidden);
-    arrowDef.classList.toggle("fa-chevron-up", isHidden);
-});
-
-
-document.addEventListener("DOMContentLoaded", () => {
-    const btnDias = document.getElementById("btnDias");
-    const div3 = document.querySelector(".div3");
-    const div4 = document.querySelector(".div4");
-    const div5 = document.querySelector(".div5");
-  
-    const btnOmie = document.getElementById("btnShowOmie");
-    const btnCal = document.getElementById("btnShowCalendar");
-    const btnClear = document.getElementById("btnClearForms");
-  
-    const arrowDias = btnDias.querySelector(".arrow-icon");
-  
-    const omieInput = document.getElementById("omieInput");
-    const startDate = document.getElementById("startDate");
-    const endDate = document.getElementById("endDate");
-
-    const mesSelecionado = document.getElementById("mesSelecionado");
-    const diasInput      = document.getElementById("dias");
-
-    document.getElementById("btnEsquema")?.addEventListener("click", () => {
-        esquemaAtual = (esquemaAtual === "azul-vermelho")
-          ? "azul-creme-vermelho"
-          : "azul-vermelho";
-      
-        // ícone
-        const icone = document.getElementById("iconeRaio");
-        if (icone) {
-          icone.style.color = esquemaAtual === "azul-vermelho" ? "#FFFFFF" : "#FFF6E5";
-          icone.classList.add("pulsar");
-          setTimeout(() => icone.classList.remove("pulsar"), 600);
-        }
-      
-        // **AQUI**: muda também o fundo e cor do select e input
-        const pot = document.getElementById("potenciac");
-        const con = document.getElementById("consumo");
-        if (pot && con) {
-          if (esquemaAtual === "azul-creme-vermelho") {
-            pot.style.backgroundColor = "#005A9C"; // azul escuro
-            pot.style.color           = "#FFFFFF";
-            con.style.backgroundColor = "#FFF6E5"; // creme
-            con.style.color           = "#000000";
-          } else {
-            pot.style.backgroundColor = "#007A1E"; // verde original
-            pot.style.color           = "#FFFFFF";
-            con.style.backgroundColor = "#F0B000"; // amarelo original
-            con.style.color           = "#000000";
-          }
-        }
-      
+// --------------------------------------------------
+// 3) Cria listener de toggle entre painéis
+function criarToggle(botao, painelMostrar, paineisOcultar = []) {
+    botao.addEventListener("click", () => {
+        const abrir = painelMostrar.classList.contains("hidden");
+        // oculta todos
+        paineisOcultar.concat(painelMostrar).forEach(p =>
+            p.classList.toggle("hidden", !abrir || p !== painelMostrar)
+        );
         atualizarResultados();
     });
-      
+}
 
 
-    // Função para atualizar DataS
-    function atualizarEstadoDatas() {
-        const inicioValido = startDate.value !== "";
-        const fimValido = endDate.value !== "";
-        const ordemValida = inicioValido && fimValido && (startDate.value <= endDate.value);
-
-        DataS = inicioValido && fimValido && ordemValida;
-        console.log(`🔍 DataS:`, DataS);
-        mesSelecionado.disabled = DataS;
-        diasInput.disabled      = DataS;
-    }
-
-    // Listeners para atualizar DataS automaticamente
-    startDate.addEventListener("input", () => {
-        atualizarEstadoDatas();
-        atualizarResultados();   // <- acrescenta aqui
-    });
-    
-    endDate.addEventListener("input", () => {
-        atualizarEstadoDatas();
-        atualizarResultados();   // <- acrescenta aqui
-    });
-    
-
-    // Atualizar logo no início
-    atualizarEstadoDatas();
-
-    // BtnDias mostra/esconde todo o bloco (div3, div4, div5)
-    btnDias.addEventListener("click", () => {
-      const aberto = !div3.classList.contains("hidden");
-      div3.classList.toggle("hidden", aberto);
-  
-      arrowDias.classList.toggle("fa-chevron-down", aberto);
-      arrowDias.classList.toggle("fa-chevron-up", !aberto);
-  
-      if (aberto) {
-        estadoOmieAberto = !div4.classList.contains("hidden");
-        estadoCalendarioAberto = !div5.classList.contains("hidden");
-  
-        div4.classList.add("hidden");
-        div5.classList.add("hidden");
-      } else {
-        div4.classList.toggle("hidden", !estadoOmieAberto);
-        div5.classList.toggle("hidden", !estadoCalendarioAberto);
-      }
-    });
-  
-    // Btn Omie: toggle Omie e limpa calendário
-    btnOmie.addEventListener("click", () => {
-      const abrirOmie = div4.classList.contains("hidden");
-  
-      if (abrirOmie) {
-        // Mostrar OMIE, esconder e limpar datas
-        div4.classList.remove("hidden");
-        div5.classList.add("hidden");
-        startDate.value = "";
-        endDate.value = "";
-      } else {
-        div4.classList.add("hidden");
-      }
-  
-      estadoOmieAberto = abrirOmie;
-      estadoCalendarioAberto = false;
-      atualizarResultados();
-    });
-  
-    // Btn Calendário: toggle Calendário e limpa OMIE
-    btnCal.addEventListener("click", () => {
-      const abrirCalendario = div5.classList.contains("hidden");
-  
-      if (abrirCalendario) {
-        // Mostrar calendário, esconder e limpar OMIE
-        div5.classList.remove("hidden");
-        div4.classList.add("hidden");
-        omieInput.value = "";
-      } else {
-        div5.classList.add("hidden");
-      }
-  
-      estadoCalendarioAberto = abrirCalendario;
-      estadoOmieAberto = false;
-      atualizarResultados();
-    });
-  
-    // Btn Limpar: esconde tudo e limpa todos os campos
-    btnClear.addEventListener("click", () => {
-        omieInput.value = "";
-        startDate.value = "";
-        endDate.value = "";
-        
-        startDate.min = "2010-01-01";
-        startDate.max = "2025-12-31";
-        endDate.min = "2010-01-01";
-        endDate.max = "2025-12-31";
-    
-        atualizarResultados();
-        atualizarEstadoDatas();
-    });
-    
-
-    
-  
+// --------------------------------------------------
+// 4) Reset dos descontos sociais
+function resetDescontosSociais() {
+    document.querySelector('input[name="tsType"][value="none"]').checked = true;
+    document.getElementById("familiasNumerosas").checked = false;
+}
 
 
-
-
-  
-
-  startDate.addEventListener("change", () => {
-    if (startDate.value) {
-        endDate.min = startDate.value;
-    } else {
-        endDate.min = "2025-01-01"; // Se limpar a data de início, volta ao mínimo geral
-    }
+// --------------------------------------------------
+// 5) Agrupar listeners “simples” de atualização
+[
+    { id: "mesSelecionado",    evt: "change" },
+    { id: "dias",             evt: "input" },
+    { id: "consumo",          evt: "input" },
+    { id: "potenciac",        evt: "change" },
+    { id: "fixo",             evt: "input" },
+    { id: "variavel",         evt: "input" },
+    { id: "omieInput",        evt: "input" },
+    { id: "mostrarNomes",     evt: "change" },
+    { id: "incluirACP",       evt: "change" },
+    { id: "incluirContinente",evt: "change" },
+    { id: "incluirMeo",       evt: "change" },
+    { id: "restringir",       evt: "change" },
+    { id: "incluirEDP",       evt: "change" },
+].forEach(({id, evt}) => {
+    document.getElementById(id)?.addEventListener(evt, atualizarResultados);
 });
+document.querySelectorAll('input[name="tsType"]').forEach(r =>
+    r.addEventListener("change", atualizarResultados)
+);
+document.getElementById("familiasNumerosas")
+    ?.addEventListener("change", atualizarResultados);
 
-endDate.addEventListener("change", () => {
-    if (endDate.value) {
-        startDate.max = endDate.value;
-    } else {
-        startDate.max = "2025-12-31"; // Se limpar a data de fim, volta ao máximo geral
-    }
-});
-
-}); // <--- fecha aqui o DOMContentLoaded!!
-
-
-
-
-
-
-  
-  
-  
-  
-
-document.getElementById("btnLimpar").addEventListener("click", function() {
-    document.getElementById("fixo").value = "";
-    document.getElementById("variavel").value = "";
-    atualizarResultados();
-});
-
-document.getElementById("btnLimpar").addEventListener("click", function() {
-    document.getElementById("fixo").value = "";
-    document.getElementById("variavel").value = "";
-    atualizarResultados();
-});
-
-document.getElementById("abaMeuTarifario").addEventListener("click", function() {
-    alternarAba("MeuTarifario");
-});
-
-document.getElementById("abaOutrasOpcoes").addEventListener("click", function() {
-    alternarAba("OutrasOpcoes");
-});
 
 function alternarAba(abaSelecionada) {
     const abas = ["MeuTarifario", "OutrasOpcoes"];
@@ -1350,3 +1228,207 @@ function alternarAba(abaSelecionada) {
         document.getElementById("conteudo" + aba).classList.toggle("ativa", aba === abaSelecionada);
     });
 }
+    
+// --------------------------------------------------
+// 6) Toda inicialização em um só lugar
+document.addEventListener("DOMContentLoaded", async () => {
+    // referências principais
+    const btnDias         = document.getElementById("btnDias");
+    const div3            = document.querySelector(".div3");
+    const div4            = document.querySelector(".div4");
+    const div5            = document.querySelector(".div5");
+    const div6            = document.querySelector(".div6");
+    const btnShowOmie     = document.getElementById("btnShowOmie");
+    const btnShowCalendar = document.getElementById("btnShowCalendar");
+    const btnShowTs       = document.getElementById("btnShowTs");
+    const btnClearOmie    = document.getElementById("btnClearOmie");
+    const btnClearDates   = document.getElementById("btnClearDates");
+    const btnClearTs      = document.getElementById("btnClearTs");
+    const btnClearAll     = document.getElementById("btnClearForms");
+    const btnDef          = document.getElementById("btnDefinicoes");
+    const secaoDef        = document.getElementById(btnDef.dataset.target);
+    const arrowDef        = btnDef.querySelector(".arrow-icon");
+    const arrowDias       = btnDias.querySelector(".arrow-icon");
+    const startDate       = document.getElementById("startDate");
+    const endDate         = document.getElementById("endDate");
+    const mesSelecionado  = document.getElementById("mesSelecionado");
+    const diasInput       = document.getElementById("dias");
+
+    // Controle de "DataS": desativa mês+dias se houver intervalo válido
+    function atualizarEstadoDatas() {
+        const inicioValido = startDate.value !== "";
+        const fimValido    = endDate.value   !== "";
+        DataS = inicioValido && fimValido && (startDate.value <= endDate.value);
+    
+        mesSelecionado.disabled = DataS;
+        diasInput.disabled      = DataS;
+      }
+
+    // estado para o botão Dias
+    let estadoOmieAberto = false,
+        estadoCalendarioAberto = false,
+        estadoTsAberto = false;
+
+    // 1) Carregar CSV, aplicar esquema e popular meses
+    console.log("🔄 Iniciando carregamento do CSV...");
+    await carregarDadosCSV();
+    aplicarEsquema(esquemaAtual);
+    preencherSelecaoMeses();
+    document.getElementById("incluirACP").checked = true;
+    atualizarResultados();
+
+    // 2) Listeners de Clear individuais
+    btnClearAll.addEventListener("click", () => {
+        document.getElementById("omieInput").value = "";
+        startDate.value = endDate.value = "";
+        // 2) Restaura os limites originais
+        startDate.min = "2025-01-01";
+        startDate.max = "2025-12-31";
+        endDate.min = "2025-01-01";
+        endDate.max = "2025-12-31";
+        resetDescontosSociais();
+        atualizarEstadoDatas();
+        atualizarResultados();
+    });
+    btnClearOmie.addEventListener("click", () => {
+        document.getElementById("omieInput").value = "";
+        atualizarResultados();
+    });
+    btnClearDates.addEventListener("click", () => {
+        startDate.value = endDate.value = "";
+        // 2) Restaura os limites originais
+        startDate.min = "2025-01-01";
+        startDate.max = "2025-12-31";
+        endDate.min = "2025-01-01";
+        endDate.max = "2025-12-31";
+        atualizarEstadoDatas();
+        atualizarResultados();
+    });
+    btnClearTs.addEventListener("click", () => {
+        resetDescontosSociais();
+        atualizarResultados();
+    });
+
+    // 3) Toggle OMIE + clear
+    btnShowOmie.addEventListener("click", () => {
+        div4.classList.toggle("hidden");
+        // esconde Datas e TS e limpa as Datas sempre que OMIE aparece
+        if (!div4.classList.contains("hidden")) {
+            div5.classList.add("hidden");
+            startDate.value = "";
+            endDate.value = "";
+            btnClearDates.classList.add("hidden");
+            div6.classList.add("hidden");
+            btnClearTs.classList.add("hidden");
+        }
+        // mostra/esconde o botão “limpar OMIE”
+        btnClearOmie.classList.toggle("hidden", div4.classList.contains("hidden"));
+        atualizarResultados();
+    });
+    // 4) Toggle Datas + clear
+    btnShowCalendar.addEventListener("click", () => {
+        div5.classList.toggle("hidden");
+        // esconde OMIE e TS e limpa OMIE sempre que Datas aparecem
+        if (!div5.classList.contains("hidden")) {
+            div4.classList.add("hidden");
+            document.getElementById("omieInput").value = "";
+            btnClearOmie.classList.add("hidden");
+            div6.classList.add("hidden");
+            btnClearTs.classList.add("hidden");
+        }
+        btnClearDates.classList.toggle("hidden", div5.classList.contains("hidden"));
+        atualizarResultados();
+    });
+    // 5) Toggle TS + clear
+    btnShowTs.addEventListener("click", () => {
+        div6.classList.toggle("hidden");
+        if (!div6.classList.contains("hidden")) {
+            div4.classList.add("hidden");
+            btnClearOmie.classList.add("hidden");
+            div5.classList.add("hidden");
+            btnClearDates.classList.add("hidden");
+        }
+        btnClearTs.classList.toggle("hidden", div6.classList.contains("hidden"));
+        atualizarResultados();
+    });
+
+    // 6) Botão Definições
+    btnDef.addEventListener("click", () => {
+        const isHidden = secaoDef.style.display === "none" ||
+                         getComputedStyle(secaoDef).display === "none";
+        secaoDef.style.display = isHidden ? "block" : "none";
+        arrowDef.classList.toggle("fa-chevron-down", !isHidden);
+        arrowDef.classList.toggle("fa-chevron-up", isHidden);
+    });
+
+    // 7) Dates → DataS + resultados
+    // Função de callback comum para startDate
+    function onStartDateChange() {
+        // ajustar min do endDate
+        endDate.min = startDate.value || "2025-01-01";
+        atualizarEstadoDatas();
+        atualizarResultados();
+    }
+
+    // Função de callback comum para endDate
+    function onEndDateChange() {
+        // ajustar max do startDate
+        startDate.max = endDate.value || "2025-12-31";
+        atualizarEstadoDatas();
+        atualizarResultados();
+    }
+
+    // Atachar em input e change para robustez
+    startDate.addEventListener("input", onStartDateChange);
+    startDate.addEventListener("change", onStartDateChange);
+
+    endDate.addEventListener("input", onEndDateChange);
+    endDate.addEventListener("change", onEndDateChange);
+
+    // 8) Botão Dias (chevron/menu)
+    btnDias.addEventListener("click", () => {
+        const aberto = !div3.classList.contains("hidden");
+        div3.classList.toggle("hidden", aberto);
+        arrowDias.classList.toggle("fa-chevron-down", aberto);
+        arrowDias.classList.toggle("fa-chevron-up", !aberto);
+    
+        if (aberto) {
+            estadoOmieAberto       = !div4.classList.contains("hidden");
+            estadoCalendarioAberto = !div5.classList.contains("hidden");
+            estadoTsAberto         = !div6.classList.contains("hidden");
+    
+            div4.classList.add("hidden");
+            div5.classList.add("hidden");
+            div6.classList.add("hidden");
+    
+            // 🟨 Esconder também os botões “Clear”
+            btnClearOmie.classList.add("hidden");
+            btnClearDates.classList.add("hidden");
+            btnClearTs.classList.add("hidden");
+    
+        } else {
+            div4.classList.toggle("hidden", !estadoOmieAberto);
+            div5.classList.toggle("hidden", !estadoCalendarioAberto);
+            div6.classList.toggle("hidden", !estadoTsAberto);
+    
+            // 🟩 Mostrar os “Clear” se o painel estiver visível
+            btnClearOmie.classList.toggle("hidden", !estadoOmieAberto);
+            btnClearDates.classList.toggle("hidden", !estadoCalendarioAberto);
+            btnClearTs.classList.toggle("hidden", !estadoTsAberto);
+        }
+    });
+
+    // Botão limpar meu tarifário
+    document.getElementById("btnLimpar")?.addEventListener("click", () => {
+        document.getElementById("fixo").value = "";
+        document.getElementById("variavel").value = "";
+        atualizarResultados();
+    });
+    
+
+    // 9) Alternar abas “Meu tarifário” / “Outras opções”
+    document.getElementById("abaMeuTarifario")
+        .addEventListener("click", () => alternarAba("MeuTarifario"));
+    document.getElementById("abaOutrasOpcoes")
+        .addEventListener("click", () => alternarAba("OutrasOpcoes"));
+});
