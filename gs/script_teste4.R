@@ -213,6 +213,12 @@ dados_csv_ano <- dados_csv_ano %>%
     ~ str_replace_all(.x, ",", ".")
   ))
 
+# Selecionar apenas linhas de dados_csv que ainda não existem em dados_csv_ano
+dados_csv_novos <- anti_join(dados_csv, dados_csv_ano, by = c("Fecha", "Hora"))
+
+# Unir os dados antigos com os novos, garantindo que não há repetições
+dados_csv_ano <- bind_rows(dados_csv_novos,dados_csv_ano)
+                       
 dados_csv_ano_convertido <- dados_csv_ano %>%
   # cria as colunas Data e Preço
   mutate(
