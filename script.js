@@ -997,7 +997,7 @@ function atualizarResultados() {
           <th colspan="3" rowspan="2" 
                style="background-color:${headerSecondary}; color:white; text-align:center; vertical-align:middle; position:relative;
           font-weight: normal;line-height:1;">
-            <button id="btnEsquema" style="position:absolute;top:5px;left:5px;
+            <button id="btnEsquema" title="Alterar cores" style="position:absolute;top:5px;left:5px;
             width: 30px;      /* nova largura */    
             height: 30px;     /* altura igual */
             padding: 0;       /* sem espaço interior */
