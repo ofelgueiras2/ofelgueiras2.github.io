@@ -534,7 +534,39 @@ fig
 
 saveWidget(config(fig, displayModeBar = FALSE), "gs/grafico_omie_plotly.html", selfcontained = TRUE)
 
+# Função auxiliar para sobrescrever o bundle Plotly por CDN
+save_with_cdn <- function(fig, cdn_href, cdn_script, outfile){
+  dep  <- fig$dependencies[[1]]
+  dep$src    <- list(href = cdn_href)
+  dep$script <- cdn_script
+  fig2 <- fig
+  fig2$dependencies <- list(dep)
+  saveWidget(fig2, outfile, selfcontained = TRUE)
+}
 
+# --- 3) Versão Cartesian-only (~1.3 MB) ---
+save_with_cdn(
+  fig,
+  "https://cdn.jsdelivr.net/npm/plotly.js-cartesian-dist-min@latest/",
+  "plotly-cartesian.min.js",
+  "gs/grafico_cartesian.html"
+)
+
+# --- 4) Versão Basic-only (~960 kB) ---
+save_with_cdn(
+  fig,
+  "https://cdn.jsdelivr.net/npm/plotly.js-basic-dist-min@latest/",
+  "plotly-basic.min.js",
+  "gs/grafico_basic.html"
+)
+
+# --- 5) (Opcional) Versão Customizada — só se tiveres um custom-plotly.js em ./www ---
+# save_with_cdn(
+#   fig,
+#   NULL,
+#   "custom-plotly.js",
+#   "gs/grafico_custom.html"
+# )
 
 # 1. Criar um dataframe com todos os dias de 2025 e, para cada dia,
 #    gerar as horas de 1 até o número indicado em df_final$Horas.
