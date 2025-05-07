@@ -93,6 +93,8 @@ jobs:
           add: |
             gs/SimuladorEletricidade_OF_MN_2025_3.csv
             gs/grafico_omie_plotly.html
+            gs/grafico_cartesian.html
+            gs/grafico_basic.html
             gs/Precos_20100101_hoje.parquet
           message: "Adiciona novo arquivo gerado pelo workflow"
           github_token: ${{ secrets.PAT_TOKEN }}
