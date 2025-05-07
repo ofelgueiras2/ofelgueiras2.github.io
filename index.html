@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
+    
     <link rel="stylesheet" href="styles.css">
+    
     <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-MNLD39E8FB"></script>
 <script>
@@ -14,6 +16,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comparador de Tarifários 2025</title>
+    <meta name="description"
+      content="Comparador de tarifários de eletricidade 2025: calcula em segundos o custo mensal consoante potência contratada, consumo e descontos sociais.">
+
+    <link rel="prefetch" href="icons.svg" as="image" type="image/svg+xml">
+
+    
 </head>
 <body>
     <h1>Comparador de Tarifários 2025</h1>
@@ -282,29 +290,45 @@
         
         
         
-        <!-- Caixa de título com cantos arredondados -->
-        <div style="
-        background-color: #f3e29f;
-        padding: 12px;
-        font-family: sans-serif;
-        text-align: center;
-        border-radius: 12px;
-        margin-bottom: 0px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <div id="postTableContent" class="post-table-content">
+            <!-- Caixa de título com cantos arredondados -->
+            <div class="reveal">
+                <div class="titulo-omie"
+                     style="
+                       background-color: #f3e29f;
+                       padding: 12px;
+                       font-family: sans-serif;
+                       text-align: center;
+                       border-radius: 12px;
+                       margin-bottom: 0;
+                       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                     ">
+                  <div style="font-weight: bold; font-size: 16px; margin-bottom:4px;">
+                    Preços OMIE em €/MWh
+                  </div>
+                  <div style="font-size: 14px; font-style: italic; margin-bottom:4px;">
+                    (corrigidos para a hora portuguesa)
+                  </div>
+                  <div style="font-weight: bold; font-size: 16px;">
+                    Valor médio do ciclo mensal até cada data
+                  </div>
+                </div>
+              </div>
         
-            <div style="font-weight: bold; font-size: 16px;">Preços OMIE em €/MWh</div>
-            <div style="font-size: 14px; font-style: italic;">(corrigidos para a hora portuguesa)</div>
-            <div style="font-weight: bold; font-size: 16px;">
-                Valor médio do ciclo mensal até cada data
-            </div>
-        </div>
-        
+    <div class="reveal">
         <!-- Gráfico -->
-        <div style="position: relative; padding-top: 56.25%; height: 0; overflow: hidden;">
-            <iframe src="gs/grafico_omie_plotly.html" title="OMIE e Projeção"
-                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;">
-            </iframe>
+        <div class="grafico-wrapper">
+            <iframe
+              id="grafico"
+              data-src="gs/grafico_omie_plotly.html"
+              title="OMIE e Projeção"
+              width="800"
+              height="450"
+              loading="lazy"
+              style="border:none; position:absolute; inset:0;"
+            ></iframe>
         </div>
+    </div>  
         
         <div style="text-align: center; margin-top: 20px;">
             <!-- Botão para baixar Excel -->
@@ -316,29 +340,34 @@
                 class="botao-sheet">📂 Abrir Google Sheets</a>
         </div>
         
-        <footer style="text-align: center; margin-top: 30px; font-size: 14px; color: #666;">
+        <div class="reveal footer-custom" style="text-align: center; margin-top: 30px; font-size: 14px; color: #666;">
+            <!-- teu conteúdo de rodapé -->
             <div>
                 <a href="https://www.youtube.com/@oscarfelgueiras8837" target="_blank"
                     style="text-decoration: none; margin-right: 15px;">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg" alt="YouTube"
-                    width="112"
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/YouTube_full-color_icon_%282024%29.svg/330px-YouTube_full-color_icon_%282024%29.svg.png" alt="YouTube"
+                    width="36"
                     height="25"
-                    style="height:25px; width:112px;">
+                    style="height:25px; width:36px;">
                 </a>
-                <a href="https://x.com/ofelgueiras2" target="_blank" style="text-decoration: none;">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/21/1690643591twitter-x-logo-png.webp"
-                    width="25"
-                    height="25"
-                        alt="X (Twitter)" style="height: 25px;">
-                </a>
+                <a href="https://x.com/ofelgueiras2" target="_blank" style="text-decoration: none; display: inline-block; overflow: hidden;">
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/5/5a/X_icon_2.svg"
+                      width="25"
+                      height="25"
+                      alt="X (Twitter)"
+                      style="border-radius: 4px; display: block;"
+                    >
+                  </a>
+                  
             </div>
             <div style="margin-top: 10px;">
-                <img src="https://ofelgueiras2.github.io/favicon-32x32.png" alt="Ícone de Óscar Felgueiras"
+                <img src="favicon-32x32.png" alt="Ícone de Óscar Felgueiras"
                     style="width: 32px; height: 32px; border-radius: 50%; vertical-align: middle;">
                 <span style="margin-left: 8px;">© 2025 Óscar Felgueiras</span>
             </div>
-        </footer>
-        
+        </div>
+    </div>   
         <script src="script.js"></script>
         </body>
         
