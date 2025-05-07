@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>plotly</title>
+<style type="text/css">@layer htmltools {
+.html-fill-container {
+display: flex;
+flex-direction: column;
+
+min-height: 0;
+min-width: 0;
+}
+.html-fill-container > .html-fill-item {
+
+flex: 1 1 auto;
+min-height: 0;
+min-width: 0;
+}
+.html-fill-container > :not(.html-fill-item) {
+
+flex: 0 0 auto;
+}
+}
+</style>
+<script>(function() {
+  // If window.HTMLWidgets is already defined, then use it; otherwise create a
+  // new object. This allows preceding code to set options that affect the
+  // initialization process (though none currently exist).
+  window.HTMLWidgets = window.HTMLWidgets || {};
+
+  // See if we're running in a viewer pane. If not, we're in a web browser.
+  var viewerMode = window.HTMLWidgets.viewerMode =
+      /\bviewer_pane=1\b/.test(window.location);
+
+  // See if we're running in Shiny mode. If not, it's a static document.
+  // Note that static widgets can appear in both Shiny and static modes, but
+  // obviously, Shiny widgets can only appear in Shiny apps/documents.
+  var shinyMode = window.HTMLWidgets.shinyMode =
+      typeof(window.Shiny) !== "undefined" && !!window.Shiny.outputBindings;
+
+  // We can't count on jQuery being available, so we implement our own
+  // version if necessary.
+  function querySelectorAll(scope, selector) {
+    if (typeof(jQuery) !== "undefined" && scope instanceof jQuery) {
+      return scope.find(selector);
+    }
+    if (scope.querySelectorAll) {
+      return scope.querySelectorAll(selector);
+    }
+  }
+
+  function asArray(value) {
+    if (value === null)
+      return [];
+    if ($.isArray(value))
+      return value;
+    return [value];
+  }
+
+  // Implement jQuery's extend
+  function extend(target /*, ... */) {
+    if (arguments.length == 1) {
+      return target;
+    }
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var prop in source) {
+        if (source.hasOwnProperty(prop)) {
+          target[prop] = source[prop];
+        }
+      }
+    }
+    return target;
+  }
+
+  // IE8 doesn't support Array.forEach.
+  function forEach(values, callback, thisArg) {
+    if (values.forEach) {
+      values.forEach(callback, thisArg);
+    } else {
+      for (var i = 0; i < values.length; i++) {
+        callback.call(thisArg, values[i], i, values);
+      }
+    }
+  }
+
+  // Replaces the specified method with the return value of funcSource.
+  //
+  // Note that funcSource should not BE the new method, it should be a function
+  // that RETURNS the new method. funcSource receives a single argument that is
+  // the overridden method, it can be called from the new method. The overridden
+  // method can be called like a regular function, it has the target permanently
+  // bound to it so "this" will work correctly.
+  function overrideMethod(target, methodName, funcSource) {
+    var superFunc = target[methodName] || function() {};
+    var superFuncBound = function() {
+      return superFunc.apply(target, arguments);
+    };
+    target[methodName] = funcSource(superFuncBound);
+  }
+
+  // Add a method to delegator that, when invoked, calls
+  // delegatee.methodName. If there is no such method on
+  // the delegatee, but there was one on delegator before
+  // delegateMethod was called, then the original version
+  // is invoked instead.
+  // For example:
+  //
+  // var a = {
+  //   method1: function() { console.log('a1'); }
+  //   method2: function() { console.log('a2'); }
+  // };
+  // var b = {
+  //   method1: function() { console.log('b1'); }
+  // };
+  // delegateMethod(a, b, "method1");
+  // delegateMethod(a, b, "method2");
+  // a.method1();
+  // a.method2();
+  //
+  // The output would be "b1", "a2".
+  function delegateMethod(delegator, delegatee, methodName) {
+    var inherited = delegator[methodName];
+    delegator[methodName] = function() {
+      var target = delegatee;
+      var method = delegatee[methodName];
+
+      // The method doesn't exist on the delegatee. Instead,
+      // call the method on the delegator, if it exists.
+      if (!method) {
+        target = delegator;
+        method = inherited;
+      }
+
+      if (method) {
+        return method.apply(target, arguments);
+      }
+    };
+  }
+
+  // Implement a vague facsimilie of jQuery's data method
+  function elementData(el, name, value) {
+    if (arguments.length == 2) {
+      return el["htmlwidget_data_" + name];
+    } else if (arguments.length == 3) {
+      el["htmlwidget_data_" + name] = value;
+      return el;
+    } else {
+      throw new Error("Wrong number of arguments for elementData: " +
+        arguments.length);
+    }
+  }
+
+  // http://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
+  function escapeRegExp(str) {
+    return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+  }
+
+  function hasClass(el, className) {
+    var re = new RegExp("\\b" + escapeRegExp(className) + "\\b");
+    return re.test(el.className);
+  }
+
+  // elements - array (or array-like object) of HTML elements
+  // className - class name to test for
+  // include - if true, only return elements with given className;
+  //   if false, only return elements *without* given className
+  function filterByClass(elements, className, include) {
+    var results = [];
+    for (var i = 0; i < elements.length; i++) {
+      if (hasClass(elements[i], className) == include)
+        results.push(elements[i]);
+    }
+    return results;
+  }
+
+  function on(obj, eventName, func) {
+    if (obj.addEventListener) {
+      obj.addEventListener(eventName, func, false);
+    } else if (obj.attachEvent) {
+      obj.attachEvent(eventName, func);
+    }
+  }
+
+  function off(obj, eventName, func) {
+    if (obj.removeEventListener)
+      obj.removeEventListener(eventName, func, false);
+    else if (obj.detachEvent) {
+      obj.detachEvent(eventName, func);
+    }
+  }
+
+  // Translate array of values to top/right/bottom/left, as usual with
+  // the "padding" CSS property
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/padding
+  function unpackPadding(value) {
+    if (typeof(value) === "number")
+      value = [value];
+    if (value.length === 1) {
+      return {top: value[0], right: value[0], bottom: value[0], left: value[0]};
+    }
+    if (value.length === 2) {
+      return {top: value[0], right: value[1], bottom: value[0], left: value[1]};
+    }
+    if (value.length === 3) {
+      return {top: value[0], right: value[1], bottom: value[2], left: value[1]};
+    }
+    if (value.length === 4) {
+      return {top: value[0], right: value[1], bottom: value[2], left: value[3]};
+    }
+  }
+
+  // Convert an unpacked padding object to a CSS value
+  function paddingToCss(paddingObj) {
+    return paddingObj.top + "px " + paddingObj.right + "px " + paddingObj.bottom + "px " + paddingObj.left + "px";
+  }
+
+  // Makes a number suitable for CSS
+  function px(x) {
+    if (typeof(x) === "number")
+      return x + "px";
+    else
+      return x;
+  }
+
+  // Retrieves runtime widget sizing information for an element.
+  // The return value is either null, or an object with fill, padding,
+  // defaultWidth, defaultHeight fields.
+  function sizingPolicy(el) {
+    var sizingEl = document.querySelector("script[data-for='" + el.id + "'][type='application/htmlwidget-sizing']");
+    if (!sizingEl)
+      return null;
+    var sp = JSON.parse(sizingEl.textContent || sizingEl.text || "{}");
+    if (viewerMode) {
+      return sp.viewer;
+    } else {
+      return sp.browser;
+    }
+  }
+
+  // @param tasks Array of strings (or falsy value, in which case no-op).
+  //   Each element must be a valid JavaScript expression that yields a
+  //   function. Or, can be an array of objects with "code" and "data"
+  //   properties; in this case, the "code" property should be a string
+  //   of JS that's an expr that yields a function, and "data" should be
+  //   an object that will be added as an additional argument when that
+  //   function is called.
+  // @param target The object that will be "this" for each function
+  //   execution.
+  // @param args Array of arguments to be passed to the functions. (The
+  //   same arguments will be passed to all functions.)
+  function evalAndRun(tasks, target, args) {
+    if (tasks) {
+      forEach(tasks, function(task) {
+        var theseArgs = args;
+        if (typeof(task) === "object") {
+          theseArgs = theseArgs.concat([task.data]);
+          task = task.code;
+        }
+        var taskFunc = tryEval(task);
+        if (typeof(taskFunc) !== "function") {
+          throw new Error("Task must be a function! Source:\n" + task);
+        }
+        taskFunc.apply(target, theseArgs);
+      });
+    }
+  }
+
+  // Attempt eval() both with and without enclosing in parentheses.
+  // Note that enclosing coerces a function declaration into
+  // an expression that eval() can parse
+  // (otherwise, a SyntaxError is thrown)
+  function tryEval(code) {
+    var result = null;
+    try {
+      result = eval("(" + code + ")");
+    } catch(error) {
+      if (!(error instanceof SyntaxError)) {
+        throw error;
+      }
+      try {
+        result = eval(code);
+      } catch(e) {
+        if (e instanceof SyntaxError) {
+          throw error;
+        } else {
+          throw e;
+        }
+      }
+    }
+    return result;
+  }
+
+  function initSizing(el) {
+    var sizing = sizingPolicy(el);
+    if (!sizing)
+      return;
+
+    var cel = document.getElementById("htmlwidget_container");
+    if (!cel)
+      return;
+
+    if (typeof(sizing.padding) !== "undefined") {
+      document.body.style.margin = "0";
+      document.body.style.padding = paddingToCss(unpackPadding(sizing.padding));
+    }
+
+    if (sizing.fill) {
+      document.body.style.overflow = "hidden";
+      document.body.style.width = "100%";
+      document.body.style.height = "100%";
+      document.documentElement.style.width = "100%";
+      document.documentElement.style.height = "100%";
+      cel.style.position = "absolute";
+      var pad = unpackPadding(sizing.padding);
+      cel.style.top = pad.top + "px";
+      cel.style.right = pad.right + "px";
+      cel.style.bottom = pad.bottom + "px";
+      cel.style.left = pad.left + "px";
+      el.style.width = "100%";
+      el.style.height = "100%";
+
+      return {
+        getWidth: function() { return cel.getBoundingClientRect().width; },
+        getHeight: function() { return cel.getBoundingClientRect().height; }
+      };
+
+    } else {
+      el.style.width = px(sizing.width);
+      el.style.height = px(sizing.height);
+
+      return {
+        getWidth: function() { return cel.getBoundingClientRect().width; },
+        getHeight: function() { return cel.getBoundingClientRect().height; }
+      };
+    }
+  }
+
+  // Default implementations for methods
+  var defaults = {
+    find: function(scope) {
+      return querySelectorAll(scope, "." + this.name);
+    },
+    renderError: function(el, err) {
+      var $el = $(el);
+
+      this.clearError(el);
+
+      // Add all these error classes, as Shiny does
+      var errClass = "shiny-output-error";
+      if (err.type !== null) {
+        // use the classes of the error condition as CSS class names
+        errClass = errClass + " " + $.map(asArray(err.type), function(type) {
+          return errClass + "-" + type;
+        }).join(" ");
+      }
+      errClass = errClass + " htmlwidgets-error";
+
+      // Is el inline or block? If inline or inline-block, just display:none it
+      // and add an inline error.
+      var display = $el.css("display");
+      $el.data("restore-display-mode", display);
+
+      if (display === "inline" || display === "inline-block") {
+        $el.hide();
+        if (err.message !== "") {
+          var errorSpan = $("<span>").addClass(errClass);
+          errorSpan.text(err.message);
+          $el.after(errorSpan);
+        }
+      } else if (display === "block") {
+        // If block, add an error just after the el, set visibility:none on the
+        // el, and position the error to be on top of the el.
+        // Mark it with a unique ID and CSS class so we can remove it later.
+        $el.css("visibility", "hidden");
+        if (err.message !== "") {
+          var errorDiv = $("<div>").addClass(errClass).css("position", "absolute")
+            .css("top", el.offsetTop)
+            .css("left", el.offsetLeft)
+            // setting width can push out the page size, forcing otherwise
+            // unnecessary scrollbars to appear and making it impossible for
+            // the element to shrink; so use max-width instead
+            .css("maxWidth", el.offsetWidth)
+            .css("height", el.offsetHeight);
+          errorDiv.text(err.message);
+          $el.after(errorDiv);
+
+          // Really dumb way to keep the size/position of the error in sync with
+          // the parent element as the window is resized or whatever.
+          var intId = setInterval(function() {
+            if (!errorDiv[0].parentElement) {
+              clearInterval(intId);
+              return;
+            }
+            errorDiv
+              .css("top", el.offsetTop)
+              .css("left", el.offsetLeft)
+              .css("maxWidth", el.offsetWidth)
+              .css("height", el.offsetHeight);
+          }, 500);
+        }
+      }
+    },
+    clearError: function(el) {
+      var $el = $(el);
+      var display = $el.data("restore-display-mode");
+      $el.data("restore-display-mode", null);
+
+      if (display === "inline" || display === "inline-block") {
+        if (display)
+          $el.css("display", display);
+        $(el.nextSibling).filter(".htmlwidgets-error").remove();
+      } else if (display === "block"){
+        $el.css("visibility", "inherit");
+        $(el.nextSibling).filter(".htmlwidgets-error").remove();
+      }
+    },
+    sizing: {}
+  };
+
+  // Called by widget bindings to register a new type of widget. The definition
+  // object can contain the following properties:
+  // - name (required) - A string indicating the binding name, which will be
+  //   used by default as the CSS classname to look for.
+  // - initialize (optional) - A function(el) that will be called once per
+  //   widget element; if a value is returned, it will be passed as the third
+  //   value to renderValue.
+  // - renderValue (required) - A function(el, data, initValue) that will be
+  //   called with data. Static contexts will cause this to be called once per
+  //   element; Shiny apps will cause this to be called multiple times per
+  //   element, as the data changes.
+  window.HTMLWidgets.widget = function(definition) {
+    if (!definition.name) {
+      throw new Error("Widget must have a name");
+    }
+    if (!definition.type) {
+      throw new Error("Widget must have a type");
+    }
+    // Currently we only support output widgets
+    if (definition.type !== "output") {
+      throw new Error("Unrecognized widget type '" + definition.type + "'");
+    }
+    // TODO: Verify that .name is a valid CSS classname
+
+    // Support new-style instance-bound definitions. Old-style class-bound
+    // definitions have one widget "object" per widget per type/class of
+    // widget; the renderValue and resize methods on such widget objects
+    // take el and instance arguments, because the widget object can't
+    // store them. New-style instance-bound definitions have one widget
+    // object per widget instance; the definition that's passed in doesn't
+    // provide renderValue or resize methods at all, just the single method
+    //   factory(el, width, height)
+    // which returns an object that has renderValue(x) and resize(w, h).
+    // This enables a far more natural programming style for the widget
+    // author, who can store per-instance state using either OO-style
+    // instance fields or functional-style closure variables (I guess this
+    // is in contrast to what can only be called C-style pseudo-OO which is
+    // what we required before).
+    if (definition.factory) {
+      definition = createLegacyDefinitionAdapter(definition);
+    }
+
+    if (!definition.renderValue) {
+      throw new Error("Widget must have a renderValue function");
+    }
+
+    // For static rendering (non-Shiny), use a simple widget registration
+    // scheme. We also use this scheme for Shiny apps/documents that also
+    // contain static widgets.
+    window.HTMLWidgets.widgets = window.HTMLWidgets.widgets || [];
+    // Merge defaults into the definition; don't mutate the original definition.
+    var staticBinding = extend({}, defaults, definition);
+    overrideMethod(staticBinding, "find", function(superfunc) {
+      return function(scope) {
+        var results = superfunc(scope);
+        // Filter out Shiny outputs, we only want the static kind
+        return filterByClass(results, "html-widget-output", false);
+      };
+    });
+    window.HTMLWidgets.widgets.push(staticBinding);
+
+    if (shinyMode) {
+      // Shiny is running. Register the definition with an output binding.
+      // The definition itself will not be the output binding, instead
+      // we will make an output binding object that delegates to the
+      // definition. This is because we foolishly used the same method
+      // name (renderValue) for htmlwidgets definition and Shiny bindings
+      // but they actually have quite different semantics (the Shiny
+      // bindings receive data that includes lots of metadata that it
+      // strips off before calling htmlwidgets renderValue). We can't
+      // just ignore the difference because in some widgets it's helpful
+      // to call this.renderValue() from inside of resize(), and if
+      // we're not delegating, then that call will go to the Shiny
+      // version instead of the htmlwidgets version.
+
+      // Merge defaults with definition, without mutating either.
+      var bindingDef = extend({}, defaults, definition);
+
+      // This object will be our actual Shiny binding.
+      var shinyBinding = new Shiny.OutputBinding();
+
+      // With a few exceptions, we'll want to simply use the bindingDef's
+      // version of methods if they are available, otherwise fall back to
+      // Shiny's defaults. NOTE: If Shiny's output bindings gain additional
+      // methods in the future, and we want them to be overrideable by
+      // HTMLWidget binding definitions, then we'll need to add them to this
+      // list.
+      delegateMethod(shinyBinding, bindingDef, "getId");
+      delegateMethod(shinyBinding, bindingDef, "onValueChange");
+      delegateMethod(shinyBinding, bindingDef, "onValueError");
+      delegateMethod(shinyBinding, bindingDef, "renderError");
+      delegateMethod(shinyBinding, bindingDef, "clearError");
+      delegateMethod(shinyBinding, bindingDef, "showProgress");
+
+      // The find, renderValue, and resize are handled differently, because we
+      // want to actually decorate the behavior of the bindingDef methods.
+
+      shinyBinding.find = function(scope) {
+        var results = bindingDef.find(scope);
+
+        // Only return elements that are Shiny outputs, not static ones
+        var dynamicResults = results.filter(".html-widget-output");
+
+        // It's possible that whatever caused Shiny to think there might be
+        // new dynamic outputs, also caused there to be new static outputs.
+        // Since there might be lots of different htmlwidgets bindings, we
+        // schedule execution for later--no need to staticRender multiple
+        // times.
+        if (results.length !== dynamicResults.length)
+          scheduleStaticRender();
+
+        return dynamicResults;
+      };
+
+      // Wrap renderValue to handle initialization, which unfortunately isn't
+      // supported natively by Shiny at the time of this writing.
+
+      shinyBinding.renderValue = function(el, data) {
+        Shiny.renderDependencies(data.deps);
+        // Resolve strings marked as javascript literals to objects
+        if (!(data.evals instanceof Array)) data.evals = [data.evals];
+        for (var i = 0; data.evals && i < data.evals.length; i++) {
+          window.HTMLWidgets.evaluateStringMember(data.x, data.evals[i]);
+        }
+        if (!bindingDef.renderOnNullValue) {
+          if (data.x === null) {
+            el.style.visibility = "hidden";
+            return;
+          } else {
+            el.style.visibility = "inherit";
+          }
+        }
+        if (!elementData(el, "initialized")) {
+          initSizing(el);
+
+          elementData(el, "initialized", true);
+          if (bindingDef.initialize) {
+            var rect = el.getBoundingClientRect();
+            var result = bindingDef.initialize(el, rect.width, rect.height);
+            elementData(el, "init_result", result);
+          }
+        }
+        bindingDef.renderValue(el, data.x, elementData(el, "init_result"));
+        evalAndRun(data.jsHooks.render, elementData(el, "init_result"), [el, data.x]);
+      };
+
+      // Only override resize if bindingDef implements it
+      if (bindingDef.resize) {
+        shinyBinding.resize = function(el, width, height) {
+          // Shiny can call resize before initialize/renderValue have been
+          // called, which doesn't make sense for widgets.
+          if (elementData(el, "initialized")) {
+            bindingDef.resize(el, width, height, elementData(el, "init_result"));
+          }
+        };
+      }
+
+      Shiny.outputBindings.register(shinyBinding, bindingDef.name);
+    }
+  };
+
+  var scheduleStaticRenderTimerId = null;
+  function scheduleStaticRender() {
+    if (!scheduleStaticRenderTimerId) {
+      scheduleStaticRenderTimerId = setTimeout(function() {
+        scheduleStaticRenderTimerId = null;
+        window.HTMLWidgets.staticRender();
+      }, 1);
+    }
+  }
+
+  // Render static widgets after the document finishes loading
+  // Statically render all elements that are of this widget's class
+  window.HTMLWidgets.staticRender = function() {
+    var bindings = window.HTMLWidgets.widgets || [];
+    forEach(bindings, function(binding) {
+      var matches = binding.find(document.documentElement);
+      forEach(matches, function(el) {
+        var sizeObj = initSizing(el, binding);
+
+        var getSize = function(el) {
+          if (sizeObj) {
+            return {w: sizeObj.getWidth(), h: sizeObj.getHeight()}
+          } else {
+            var rect = el.getBoundingClientRect();
+            return {w: rect.width, h: rect.height}
+          }
+        };
+
+        if (hasClass(el, "html-widget-static-bound"))
+          return;
+        el.className = el.className + " html-widget-static-bound";
+
+        var initResult;
+        if (binding.initialize) {
+          var size = getSize(el);
+          initResult = binding.initialize(el, size.w, size.h);
+          elementData(el, "init_result", initResult);
+        }
+
+        if (binding.resize) {
+          var lastSize = getSize(el);
+          var resizeHandler = function(e) {
+            var size = getSize(el);
+            if (size.w === 0 && size.h === 0)
+              return;
+            if (size.w === lastSize.w && size.h === lastSize.h)
+              return;
+            lastSize = size;
+            binding.resize(el, size.w, size.h, initResult);
+          };
+
+          on(window, "resize", resizeHandler);
+
+          // This is needed for cases where we're running in a Shiny
+          // app, but the widget itself is not a Shiny output, but
+          // rather a simple static widget. One example of this is
+          // an rmarkdown document that has runtime:shiny and widget
+          // that isn't in a render function. Shiny only knows to
+          // call resize handlers for Shiny outputs, not for static
+          // widgets, so we do it ourselves.
+          if (window.jQuery) {
+            window.jQuery(document).on(
+              "shown.htmlwidgets shown.bs.tab.htmlwidgets shown.bs.collapse.htmlwidgets",
+              resizeHandler
+            );
+            window.jQuery(document).on(
+              "hidden.htmlwidgets hidden.bs.tab.htmlwidgets hidden.bs.collapse.htmlwidgets",
+              resizeHandler
+            );
+          }
+
+          // This is needed for the specific case of ioslides, which
+          // flips slides between display:none and display:block.
+          // Ideally we would not have to have ioslide-specific code
+          // here, but rather have ioslides raise a generic event,
+          // but the rmarkdown package just went to CRAN so the
+          // window to getting that fixed may be long.
+          if (window.addEventListener) {
+            // It's OK to limit this to window.addEventListener
+            // browsers because ioslides itself only supports
+            // such browsers.
+            on(document, "slideenter", resizeHandler);
+            on(document, "slideleave", resizeHandler);
+          }
+        }
+
+        var scriptData = document.querySelector("script[data-for='" + el.id + "'][type='application/json']");
+        if (scriptData) {
+          var data = JSON.parse(scriptData.textContent || scriptData.text);
+          // Resolve strings marked as javascript literals to objects
+          if (!(data.evals instanceof Array)) data.evals = [data.evals];
+          for (var k = 0; data.evals && k < data.evals.length; k++) {
+            window.HTMLWidgets.evaluateStringMember(data.x, data.evals[k]);
+          }
+          binding.renderValue(el, data.x, initResult);
+          evalAndRun(data.jsHooks.render, initResult, [el, data.x]);
+        }
+      });
+    });
+
+    invokePostRenderHandlers();
+  }
+
+
+  function has_jQuery3() {
+    if (!window.jQuery) {
+      return false;
+    }
+    var $version = window.jQuery.fn.jquery;
+    var $major_version = parseInt($version.split(".")[0]);
+    return $major_version >= 3;
+  }
+
+  /*
+  / Shiny 1.4 bumped jQuery from 1.x to 3.x which means jQuery's
+  / on-ready handler (i.e., $(fn)) is now asyncronous (i.e., it now
+  / really means $(setTimeout(fn)).
+  / https://jquery.com/upgrade-guide/3.0/#breaking-change-document-ready-handlers-are-now-asynchronous
+  /
+  / Since Shiny uses $() to schedule initShiny, shiny>=1.4 calls initShiny
+  / one tick later than it did before, which means staticRender() is
+  / called renderValue() earlier than (advanced) widget authors might be expecting.
+  / https://github.com/rstudio/shiny/issues/2630
+  /
+  / For a concrete example, leaflet has some methods (e.g., updateBounds)
+  / which reference Shiny methods registered in initShiny (e.g., setInputValue).
+  / Since leaflet is privy to this life-cycle, it knows to use setTimeout() to
+  / delay execution of those methods (until Shiny methods are ready)
+  / https://github.com/rstudio/leaflet/blob/18ec981/javascript/src/index.js#L266-L268
+  /
+  / Ideally widget authors wouldn't need to use this setTimeout() hack that
+  / leaflet uses to call Shiny methods on a staticRender(). In the long run,
+  / the logic initShiny should be broken up so that method registration happens
+  / right away, but binding happens later.
+  */
+  function maybeStaticRenderLater() {
+    if (shinyMode && has_jQuery3()) {
+      window.jQuery(window.HTMLWidgets.staticRender);
+    } else {
+      window.HTMLWidgets.staticRender();
+    }
+  }
+
+  if (document.addEventListener) {
+    document.addEventListener("DOMContentLoaded", function() {
+      document.removeEventListener("DOMContentLoaded", arguments.callee, false);
+      maybeStaticRenderLater();
+    }, false);
+  } else if (document.attachEvent) {
+    document.attachEvent("onreadystatechange", function() {
+      if (document.readyState === "complete") {
+        document.detachEvent("onreadystatechange", arguments.callee);
+        maybeStaticRenderLater();
+      }
+    });
+  }
+
+
+  window.HTMLWidgets.getAttachmentUrl = function(depname, key) {
+    // If no key, default to the first item
+    if (typeof(key) === "undefined")
+      key = 1;
+
+    var link = document.getElementById(depname + "-" + key + "-attachment");
+    if (!link) {
+      throw new Error("Attachment " + depname + "/" + key + " not found in document");
+    }
+    return link.getAttribute("href");
+  };
+
+  window.HTMLWidgets.dataframeToD3 = function(df) {
+    var names = [];
+    var length;
+    for (var name in df) {
+        if (df.hasOwnProperty(name))
+            names.push(name);
+        if (typeof(df[name]) !== "object" || typeof(df[name].length) === "undefined") {
+            throw new Error("All fields must be arrays");
+        } else if (typeof(length) !== "undefined" && length !== df[name].length) {
+            throw new Error("All fields must be arrays of the same length");
+        }
+        length = df[name].length;
+    }
+    var results = [];
+    var item;
+    for (var row = 0; row < length; row++) {
+        item = {};
+        for (var col = 0; col < names.length; col++) {
+            item[names[col]] = df[names[col]][row];
+        }
+        results.push(item);
+    }
+    return results;
+  };
+
+  window.HTMLWidgets.transposeArray2D = function(array) {
+      if (array.length === 0) return array;
+      var newArray = array[0].map(function(col, i) {
+          return array.map(function(row) {
+              return row[i]
+          })
+      });
+      return newArray;
+  };
+  // Split value at splitChar, but allow splitChar to be escaped
+  // using escapeChar. Any other characters escaped by escapeChar
+  // will be included as usual (including escapeChar itself).
+  function splitWithEscape(value, splitChar, escapeChar) {
+    var results = [];
+    var escapeMode = false;
+    var currentResult = "";
+    for (var pos = 0; pos < value.length; pos++) {
+      if (!escapeMode) {
+        if (value[pos] === splitChar) {
+          results.push(currentResult);
+          currentResult = "";
+        } else if (value[pos] === escapeChar) {
+          escapeMode = true;
+        } else {
+          currentResult += value[pos];
+        }
+      } else {
+        currentResult += value[pos];
+        escapeMode = false;
+      }
+    }
+    if (currentResult !== "") {
+      results.push(currentResult);
+    }
+    return results;
+  }
+  // Function authored by Yihui/JJ Allaire
+  window.HTMLWidgets.evaluateStringMember = function(o, member) {
+    var parts = splitWithEscape(member, '.', '\\');
+    for (var i = 0, l = parts.length; i < l; i++) {
+      var part = parts[i];
+      // part may be a character or 'numeric' member name
+      if (o !== null && typeof o === "object" && part in o) {
+        if (i == (l - 1)) { // if we are at the end of the line then evalulate
+          if (typeof o[part] === "string")
+            o[part] = tryEval(o[part]);
+        } else { // otherwise continue to next embedded object
+          o = o[part];
+        }
+      }
+    }
+  };
+
+  // Retrieve the HTMLWidget instance (i.e. the return value of an
+  // HTMLWidget binding's initialize() or factory() function)
+  // associated with an element, or null if none.
+  window.HTMLWidgets.getInstance = function(el) {
+    return elementData(el, "init_result");
+  };
+
+  // Finds the first element in the scope that matches the selector,
+  // and returns the HTMLWidget instance (i.e. the return value of
+  // an HTMLWidget binding's initialize() or factory() function)
+  // associated with that element, if any. If no element matches the
+  // selector, or the first matching element has no HTMLWidget
+  // instance associated with it, then null is returned.
+  //
+  // The scope argument is optional, and defaults to window.document.
+  window.HTMLWidgets.find = function(scope, selector) {
+    if (arguments.length == 1) {
+      selector = scope;
+      scope = document;
+    }
+
+    var el = scope.querySelector(selector);
+    if (el === null) {
+      return null;
+    } else {
+      return window.HTMLWidgets.getInstance(el);
+    }
+  };
+
+  // Finds all elements in the scope that match the selector, and
+  // returns the HTMLWidget instances (i.e. the return values of
+  // an HTMLWidget binding's initialize() or factory() function)
+  // associated with the elements, in an array. If elements that
+  // match the selector don't have an associated HTMLWidget
+  // instance, the returned array will contain nulls.
+  //
+  // The scope argument is optional, and defaults to window.document.
+  window.HTMLWidgets.findAll = function(scope, selector) {
+    if (arguments.length == 1) {
+      selector = scope;
+      scope = document;
+    }
+
+    var nodes = scope.querySelectorAll(selector);
+    var results = [];
+    for (var i = 0; i < nodes.length; i++) {
+      results.push(window.HTMLWidgets.getInstance(nodes[i]));
+    }
+    return results;
+  };
+
+  var postRenderHandlers = [];
+  function invokePostRenderHandlers() {
+    while (postRenderHandlers.length) {
+      var handler = postRenderHandlers.shift();
+      if (handler) {
+        handler();
+      }
+    }
+  }
+
+  // Register the given callback function to be invoked after the
+  // next time static widgets are rendered.
+  window.HTMLWidgets.addPostRenderHandler = function(callback) {
+    postRenderHandlers.push(callback);
+  };
+
+  // Takes a new-style instance-bound definition, and returns an
+  // old-style class-bound definition. This saves us from having
+  // to rewrite all the logic in this file to accomodate both
+  // types of definitions.
+  function createLegacyDefinitionAdapter(defn) {
+    var result = {
+      name: defn.name,
+      type: defn.type,
+      initialize: function(el, width, height) {
+        return defn.factory(el, width, height);
+      },
+      renderValue: function(el, x, instance) {
+        return instance.renderValue(x);
+      },
+      resize: function(el, width, height, instance) {
+        return instance.resize(width, height);
+      }
+    };
+
+    if (defn.find)
+      result.find = defn.find;
+    if (defn.renderError)
+      result.renderError = defn.renderError;
+    if (defn.clearError)
+      result.clearError = defn.clearError;
+
+    return result;
+  }
+})();
+</script>
+<script>
+HTMLWidgets.widget({
+  name: "plotly",
+  type: "output",
+
+  initialize: function(el, width, height) {
+    return {};
+  },
+
+  resize: function(el, width, height, instance) {
+    if (instance.autosize) {
+      var width = instance.width || width;
+      var height = instance.height || height;
+      Plotly.relayout(el.id, {width: width, height: height});
+    }
+  },  
+  
+  renderValue: function(el, x, instance) {
+    
+    // Plotly.relayout() mutates the plot input object, so make sure to 
+    // keep a reference to the user-supplied width/height *before*
+    // we call Plotly.plot();
+    var lay = x.layout || {};
+    instance.width = lay.width;
+    instance.height = lay.height;
+    instance.autosize = lay.autosize || true;
+    
+    /* 
+    / 'inform the world' about highlighting options this is so other
+    / crosstalk libraries have a chance to respond to special settings 
+    / such as persistent selection. 
+    / AFAIK, leaflet is the only library with such intergration
+    / https://github.com/rstudio/leaflet/pull/346/files#diff-ad0c2d51ce5fdf8c90c7395b102f4265R154
+    */
+    var ctConfig = crosstalk.var('plotlyCrosstalkOpts').set(x.highlight);
+      
+    if (typeof(window) !== "undefined") {
+      // make sure plots don't get created outside the network (for on-prem)
+      window.PLOTLYENV = window.PLOTLYENV || {};
+      window.PLOTLYENV.BASE_URL = x.base_url;
+      
+      // Enable persistent selection when shift key is down
+      // https://stackoverflow.com/questions/1828613/check-if-a-key-is-down
+      var persistOnShift = function(e) {
+        if (!e) window.event;
+        if (e.shiftKey) { 
+          x.highlight.persistent = true; 
+          x.highlight.persistentShift = true;
+        } else {
+          x.highlight.persistent = false; 
+          x.highlight.persistentShift = false;
+        }
+      };
+      
+      // Only relevant if we haven't forced persistent mode at command line
+      if (!x.highlight.persistent) {
+        window.onmousemove = persistOnShift;
+      }
+    }
+
+    var graphDiv = document.getElementById(el.id);
+    
+    // TODO: move the control panel injection strategy inside here...
+    HTMLWidgets.addPostRenderHandler(function() {
+      
+      // lower the z-index of the modebar to prevent it from highjacking hover
+      // (TODO: do this via CSS?)
+      // https://github.com/ropensci/plotly/issues/956
+      // https://www.w3schools.com/jsref/prop_style_zindex.asp
+      var modebars = document.querySelectorAll(".js-plotly-plot .plotly .modebar");
+      for (var i = 0; i < modebars.length; i++) {
+        modebars[i].style.zIndex = 1;
+      }
+    });
+      
+      // inject a "control panel" holding selectize/dynamic color widget(s)
+    if ((x.selectize || x.highlight.dynamic) && !instance.plotly) {
+      var flex = document.createElement("div");
+      flex.class = "plotly-crosstalk-control-panel";
+      flex.style = "display: flex; flex-wrap: wrap";
+      
+      // inject the colourpicker HTML container into the flexbox
+      if (x.highlight.dynamic) {
+        var pickerDiv = document.createElement("div");
+        
+        var pickerInput = document.createElement("input");
+        pickerInput.id = el.id + "-colourpicker";
+        pickerInput.placeholder = "asdasd";
+        
+        var pickerLabel = document.createElement("label");
+        pickerLabel.for = pickerInput.id;
+        pickerLabel.innerHTML = "Brush color&nbsp;&nbsp;";
+        
+        pickerDiv.appendChild(pickerLabel);
+        pickerDiv.appendChild(pickerInput);
+        flex.appendChild(pickerDiv);
+      }
+      
+      // inject selectize HTML containers (one for every crosstalk group)
+      if (x.selectize) {
+        var ids = Object.keys(x.selectize);
+        
+        for (var i = 0; i < ids.length; i++) {
+          var container = document.createElement("div");
+          container.id = ids[i];
+          container.style = "width: 80%; height: 10%";
+          container.class = "form-group crosstalk-input-plotly-highlight";
+          
+          var label = document.createElement("label");
+          label.for = ids[i];
+          label.innerHTML = x.selectize[ids[i]].group;
+          label.class = "control-label";
+          
+          var selectDiv = document.createElement("div");
+          var select = document.createElement("select");
+          select.multiple = true;
+          
+          selectDiv.appendChild(select);
+          container.appendChild(label);
+          container.appendChild(selectDiv);
+          flex.appendChild(container);
+        }
+      }
+      
+      // finally, insert the flexbox inside the htmlwidget container,
+      // but before the plotly graph div
+      graphDiv.parentElement.insertBefore(flex, graphDiv);
+      
+      if (x.highlight.dynamic) {
+        var picker = $("#" + pickerInput.id);
+        var colors = x.highlight.color || [];
+        // TODO: let users specify options?
+        var opts = {
+          value: colors[0],
+          showColour: "both",
+          palette: "limited",
+          allowedCols: colors.join(" "),
+          width: "20%",
+          height: "10%"
+        };
+        picker.colourpicker({changeDelay: 0});
+        picker.colourpicker("settings", opts);
+        picker.colourpicker("value", opts.value);
+        // inform crosstalk about a change in the current selection colour
+        var grps = x.highlight.ctGroups || [];
+        for (var i = 0; i < grps.length; i++) {
+          crosstalk.group(grps[i]).var('plotlySelectionColour')
+            .set(picker.colourpicker('value'));
+        }
+        picker.on("change", function() {
+          for (var i = 0; i < grps.length; i++) {
+            crosstalk.group(grps[i]).var('plotlySelectionColour')
+              .set(picker.colourpicker('value'));
+          }
+        });
+      }
+    }
+    
+    // if no plot exists yet, create one with a particular configuration
+    if (!instance.plotly) {
+      
+      var plot = Plotly.newPlot(graphDiv, x);
+      instance.plotly = true;
+      
+    } else if (x.layout.transition) {
+      
+      var plot = Plotly.react(graphDiv, x);
+    
+    } else {
+      
+      // this is essentially equivalent to Plotly.newPlot(), but avoids creating 
+      // a new webgl context
+      // https://github.com/plotly/plotly.js/blob/2b24f9def901831e61282076cf3f835598d56f0e/src/plot_api/plot_api.js#L531-L532
+
+      // TODO: restore crosstalk selections?
+      Plotly.purge(graphDiv);
+      // TODO: why is this necessary to get crosstalk working?
+      graphDiv.data = undefined;
+      graphDiv.layout = undefined;
+      var plot = Plotly.newPlot(graphDiv, x);
+    }
+    
+    // Trigger plotly.js calls defined via `plotlyProxy()`
+    plot.then(function() {
+      if (HTMLWidgets.shinyMode) {
+        Shiny.addCustomMessageHandler("plotly-calls", function(msg) {
+          var gd = document.getElementById(msg.id);
+          if (!gd) {
+            throw new Error("Couldn't find plotly graph with id: " + msg.id);
+          }
+          // This isn't an official plotly.js method, but it's the only current way to 
+          // change just the configuration of a plot 
+          // https://community.plot.ly/t/update-config-function/9057
+          if (msg.method == "reconfig") {
+            Plotly.react(gd, gd.data, gd.layout, msg.args);
+            return;
+          }
+          if (!Plotly[msg.method]) {
+            throw new Error("Unknown method " + msg.method);
+          }
+          var args = [gd].concat(msg.args);
+          Plotly[msg.method].apply(null, args);
+        });
+      }
+      
+      // plotly's mapbox API doesn't currently support setting bounding boxes
+      // https://www.mapbox.com/mapbox-gl-js/example/fitbounds/
+      // so we do this manually...
+      // TODO: make sure this triggers on a redraw and relayout as well as on initial draw
+      var mapboxIDs = graphDiv._fullLayout._subplots.mapbox || [];
+      for (var i = 0; i < mapboxIDs.length; i++) {
+        var id = mapboxIDs[i];
+        var mapOpts = x.layout[id] || {};
+        var args = mapOpts._fitBounds || {};
+        if (!args) {
+          continue;
+        }
+        var mapObj = graphDiv._fullLayout[id]._subplot.map;
+        mapObj.fitBounds(args.bounds, args.options);
+      }
+      
+    });
+    
+    // Attach attributes (e.g., "key", "z") to plotly event data
+    function eventDataWithKey(eventData) {
+      if (eventData === undefined || !eventData.hasOwnProperty("points")) {
+        return null;
+      }
+      return eventData.points.map(function(pt) {
+        var obj = {
+          curveNumber: pt.curveNumber, 
+          pointNumber: pt.pointNumber, 
+          x: pt.x,
+          y: pt.y
+        };
+        
+        // If 'z' is reported with the event data, then use it!
+        if (pt.hasOwnProperty("z")) {
+          obj.z = pt.z;
+        }
+        
+        if (pt.hasOwnProperty("customdata")) {
+          obj.customdata = pt.customdata;
+        }
+        
+        /* 
+          TL;DR: (I think) we have to select the graph div (again) to attach keys...
+          
+          Why? Remember that crosstalk will dynamically add/delete traces 
+          (see traceManager.prototype.updateSelection() below)
+          For this reason, we can't simply grab keys from x.data (like we did previously)
+          Moreover, we can't use _fullData, since that doesn't include 
+          unofficial attributes. It's true that click/hover events fire with 
+          pt.data, but drag events don't...
+        */
+        var gd = document.getElementById(el.id);
+        var trace = gd.data[pt.curveNumber];
+        
+        if (!trace._isSimpleKey) {
+          var attrsToAttach = ["key"];
+        } else {
+          // simple keys fire the whole key
+          obj.key = trace.key;
+          var attrsToAttach = [];
+        }
+        
+        for (var i = 0; i < attrsToAttach.length; i++) {
+          var attr = trace[attrsToAttach[i]];
+          if (Array.isArray(attr)) {
+            if (typeof pt.pointNumber === "number") {
+              obj[attrsToAttach[i]] = attr[pt.pointNumber];
+            } else if (Array.isArray(pt.pointNumber)) {
+              obj[attrsToAttach[i]] = attr[pt.pointNumber[0]][pt.pointNumber[1]];
+            } else if (Array.isArray(pt.pointNumbers)) {
+              obj[attrsToAttach[i]] = pt.pointNumbers.map(function(idx) { return attr[idx]; });
+            }
+          }
+        }
+        return obj;
+      });
+    }
+    
+    
+    var legendEventData = function(d) {
+      // if legendgroup is not relevant just return the trace
+      var trace = d.data[d.curveNumber];
+      if (!trace.legendgroup) return trace;
+      
+      // if legendgroup was specified, return all traces that match the group
+      var legendgrps = d.data.map(function(trace){ return trace.legendgroup; });
+      var traces = [];
+      for (i = 0; i < legendgrps.length; i++) {
+        if (legendgrps[i] == trace.legendgroup) {
+          traces.push(d.data[i]);
+        }
+      }
+      
+      return traces;
+    };
+
+    
+    // send user input event data to shiny
+    if (HTMLWidgets.shinyMode && Shiny.setInputValue) {
+      
+      // Some events clear other input values
+      // TODO: always register these?
+      var eventClearMap = {
+        plotly_deselect: ["plotly_selected", "plotly_selecting", "plotly_brushed", "plotly_brushing", "plotly_click"],
+        plotly_unhover: ["plotly_hover"],
+        plotly_doubleclick: ["plotly_click"]
+      };
+    
+      Object.keys(eventClearMap).map(function(evt) {
+        graphDiv.on(evt, function() {
+          var inputsToClear = eventClearMap[evt];
+          inputsToClear.map(function(input) {
+            Shiny.setInputValue(input + "-" + x.source, null, {priority: "event"});
+          });
+        });
+      });
+      
+      var eventDataFunctionMap = {
+        plotly_click: eventDataWithKey,
+        plotly_sunburstclick: eventDataWithKey,
+        plotly_hover: eventDataWithKey,
+        plotly_unhover: eventDataWithKey,
+        // If 'plotly_selected' has already been fired, and you click
+        // on the plot afterwards, this event fires `undefined`?!?
+        // That might be considered a plotly.js bug, but it doesn't make 
+        // sense for this input change to occur if `d` is falsy because,
+        // even in the empty selection case, `d` is truthy (an object),
+        // and the 'plotly_deselect' event will reset this input
+        plotly_selected: function(d) { if (d) { return eventDataWithKey(d); } },
+        plotly_selecting: function(d) { if (d) { return eventDataWithKey(d); } },
+        plotly_brushed: function(d) {
+          if (d) { return d.range ? d.range : d.lassoPoints; }
+        },
+        plotly_brushing: function(d) {
+          if (d) { return d.range ? d.range : d.lassoPoints; }
+        },
+        plotly_legendclick: legendEventData,
+        plotly_legenddoubleclick: legendEventData,
+        plotly_clickannotation: function(d) { return d.fullAnnotation }
+      };
+      
+      var registerShinyValue = function(event) {
+        var eventDataPreProcessor = eventDataFunctionMap[event] || function(d) { return d ? d : el.id };
+        // some events are unique to the R package
+        var plotlyJSevent = (event == "plotly_brushed") ? "plotly_selected" : (event == "plotly_brushing") ? "plotly_selecting" : event;
+        // register the event
+        graphDiv.on(plotlyJSevent, function(d) {
+          Shiny.setInputValue(
+            event + "-" + x.source,
+            JSON.stringify(eventDataPreProcessor(d)),
+            {priority: "event"}
+          );
+        });
+      }
+    
+      var shinyEvents = x.shinyEvents || [];
+      shinyEvents.map(registerShinyValue);
+    }
+    
+    // Given an array of {curveNumber: x, pointNumber: y} objects,
+    // return a hash of {
+    //   set1: {value: [key1, key2, ...], _isSimpleKey: false}, 
+    //   set2: {value: [key3, key4, ...], _isSimpleKey: false}
+    // }
+    function pointsToKeys(points) {
+      var keysBySet = {};
+      for (var i = 0; i < points.length; i++) {
+        
+        var trace = graphDiv.data[points[i].curveNumber];
+        if (!trace.key || !trace.set) {
+          continue;
+        }
+        
+        // set defaults for this keySet
+        // note that we don't track the nested property (yet) since we always 
+        // emit the union -- http://cpsievert.github.io/talks/20161212b/#21
+        keysBySet[trace.set] = keysBySet[trace.set] || {
+          value: [],
+          _isSimpleKey: trace._isSimpleKey
+        };
+        
+        // Use pointNumber by default, but aggregated traces should emit pointNumbers
+        var ptNum = points[i].pointNumber;
+        var hasPtNum = typeof ptNum === "number";
+        var ptNum = hasPtNum ? ptNum : points[i].pointNumbers;
+        
+        // selecting a point of a "simple" trace means: select the 
+        // entire key attached to this trace, which is useful for,
+        // say clicking on a fitted line to select corresponding observations 
+        var key = trace._isSimpleKey ? trace.key : Array.isArray(ptNum) ? ptNum.map(function(idx) { return trace.key[idx]; }) : trace.key[ptNum];
+        // http://stackoverflow.com/questions/10865025/merge-flatten-an-array-of-arrays-in-javascript
+        var keyFlat = trace._isNestedKey ? [].concat.apply([], key) : key;
+        
+        // TODO: better to only add new values?
+        keysBySet[trace.set].value = keysBySet[trace.set].value.concat(keyFlat);
+      }
+      
+      return keysBySet;
+    }
+    
+    
+    x.highlight.color = x.highlight.color || [];
+    // make sure highlight color is an array
+    if (!Array.isArray(x.highlight.color)) {
+      x.highlight.color = [x.highlight.color];
+    }
+
+    var traceManager = new TraceManager(graphDiv, x.highlight);
+
+    // Gather all *unique* sets.
+    var allSets = [];
+    for (var curveIdx = 0; curveIdx < x.data.length; curveIdx++) {
+      var newSet = x.data[curveIdx].set;
+      if (newSet) {
+        if (allSets.indexOf(newSet) === -1) {
+          allSets.push(newSet);
+        }
+      }
+    }
+
+    // register event listeners for all sets
+    for (var i = 0; i < allSets.length; i++) {
+      
+      var set = allSets[i];
+      var selection = new crosstalk.SelectionHandle(set);
+      var filter = new crosstalk.FilterHandle(set);
+      
+      var filterChange = function(e) {
+        removeBrush(el);
+        traceManager.updateFilter(set, e.value);
+      };
+      filter.on("change", filterChange);
+      
+      
+      var selectionChange = function(e) {
+        
+        // Workaround for 'plotly_selected' now firing previously selected
+        // points (in addition to new ones) when holding shift key. In our case,
+        // we just want the new keys 
+        if (x.highlight.on === "plotly_selected" && x.highlight.persistentShift) {
+          // https://stackoverflow.com/questions/1187518/how-to-get-the-difference-between-two-arrays-in-javascript
+          Array.prototype.diff = function(a) {
+              return this.filter(function(i) {return a.indexOf(i) < 0;});
+          };
+          e.value = e.value.diff(e.oldValue);
+        }
+        
+        // array of "event objects" tracking the selection history
+        // this is used to avoid adding redundant selections
+        var selectionHistory = crosstalk.var("plotlySelectionHistory").get() || [];
+        
+        // Construct an event object "defining" the current event. 
+        var event = {
+          receiverID: traceManager.gd.id,
+          plotlySelectionColour: crosstalk.group(set).var("plotlySelectionColour").get()
+        };
+        event[set] = e.value;
+        // TODO: is there a smarter way to check object equality?
+        if (selectionHistory.length > 0) {
+          var ev = JSON.stringify(event);
+          for (var i = 0; i < selectionHistory.length; i++) {
+            var sel = JSON.stringify(selectionHistory[i]);
+            if (sel == ev) {
+              return;
+            }
+          }
+        }
+        
+        // accumulate history for persistent selection
+        if (!x.highlight.persistent) {
+          selectionHistory = [event];
+        } else {
+          selectionHistory.push(event);
+        }
+        crosstalk.var("plotlySelectionHistory").set(selectionHistory);
+        
+        // do the actual updating of traces, frames, and the selectize widget
+        traceManager.updateSelection(set, e.value);
+        // https://github.com/selectize/selectize.js/blob/master/docs/api.md#methods_items
+        if (x.selectize) {
+          if (!x.highlight.persistent || e.value === null) {
+            selectize.clear(true);
+          }
+          selectize.addItems(e.value, true);
+          selectize.close();
+        }
+      }
+      selection.on("change", selectionChange);
+      
+      // Set a crosstalk variable selection value, triggering an update
+      var turnOn = function(e) {
+        if (e) {
+          var selectedKeys = pointsToKeys(e.points);
+          // Keys are group names, values are array of selected keys from group.
+          for (var set in selectedKeys) {
+            if (selectedKeys.hasOwnProperty(set)) {
+              selection.set(selectedKeys[set].value, {sender: el});
+            }
+          }
+        }
+      };
+      if (x.highlight.debounce > 0) {
+        turnOn = debounce(turnOn, x.highlight.debounce);
+      }
+      graphDiv.on(x.highlight.on, turnOn);
+      
+      graphDiv.on(x.highlight.off, function turnOff(e) {
+        // remove any visual clues
+        removeBrush(el);
+        // remove any selection history
+        crosstalk.var("plotlySelectionHistory").set(null);
+        // trigger the actual removal of selection traces
+        selection.set(null, {sender: el});
+      });
+          
+      // register a callback for selectize so that there is bi-directional
+      // communication between the widget and direct manipulation events
+      if (x.selectize) {
+        var selectizeID = Object.keys(x.selectize)[i];
+        var options = x.selectize[selectizeID];
+        var first = [{value: "", label: "(All)"}];
+        var opts = $.extend({
+            options: first.concat(options.items),
+            searchField: "label",
+            valueField: "value",
+            labelField: "label",
+            maxItems: 50
+          }, 
+          options
+        );
+        var select = $("#" + selectizeID).find("select")[0];
+        var selectize = $(select).selectize(opts)[0].selectize;
+        // NOTE: this callback is triggered when *directly* altering 
+        // dropdown items
+        selectize.on("change", function() {
+          var currentItems = traceManager.groupSelections[set] || [];
+          if (!x.highlight.persistent) {
+            removeBrush(el);
+            for (var i = 0; i < currentItems.length; i++) {
+              selectize.removeItem(currentItems[i], true);
+            }
+          }
+          var newItems = selectize.items.filter(function(idx) { 
+            return currentItems.indexOf(idx) < 0;
+          });
+          if (newItems.length > 0) {
+            traceManager.updateSelection(set, newItems);
+          } else {
+            // Item has been removed...
+            // TODO: this logic won't work for dynamically changing palette 
+            traceManager.updateSelection(set, null);
+            traceManager.updateSelection(set, selectize.items);
+          }
+        });
+      }
+    } // end of selectionChange
+    
+  } // end of renderValue
+}); // end of widget definition
+
+/**
+ * @param graphDiv The Plotly graph div
+ * @param highlight An object with options for updating selection(s)
+ */
+function TraceManager(graphDiv, highlight) {
+  // The Plotly graph div
+  this.gd = graphDiv;
+
+  // Preserve the original data.
+  // TODO: try using Lib.extendFlat() as done in  
+  // https://github.com/plotly/plotly.js/pull/1136 
+  this.origData = JSON.parse(JSON.stringify(graphDiv.data));
+  
+  // avoid doing this over and over
+  this.origOpacity = [];
+  for (var i = 0; i < this.origData.length; i++) {
+    this.origOpacity[i] = this.origData[i].opacity === 0 ? 0 : (this.origData[i].opacity || 1);
+  }
+
+  // key: group name, value: null or array of keys representing the
+  // most recently received selection for that group.
+  this.groupSelections = {};
+  
+  // selection parameters (e.g., transient versus persistent selection)
+  this.highlight = highlight;
+}
+
+TraceManager.prototype.close = function() {
+  // TODO: Unhook all event handlers
+};
+
+TraceManager.prototype.updateFilter = function(group, keys) {
+
+  if (typeof(keys) === "undefined" || keys === null) {
+    
+    this.gd.data = JSON.parse(JSON.stringify(this.origData));
+    
+  } else {
+  
+    var traces = [];
+    for (var i = 0; i < this.origData.length; i++) {
+      var trace = this.origData[i];
+      if (!trace.key || trace.set !== group) {
+        continue;
+      }
+      var matchFunc = getMatchFunc(trace);
+      var matches = matchFunc(trace.key, keys);
+      
+      if (matches.length > 0) {
+        if (!trace._isSimpleKey) {
+          // subsetArrayAttrs doesn't mutate trace (it makes a modified clone)
+          trace = subsetArrayAttrs(trace, matches);
+        }
+        traces.push(trace);
+      }
+    }
+    this.gd.data = traces;
+  }
+  
+  Plotly.redraw(this.gd);
+  
+  // NOTE: we purposely do _not_ restore selection(s), since on filter,
+  // axis likely will update, changing the pixel -> data mapping, leading 
+  // to a likely mismatch in the brush outline and highlighted marks
+  
+};
+
+TraceManager.prototype.updateSelection = function(group, keys) {
+  
+  if (keys !== null && !Array.isArray(keys)) {
+    throw new Error("Invalid keys argument; null or array expected");
+  }
+  
+  // if selection has been cleared, or if this is transient
+  // selection, delete the "selection traces"
+  var nNewTraces = this.gd.data.length - this.origData.length;
+  if (keys === null || !this.highlight.persistent && nNewTraces > 0) {
+    var tracesToRemove = [];
+    for (var i = 0; i < this.gd.data.length; i++) {
+      if (this.gd.data[i]._isCrosstalkTrace) tracesToRemove.push(i);
+    }
+    Plotly.deleteTraces(this.gd, tracesToRemove);
+    this.groupSelections[group] = keys;
+  } else {
+    // add to the groupSelection, rather than overwriting it
+    // TODO: can this be removed?
+    this.groupSelections[group] = this.groupSelections[group] || [];
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (this.groupSelections[group].indexOf(k) < 0) {
+        this.groupSelections[group].push(k);
+      }
+    }
+  }
+  
+  if (keys === null) {
+    
+    Plotly.restyle(this.gd, {"opacity": this.origOpacity});
+    
+  } else if (keys.length >= 1) {
+    
+    // placeholder for new "selection traces"
+    var traces = [];
+    // this variable is set in R/highlight.R
+    var selectionColour = crosstalk.group(group).var("plotlySelectionColour").get() || 
+      this.highlight.color[0];
+
+    for (var i = 0; i < this.origData.length; i++) {
+      // TODO: try using Lib.extendFlat() as done in  
+      // https://github.com/plotly/plotly.js/pull/1136 
+      var trace = JSON.parse(JSON.stringify(this.gd.data[i]));
+      if (!trace.key || trace.set !== group) {
+        continue;
+      }
+      // Get sorted array of matching indices in trace.key
+      var matchFunc = getMatchFunc(trace);
+      var matches = matchFunc(trace.key, keys);
+      
+      if (matches.length > 0) {
+        // If this is a "simple" key, that means select the entire trace
+        if (!trace._isSimpleKey) {
+          trace = subsetArrayAttrs(trace, matches);
+        }
+        // reach into the full trace object so we can properly reflect the 
+        // selection attributes in every view
+        var d = this.gd._fullData[i];
+        
+        /* 
+        / Recursively inherit selection attributes from various sources, 
+        / in order of preference:
+        /  (1) official plotly.js selected attribute
+        /  (2) highlight(selected = attrs_selected(...))
+        */
+        // TODO: it would be neat to have a dropdown to dynamically specify these!
+        $.extend(true, trace, this.highlight.selected);
+        
+        // if it is defined, override color with the "dynamic brush color""
+        if (d.marker) {
+          trace.marker = trace.marker || {};
+          trace.marker.color =  selectionColour || trace.marker.color || d.marker.color;
+        }
+        if (d.line) {
+          trace.line = trace.line || {};
+          trace.line.color =  selectionColour || trace.line.color || d.line.color;
+        }
+        if (d.textfont) {
+          trace.textfont = trace.textfont || {};
+          trace.textfont.color =  selectionColour || trace.textfont.color || d.textfont.color;
+        }
+        if (d.fillcolor) {
+          // TODO: should selectionColour inherit alpha from the existing fillcolor?
+          trace.fillcolor = selectionColour || trace.fillcolor || d.fillcolor;
+        }
+        // attach a sensible name/legendgroup
+        trace.name = trace.name || keys.join("<br />");
+        trace.legendgroup = trace.legendgroup || keys.join("<br />");
+        
+        // keep track of mapping between this new trace and the trace it targets
+        // (necessary for updating frames to reflect the selection traces)
+        trace._originalIndex = i;
+        trace._newIndex = this.gd._fullData.length + traces.length;
+        trace._isCrosstalkTrace = true;
+        traces.push(trace);
+      }
+    }
+    
+    if (traces.length > 0) {
+      
+      Plotly.addTraces(this.gd, traces).then(function(gd) {
+        // incrementally add selection traces to frames
+        // (this is heavily inspired by Plotly.Plots.modifyFrames() 
+        // in src/plots/plots.js)
+        var _hash = gd._transitionData._frameHash;
+        var _frames = gd._transitionData._frames || [];
+        
+        for (var i = 0; i < _frames.length; i++) {
+          
+          // add to _frames[i].traces *if* this frame references selected trace(s)
+          var newIndices = [];
+          for (var j = 0; j < traces.length; j++) {
+            var tr = traces[j];
+            if (_frames[i].traces.indexOf(tr._originalIndex) > -1) {
+              newIndices.push(tr._newIndex);
+              _frames[i].traces.push(tr._newIndex);
+            }
+          }
+          
+          // nothing to do...
+          if (newIndices.length === 0) {
+            continue;
+          }
+          
+          var ctr = 0;
+          var nFrameTraces = _frames[i].data.length;
+          
+          for (var j = 0; j < nFrameTraces; j++) {
+            var frameTrace = _frames[i].data[j];
+            if (!frameTrace.key || frameTrace.set !== group) {
+              continue;
+            }
+            
+            var matchFunc = getMatchFunc(frameTrace);
+            var matches = matchFunc(frameTrace.key, keys);
+            
+            if (matches.length > 0) {
+              if (!trace._isSimpleKey) {
+                frameTrace = subsetArrayAttrs(frameTrace, matches);
+              }
+              var d = gd._fullData[newIndices[ctr]];
+              if (d.marker) {
+                frameTrace.marker = d.marker;
+              }
+              if (d.line) {
+                frameTrace.line = d.line;
+              }
+              if (d.textfont) {
+                frameTrace.textfont = d.textfont;
+              }
+              ctr = ctr + 1;
+              _frames[i].data.push(frameTrace);
+            }
+          }
+          
+          // update gd._transitionData._frameHash
+          _hash[_frames[i].name] = _frames[i];
+        }
+      
+      });
+      
+      // dim traces that have a set matching the set of selection sets
+      var tracesToDim = [],
+          opacities = [],
+          sets = Object.keys(this.groupSelections),
+          n = this.origData.length;
+          
+      for (var i = 0; i < n; i++) {
+        var opacity = this.origOpacity[i] || 1;
+        // have we already dimmed this trace? Or is this even worth doing?
+        if (opacity !== this.gd._fullData[i].opacity || this.highlight.opacityDim === 1) {
+          continue;
+        }
+        // is this set an element of the set of selection sets?
+        var matches = findMatches(sets, [this.gd.data[i].set]);
+        if (matches.length) {
+          tracesToDim.push(i);
+          opacities.push(opacity * this.highlight.opacityDim);
+        }
+      }
+      
+      if (tracesToDim.length > 0) {
+        Plotly.restyle(this.gd, {"opacity": opacities}, tracesToDim);
+        // turn off the selected/unselected API
+        Plotly.restyle(this.gd, {"selectedpoints": null});
+      }
+      
+    }
+    
+  }
+};
+
+/* 
+Note: in all of these match functions, we assume needleSet (i.e. the selected keys)
+is a 1D (or flat) array. The real difference is the meaning of haystack.
+findMatches() does the usual thing you'd expect for 
+linked brushing on a scatterplot matrix. findSimpleMatches() returns a match iff 
+haystack is a subset of the needleSet. findNestedMatches() returns 
+*/
+
+function getMatchFunc(trace) {
+  return (trace._isNestedKey) ? findNestedMatches : 
+    (trace._isSimpleKey) ? findSimpleMatches : findMatches;
+}
+
+// find matches for "flat" keys
+function findMatches(haystack, needleSet) {
+  var matches = [];
+  haystack.forEach(function(obj, i) {
+    if (obj === null || needleSet.indexOf(obj) >= 0) {
+      matches.push(i);
+    }
+  });
+  return matches;
+}
+
+// find matches for "simple" keys
+function findSimpleMatches(haystack, needleSet) {
+  var match = haystack.every(function(val) {
+    return val === null || needleSet.indexOf(val) >= 0;
+  });
+  // yes, this doesn't make much sense other than conforming 
+  // to the output type of the other match functions
+  return (match) ? [0] : []
+}
+
+// find matches for a "nested" haystack (2D arrays)
+function findNestedMatches(haystack, needleSet) {
+  var matches = [];
+  for (var i = 0; i < haystack.length; i++) {
+    var hay = haystack[i];
+    var match = hay.every(function(val) { 
+      return val === null || needleSet.indexOf(val) >= 0; 
+    });
+    if (match) {
+      matches.push(i);
+    }
+  }
+  return matches;
+}
+
+function isPlainObject(obj) {
+  return (
+    Object.prototype.toString.call(obj) === '[object Object]' &&
+    Object.getPrototypeOf(obj) === Object.prototype
+  );
+}
+
+function subsetArrayAttrs(obj, indices) {
+  var newObj = {};
+  Object.keys(obj).forEach(function(k) {
+    var val = obj[k];
+
+    if (k.charAt(0) === "_") {
+      newObj[k] = val;
+    } else if (k === "transforms" && Array.isArray(val)) {
+      newObj[k] = val.map(function(transform) {
+        return subsetArrayAttrs(transform, indices);
+      });
+    } else if (k === "colorscale" && Array.isArray(val)) {
+      newObj[k] = val;
+    } else if (isPlainObject(val)) {
+      newObj[k] = subsetArrayAttrs(val, indices);
+    } else if (Array.isArray(val)) {
+      newObj[k] = subsetArray(val, indices);
+    } else {
+      newObj[k] = val;
+    }
+  });
+  return newObj;
+}
+
+function subsetArray(arr, indices) {
+  var result = [];
+  for (var i = 0; i < indices.length; i++) {
+    result.push(arr[indices[i]]);
+  }
+  return result;
+}
+
+// Convenience function for removing plotly's brush 
+function removeBrush(el) {
+  var outlines = el.querySelectorAll(".select-outline");
+  for (var i = 0; i < outlines.length; i++) {
+    outlines[i].remove();
+  }
+}
+
+
+// https://davidwalsh.name/javascript-debounce-function
+
+// Returns a function, that, as long as it continues to be invoked, will not
+// be triggered. The function will be called after it stops being called for
+// N milliseconds. If `immediate` is passed, trigger the function on the
+// leading edge, instead of the trailing.
+function debounce(func, wait, immediate) {
+	var timeout;
+	return function() {
+		var context = this, args = arguments;
+		var later = function() {
+			timeout = null;
+			if (!immediate) func.apply(context, args);
+		};
+		var callNow = immediate && !timeout;
+		clearTimeout(timeout);
+		timeout = setTimeout(later, wait);
+		if (callNow) func.apply(context, args);
+	};
+};
+</script>
+
+</head>
+<body style="background-color: white;">
+<div id="htmlwidget_container">
+  <div class="plotly html-widget html-fill-item" id="htmlwidget-10b6ea16c9affdc5446d" style="width:960px;height:500px;"></div>
+</div>
+<script type="application/json" data-for="htmlwidget-10b6ea16c9affdc5446d">{"x":{"visdat":{"1c0b577630ba":["function () ","plotlyVisDat"]},"cur_data":"1c0b577630ba","attrs":{"1c0b577630ba":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20]},"1c0b577630ba.1":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"type":"scatter","mode":"lines","name":"OMIE","line":{"color":"#118DFF","width":3},"hovertemplate":"Data: %{x|%d-%m-%Y}<br>OMIE: %{y:.2f}<extra><\/extra>","inherit":true},"1c0b577630ba.2":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"type":"scatter","mode":"lines","name":"Projeção","line":{"color":"#E81123","width":3,"dash":"dot"},"hovertemplate":"Data: %{x|%d-%m-%Y}<br>Projeção: %{y:.2f}<extra><\/extra>","inherit":true},"1c0b577630ba.3":{"x":["2023-06-24","2026-01-07"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[136.75956989247311,136.75956989247311],"type":"scatter","mode":"markers","marker":{"opacity":0},"hoverinfo":"skip","showlegend":false,"inherit":true}},"layout":{"width":null,"height":null,"margin":{"b":40,"l":60,"t":25,"r":10}},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"layoutAttrs":{"1c0b577630ba":{"xaxis":{"title":"Data","type":"date","showgrid":true,"gridcolor":"rgba(220,220,220,0.5)"},"yaxis":{"title":"","zeroline":false,"showgrid":true,"gridcolor":"rgba(220,220,220,0.5)"},"legend":{"orientation":"h","x":0.5,"xanchor":"center","y":1.1000000000000001},"hovermode":"closest","plot_bgcolor":"white","paper_bgcolor":"white","margin":{"t":50,"b":40,"l":20,"r":20}}}},"evals":[],"jsHooks":[]}</script>
+<script type="application/htmlwidget-sizing" data-for="htmlwidget-10b6ea16c9affdc5446d">{"viewer":{"width":450,"height":350,"padding":15,"fill":true},"browser":{"width":960,"height":500,"padding":40,"fill":false}}</script>
+</body>
+</html>
