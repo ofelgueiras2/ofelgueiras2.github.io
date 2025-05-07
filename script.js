@@ -998,14 +998,19 @@ function atualizarResultados() {
                style="background-color:${headerSecondary}; color:white; text-align:center; vertical-align:middle; position:relative;
           font-weight: normal;line-height:1;">
             <button id="btnEsquema" style="position:absolute;top:5px;left:5px;
-            width: 30px;      /* nova largura */
+            width: 30px;      /* nova largura */    
             height: 30px;     /* altura igual */
             padding: 0;       /* sem espaço interior */
-            text-align:center;background:none;border:none;cursor:pointer;">
-            <i id="iconeRaio"
-            class="fa-solid fa-bolt" title="Alterar cores"
-            style="color:${iconColor}; font-size:20px; transition: color .3s;">
-            </i>
+            text-align:center;background:none;border:none;cursor:pointer;color: ${iconColor};transition: color .3s;">
+            
+            <svg aria-hidden="true"
+               class="zap-logo"
+                 viewBox="-2 -2 28 28"
+              width="30" height="30"
+              fill="currentColor"
+            >
+            <use href="icons.svg#zap-logo"></use>
+            </svg>
 
             </button>
 
@@ -1247,8 +1252,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const btnClearAll     = document.getElementById("btnClearForms");
     const btnDef          = document.getElementById("btnDefinicoes");
     const secaoDef        = document.getElementById(btnDef.dataset.target);
-    const arrowDef        = btnDef.querySelector(".arrow-icon");
+    const arrowUseDef        = btnDef.querySelector("use");
     const arrowDias       = btnDias.querySelector(".arrow-icon");
+    const arrowUseDias    = btnDias.querySelector("use");
     const startDate       = document.getElementById("startDate");
     const endDate         = document.getElementById("endDate");
     const mesSelecionado  = document.getElementById("mesSelecionado");
@@ -1353,13 +1359,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     // 6) Botão Definições
-    btnDef.addEventListener("click", () => {
-        const isHidden = secaoDef.style.display === "none" ||
-                         getComputedStyle(secaoDef).display === "none";
-        secaoDef.style.display = isHidden ? "block" : "none";
-        arrowDef.classList.toggle("fa-chevron-down", !isHidden);
-        arrowDef.classList.toggle("fa-chevron-up", isHidden);
-    });
+    // espera que o DOM esteja pronto
+  
+    console.log("btnDef:", btnDef);
+  console.log("secaoDef:", secaoDef);
+  
+  
 
     // 7) Dates → DataS + resultados
     // Função de callback comum para startDate
@@ -1385,12 +1390,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     endDate.addEventListener("input", onEndDateChange);
     endDate.addEventListener("change", onEndDateChange);
 
+
+    btnDef.addEventListener("click", () => {
+        // 1) alterna visibilidade da secção
+        const isHidden = getComputedStyle(secaoDef).display === "none";
+        secaoDef.style.display = isHidden ? "block" : "none";
+
+        
+        // 3) escolhe o símbolo certo
+        const newId = isHidden ? "chevron-up-logo" : "chevron-down-logo";
+    
+        // 4) atualiza o href (ou xlink:href, conforme o teu SVG)
+        arrowUseDef.setAttribute("href", `icons.svg#${newId}`);
+        // se o teu <use> usa xlink:href em vez de href, usa esta linha em vez da anterior:
+        // arrowUse.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", `icons.svg#${newId}`);
+      });
+
+
     // 8) Botão Dias (chevron/menu)
     btnDias.addEventListener("click", () => {
+        // 1) Toggle do painel .div3
         const aberto = !div3.classList.contains("hidden");
         div3.classList.toggle("hidden", aberto);
-        arrowDias.classList.toggle("fa-chevron-down", aberto);
-        arrowDias.classList.toggle("fa-chevron-up", !aberto);
+      
+        // 2) Altera o símbolo (chevron-down ↔ chevron-up)
+        //    se 'aberto' era true, vamos fechar => down; se false, vamos abrir => up
+        const novoIcon = aberto ? "chevron-down-logo" : "chevron-up-logo";
+        arrowUseDias.setAttribute("href", `icons.svg#${novoIcon}`);
     
         if (aberto) {
             estadoOmieAberto       = !div4.classList.contains("hidden");
