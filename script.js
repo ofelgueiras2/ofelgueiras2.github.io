@@ -945,8 +945,8 @@ function atualizarResultados() {
         ? "#FFFFFF"
         : "#FFF6E5";
 
-        // LOGO NO INÍCIO DE calcularPreco, antes de montar tabelaResultados:
-        const headerPrimary = esquemaAtual === "azul-creme-vermelho" ? "#003D77" : "#00B050";
+        // LOGO NO INÍCIO DE calcularPreco, antes de montar tabelaResultados: 00853c
+        const headerPrimary = esquemaAtual === "azul-creme-vermelho" ? "#003D77" : "#00853c";
         // — o “verde de cima” passa a azul escuro ou fica o verde original
 
         const headerSecondary = esquemaAtual === "azul-creme-vermelho" ? "#007A1E" : "#375623";
@@ -1233,7 +1233,22 @@ function alternarAba(abaSelecionada) {
         document.getElementById("conteudo" + aba).classList.toggle("ativa", aba === abaSelecionada);
     });
 }
-    
+
+function revealPostTableContent() {
+    const wrapper = document.getElementById('postTableContent');
+    // 1) mostra o container todo de uma vez
+    wrapper.style.visibility = 'visible';
+  
+    // 2) garante que o iframe só carrega quando vamos revelar
+    const iframe = document.getElementById('grafico');
+    if (!iframe.src) iframe.src = iframe.dataset.src;
+  
+    // 3) adiciona a classe 'visible' a todos os .reveal simultaneamente
+    wrapper.querySelectorAll('.reveal').forEach(el => {
+      el.classList.add('visible');
+    });
+  }
+
 // --------------------------------------------------
 // 6) Toda inicialização em um só lugar
 document.addEventListener("DOMContentLoaded", async () => {
@@ -1253,7 +1268,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const btnDef          = document.getElementById("btnDefinicoes");
     const secaoDef        = document.getElementById(btnDef.dataset.target);
     const arrowUseDef        = btnDef.querySelector("use");
-    const arrowDias       = btnDias.querySelector(".arrow-icon");
     const arrowUseDias    = btnDias.querySelector("use");
     const startDate       = document.getElementById("startDate");
     const endDate         = document.getElementById("endDate");
@@ -1282,6 +1296,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     preencherSelecaoMeses();
     document.getElementById("incluirACP").checked = true;
     atualizarResultados();
+    revealPostTableContent();
 
     // 2) Listeners de Clear individuais
     btnClearAll.addEventListener("click", () => {
