@@ -36,17 +36,16 @@
         </div>
         <!-- 3) .btnDias com o único btnDias -->
         
-        <button 
-            id="btnDias" 
-            class="btn-icon" 
-            title="OMIE / Intervalo de datas"
-            style="width:50px;height:30px;border:1px solid #ccc;
-            border-radius:5px;
-            display:flex;align-items:center;justify-content:center;
-            gap:4px;cursor:pointer;"
-        >
-            <i class="fa-solid fa-chevron-down arrow-icon"></i>
-            <i class="fa-solid fa-bars    burger-icon"></i>
+        <button id="btnDias" class="btn-icon" title="OMIE / Intervalo de datas" style="width:50px;height:30px;border:1px solid #ccc;
+                    border-radius:5px;
+                    display:flex;align-items:center;justify-content:center;
+                    gap:0px;cursor:pointer;">
+            <svg aria-hidden="true" class="chevron-down-logo">
+                <use href="icons.svg#chevron-down-logo"></use>
+            </svg>
+            <svg aria-hidden="true" class="menu-logo">
+                <use href="icons.svg#menu-logo"></use>
+            </svg>
         </button>
         
     
@@ -82,18 +81,26 @@
             <div class="switch-buttons">
                 <button id="btnShowOmie" class="btn-icon" title="OMIE (€/kWh)">
                     <svg aria-hidden="true" class="omie-logo">
-                      <use href="icons.svg#omie-logo"></use>
-                    </svg>
+                        <use href="icons.svg#omie-logo"></use>
+                      </svg>
+                    
+                    
         <!-- 4)           <img src="omie-logo.png" alt="OMIE" /> -->
                 </button>
                 <button id="btnShowCalendar" class="btn-icon" title="Intervalo de datas">
-                    <i class="fa-solid fa-calendar-days"></i>
-                </button>
+                    <svg aria-hidden="true" class="calendar-logo">
+                        <use href="icons.svg#calendar-logo"></use>
+                      </svg>                
+                    </button>
                 <button id="btnShowTs" class="btn-icon" title="Descontos sociais">
-                    <i class="fa-regular fa-heart"></i>
+                    <svg aria-hidden="true" class="heart-logo">
+                        <use href="icons.svg#heart-logo"></use>
+                      </svg>              
                 </button>
                 <button id="btnClearForms" class="btn-limpar-inline" title="Limpar OMIE / Datas / Descontos sociais">
-                    <i class="fa-solid fa-broom"></i>
+                    <svg aria-hidden="true" class="broom-logo">
+                        <use href="icons.svg#broom-logo"></use>
+                      </svg>
                 </button>
             </div>
         </div>
@@ -150,26 +157,36 @@
           
         <!-- dentro do teu .parent, ao lado de div4 -->
         <button id="btnClearOmie" class="btn-limpar-inline hidden" title="Limpar OMIE">
-            <i class="fa-solid fa-broom"></i>
+            <svg aria-hidden="true" class="broom-logo">
+                <use href="icons.svg#broom-logo"></use>
+              </svg>
         </button>
         
         <!-- ao lado de div5 -->
         <button id="btnClearDates" class="btn-limpar-inline hidden" title="Limpar datas">
-            <i class="fa-solid fa-broom"></i>
+            <svg aria-hidden="true" class="broom-logo">
+                <use href="icons.svg#broom-logo"></use>
+              </svg>
         </button>
         
         <!-- ao lado de div6 -->
         <button id="btnClearTs" class="btn-limpar-inline hidden" title="Limpar descontos sociais">
-            <i class="fa-solid fa-broom"></i>
+            <svg aria-hidden="true" class="broom-logo">
+                <use href="icons.svg#broom-logo"></use>
+              </svg>
         </button>
 
 
         
         <button id="btnDefinicoes" class="btn-icon" title="Meu tarifário / Outras opções" data-target="secaoDefinicoes"
             style="width:50px;height:30px;border:1px solid #ccc;border-radius:5px;
-                                                 display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;">
-            <i class="fa-solid fa-chevron-down arrow-icon"></i>
-            <i class="fa-solid fa-bars    burger-icon"></i>
+                                                 display:flex;align-items:center;justify-content:center;gap:0px;cursor:pointer;">
+             <svg aria-hidden="true" class="chevron-down-logo">
+                <use href="icons.svg#chevron-down-logo"></use>
+             </svg>
+             <svg aria-hidden="true" class="menu-logo">
+            <use href="icons.svg#menu-logo"></use>
+            </svg>
         </button>
     </div>
       
@@ -213,7 +230,9 @@
         
                     <!-- Botão de limpeza -->
                     <button id="btnLimpar" class="btn-limpar" title="Limpar Meu tarifário">
-                        <i class="fa-solid fa-broom"></i>
+                        <svg aria-hidden="true" class="broom-logo">
+                            <use href="icons.svg#broom-logo"></use>
+                          </svg>
                     </button>
                 </div>
         
