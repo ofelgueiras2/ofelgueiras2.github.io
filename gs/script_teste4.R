@@ -534,56 +534,30 @@ fig
 
 saveWidget(config(fig, displayModeBar = FALSE), "gs/grafico_omie_plotly.html", selfcontained = TRUE)
 
-# Agora sim: recarrega a versão gravada (que agora já tem dependências)
-fig_html <- htmlwidgets::prependContent(htmltools::tags$div())
-fig <- htmlwidgets::onRender(fig, "function(el){}") # força dependências a aparecer
-fig_deps <- htmlwidgets:::getDependency("plotly", "plotly")
+# Função robusta para CDN
+save_widget_cdn <- function(fig, plotly_version = "cartesian", filename){
+  plotly_script <- switch(plotly_version,
+                          basic = "https://cdn.plot.ly/plotly-basic-latest.min.js",
+                          cartesian = "https://cdn.plot.ly/plotly-cartesian-latest.min.js",
+                          full = "https://cdn.plot.ly/plotly-latest.min.js")
 
-# Se por algum motivo anterior não funcionar, uma forma simples e garantida:
-fig <- htmlwidgets::createWidget(
-  name = "plotly",
-  x = fig$x,
-  width = fig$width,
-  height = fig$height,
-  package = "plotly",
-  dependencies = fig_deps
-)
-
-# --- 3) Função corrigida e robusta para gerar versões CDN ---
-save_with_cdn <- function(fig, cdn_href, cdn_script, outfile) {
-  # encontra dependência do Plotly
-  idx <- which(sapply(fig$dependencies, function(d) {
-    grepl("plotly", d$name, ignore.case = TRUE) || 
-    grepl("plotly", paste(d$script, collapse=" "), ignore.case = TRUE)
-  }))
-  
-  if (length(idx) != 1) stop("Não encontrei a dependência do Plotly em fig$dependencies")
-  
-  deps <- fig$dependencies
-  deps[[idx]]$src <- list(href = cdn_href)
-  deps[[idx]]$script <- cdn_script
-  
-  fig_mod <- fig
-  fig_mod$dependencies <- deps
-  saveWidget(fig_mod, outfile, selfcontained = TRUE)
+  htmlwidgets::saveWidget(
+    htmlwidgets::prependContent(fig, 
+      htmltools::tags$script(src = plotly_script)),
+    file = filename,
+    selfcontained = FALSE,
+    libdir = NULL
+  )
 }
 
-# --- 4) Agora gera as versões reduzidas ---
-# Versão Cartesian-only
-save_with_cdn(
-  fig,
-  "https://cdn.jsdelivr.net/npm/plotly.js-cartesian-dist-min@latest/",
-  "plotly-cartesian.min.js",
-  "gs/grafico_cartesian.html"
-)
+# Gera ficheiros diretamente na pasta "gs/"
+dir.create("gs", showWarnings = FALSE)
 
-# Versão Basic-only
-save_with_cdn(
-  fig,
-  "https://cdn.jsdelivr.net/npm/plotly.js-basic-dist-min@latest/",
-  "plotly-basic.min.js",
-  "gs/grafico_basic.html"
-)
+# Versão CARTESIAN (mais leve mas completa para gráficos XY)
+save_widget_cdn(fig, plotly_version = "cartesian", filename = "gs/grafico_cartesian.html")
+
+# Versão BASIC (muito mais leve, mas com menos funcionalidades)
+save_widget_cdn(fig, plotly_version = "basic", filename = "gs/grafico_basic.html")
                        
 # 1. Criar um dataframe com todos os dias de 2025 e, para cada dia,
 #    gerar as horas de 1 até o número indicado em df_final$Horas.
