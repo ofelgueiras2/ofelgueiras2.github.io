@@ -1,7 +1,12 @@
-const urlCSV = "gs/SimuladorEletricidade_OF_MN_2025_3.csv";
-let dadosCSV = [];
+// ✅ NOVO: caminhos para os dois ficheiros separados
+const urlCSV_basico = "gs/Simulador_basico.csv";
+const urlCSV_grande = "gs/Simulador_grande.csv";
 
-const tabelas = {
+let dadosCSV_basico = [];
+let dadosCSV_grande = [];
+
+// ✅ NOVO: estrutura adaptada às novas localizações
+const tabelasBasicas = {
     Meses: { inicio: "AB6", fim: "AB24" },
     Perdas: { inicio: "AC6", fim: "AC24" },
     OMIE: { inicio: "AD6", fim: "AD24" },
@@ -11,14 +16,6 @@ const tabelas = {
     indexBase: { inicio: "AT3", fim: "AT9" },
     strDias: { inicio: "AU14", fim: "AU32" },
     Ciclos: { inicio: "AV5", fim: "BC1" },
-    TData: { inicio: "AV2", fim: "AV35041" },
-    TBTN_A: { inicio: "AZ2", fim: "AZ35041" },
-    TBTN_B: { inicio: "BA2", fim: "BA35041" },
-    TBTN_C: { inicio: "BB2", fim: "BB35041" },
-    TPreco: { inicio: "BC2", fim: "BC35041" },
-    TBD: { inicio: "AW2", fim: "AW35041" },
-    TBS: { inicio: "AW2", fim: "BC35041" },
-    TPT: { inicio: "AY2", fim: "AY35041" },
     intDatas: { inicio: "BE2", fim: "BE368" },
     empresasBiHorario: { inicio: "C41", fim: "C61" },
     empresasSimples: { inicio: "C5", fim: "C25" },
@@ -33,11 +30,24 @@ const tabelas = {
     kVAs: { inicio: "Y6", fim: "Y15" },
     LuzigazFee: { inicio: "Z27", fim: "Z36" },
     TARPotencias: { inicio: "Z6", fim: "Z15" },
-    detalheTarifarios: { inicio: "AM5", fim: "AM25"},
-    tarifariosExtra: { inicio: "C68", fim: "C80"},
-    detalheTarifariosExtra: { inicio: "B68", fim: "B80"},
-    preçosSimplesExtra: { inicio: "D68", fim: "W80"},
+    detalheTarifarios: { inicio: "AM5", fim: "AM25" },
+    tarifariosExtra: { inicio: "C68", fim: "C80" },
+    detalheTarifariosExtra: { inicio: "B68", fim: "B80" },
+    preçosSimplesExtra: { inicio: "D68", fim: "W80" },
 };
+
+const tabelasGrandes = {
+    TData: { inicio: "A2", fim: "A35041" },
+    TBTN_A: { inicio: "E2", fim: "E35041" },
+    TBTN_B: { inicio: "F2", fim: "F35041" },
+    TBTN_C: { inicio: "G2", fim: "G35041" },
+    TPreco: { inicio: "H2", fim: "H35041" },
+    TBD: { inicio: "B2", fim: "B35041" },
+    TBS: { inicio: "B2", fim: "H35041" },
+    TPT: { inicio: "D2", fim: "D35041" }
+};
+
+let adiarGrandes = true;
 
 const variaveis = {
     perdas2024: "AC18",
@@ -138,76 +148,63 @@ function converterReferencia(ref) {
     return { col: colIndex, row };
 }
 
+function extrair(matriz, { inicio, fim }) {
+    const { col: c0, row: r0 } = converterReferencia(inicio);
+    const { col: c1, row: r1 } = converterReferencia(fim);
+    const tabela = [];
+    for (let i = r0; i <= r1; i++) {
+        if (matriz[i]) tabela.push(matriz[i].slice(c0, c1 + 1));
+    }
+    return tabela;
+}
+
+
 // 🔹 Função para obter uma tabela pelo nome
 function obterTabela(nome) {
-    if (!dadosCSV.length || !tabelas[nome]) return "❌ Tabela não encontrada!";
-    
-    const { inicio, fim } = tabelas[nome];
-    const { col: colIni, row: rowIni } = converterReferencia(inicio);
-    const { col: colFim, row: rowFim } = converterReferencia(fim);
-    
-    let tabelaExtraida = [];
-    for (let i = rowIni; i <= rowFim; i++) {
-        if (dadosCSV[i]) {
-            tabelaExtraida.push(dadosCSV[i].slice(colIni, colFim + 1));
+    if (tabelasBasicas[nome]) {
+        return extrair(dadosCSV_basico, tabelasBasicas[nome]);
+    } else if (tabelasGrandes[nome]) {
+        if (adiarGrandes) {
+            console.log(`⏳ Tabela grande '${nome}' ainda não carregada.`);
+            return "⌛ Adiado";
         }
+        return extrair(dadosCSV_grande, tabelasGrandes[nome]);
+    } else {
+        return `❌ Tabela '${nome}' não encontrada.`;
     }
-    
-    console.log(`🔎 Conteúdo de ${nome}:`, tabelaExtraida);
-    return tabelaExtraida.length > 0 ? tabelaExtraida : "❌ Tabela vazia!";
 }
+
+
 
 // Função para obter variável pelo nome e mostrar a linha e coluna usadas
 function obterVariavel(nome) {
-    if (!dadosCSV.length || !variaveis[nome]) {
+    if (!dadosCSV_basico.length || !variaveis[nome]) {
         console.error(`❌ Variável "${nome}" não encontrada.`);
         return "Variável não encontrada";
     }
 
     const { col, row } = converterReferencia(variaveis[nome]);
+    const valor = dadosCSV_basico[row]?.[col] || "Indefinido";
 
-    console.log(`🔍 Variável "${nome}" está na linha ${row}, coluna ${col}`);
-    const valor = dadosCSV[row]?.[col] || "Indefinido";
-    
     console.log(`🔎 Teste variável ${nome}:`, valor);
     return valor;
 }
 
-// 🔹 Função para carregar os dados do CSV
-async function carregarDadosCSV() {
-    console.log("📥 Carregando dados do CSV...");
-    try {
-        const resposta = await fetch(urlCSV);
-        if (!resposta.ok) {
-            throw new Error(`Erro HTTP: ${resposta.status}`);
-        }
 
-        const texto = await resposta.text();
-
-        dadosCSV = texto.split("\n").map(linha =>
-            linha.split(";").map(valor => {
-                valor = valor.trim();
-                if (valor.match(/^-?\d+,\d+$/)) {
-                    return parseFloat(valor.replace(",", "."));
-                } else if (valor.match(/^-?\d+$/)) {
-                    return parseInt(valor, 10);
-                } else {
-                    return valor;
-                }
-            })
-        );
-
-        console.log("✅ Dados do CSV carregados com sucesso!");
-        console.log("📌 Tamanho do CSV:", dadosCSV.length, "linhas x", (dadosCSV[0]?.length || 0), "colunas");
-        console.log("📌 Primeiras 5 linhas do CSV:", dadosCSV.slice(0, 5));
-
-        console.log("🔎 Teste tabela preçosSimples:", obterTabela("preçosSimples"));
-        console.log("🔎 Teste variável aano:", obterVariavel("aano"));
-
-    } catch (erro) {
-        console.error("❌ Erro ao carregar CSV:", erro);
-    }
+async function carregarCSV(url) {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Erro ${resp.status}`);
+    const txt = await resp.text();
+    return txt.split("\n").map(l =>
+        l.split(";").map(v => {
+            v = v.trim();
+            if (v.match(/^-?\d+,\d+$/)) return parseFloat(v.replace(",", "."));
+            if (v.match(/^-?\d+$/)) return parseInt(v);
+            return v;
+        })
+    );
 }
+
 
 console.log("🔍 Testando extração de tabelas...");
 console.log("📌 Tabela kVAs:", obterTabela("kVAs"));
@@ -554,12 +551,8 @@ function atualizarResultados() {
     // como há offset de 5 (a tabela começa em C5), a condição é i+5 ∈ [19,25]
     let isIndexado = (i + 5 >= 19 && i + 5 <= 25);
 
-
-        if (i + 5 >= 19 && i + 5 <= 25) { // Como a tabela começa em C5
-            isIndexado = true;
-        }
         
-        let simples;
+    let simples;
 
         if (nome === "Luzboa indexado") {
             if (DataS) {
@@ -1293,10 +1286,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 1) Carregar CSV, aplicar esquema e popular meses
     console.log("🔄 Iniciando carregamento do CSV...");
-    await carregarDadosCSV();
+    dadosCSV_basico = await carregarCSV(urlCSV_basico);
+    console.log("✅ CSV básico carregado");
     aplicarEsquema(esquemaAtual);
     preencherSelecaoMeses();
     document.getElementById("incluirACP").checked = true;
+
+
     atualizarResultados();
     revealPostTableContent();
 
@@ -1474,4 +1470,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         .addEventListener("click", () => alternarAba("MeuTarifario"));
     document.getElementById("abaOutrasOpcoes")
         .addEventListener("click", () => alternarAba("OutrasOpcoes"));
+    
+    setTimeout(async () => {
+        dadosCSV_grande = await carregarCSV(urlCSV_grande);
+        adiarGrandes = false;
+        console.log("✅ CSV grande carregado em background");
+    }, 1000); // Aguarda 1 segundo para não interferir com o carregamento inicial
+
 });
