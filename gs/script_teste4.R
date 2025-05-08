@@ -532,32 +532,32 @@ fig <- plot_ly(df_pad, x = ~Data) %>%
 
 fig
 
+# saveWidget(config(fig, displayModeBar = FALSE), "gs/grafico_omie_plotly.html", selfcontained = TRUE)
+
+# 1) Grava HTML completo inicial (auto-contido)
+dir.create("gs", showWarnings = FALSE)
 saveWidget(config(fig, displayModeBar = FALSE), "gs/grafico_omie_plotly.html", selfcontained = TRUE)
 
-# Função robusta para CDN
-save_widget_cdn <- function(fig, plotly_version = "cartesian", filename){
-  plotly_script <- switch(plotly_version,
-                          basic = "https://cdn.plot.ly/plotly-basic-latest.min.js",
-                          cartesian = "https://cdn.plot.ly/plotly-cartesian-latest.min.js",
-                          full = "https://cdn.plot.ly/plotly-latest.min.js")
+# 2) Abre o ficheiro HTML gravado e substitui manualmente o plotly.js pelo CDN Cartesian reduzido
 
-  htmlwidgets::saveWidget(
-    htmlwidgets::prependContent(fig, 
-      htmltools::tags$script(src = plotly_script)),
-    file = filename,
-    selfcontained = FALSE,
-    libdir = NULL
-  )
-}
+html <- readLines("gs/grafico_omie_plotly.html")
 
-# Gera ficheiros diretamente na pasta "gs/"
-dir.create("gs", showWarnings = FALSE)
+# Substituir o script interno do plotly.js pelo CDN cartesian
+cdn_script <- '<script src="https://cdn.plot.ly/plotly-cartesian-latest.min.js"></script>'
 
-# Versão CARTESIAN (mais leve mas completa para gráficos XY)
-save_widget_cdn(fig, plotly_version = "cartesian", filename = "gs/grafico_cartesian.html")
+# Remove o script inline grande original e substitui pelo CDN
+start_js <- grep("<script src=\"data:application/javascript", html)
+end_js <- grep("</script>", html[start_js:length(html)])[1] + start_js - 1
 
-# Versão BASIC (muito mais leve, mas com menos funcionalidades)
-save_widget_cdn(fig, plotly_version = "basic", filename = "gs/grafico_basic.html")
+# Mantém o HTML antes e depois, mas substitui pelo CDN no meio
+html_final <- c(
+  html[1:(start_js-1)],
+  cdn_script,
+  html[(end_js+1):length(html)]
+)
+
+# Grava ficheiro CDN final
+writeLines(html_final, "gs/grafico_cartesian_cdn.html")
                        
 # 1. Criar um dataframe com todos os dias de 2025 e, para cada dia,
 #    gerar as horas de 1 até o número indicado em df_final$Horas.
