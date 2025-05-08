@@ -630,15 +630,16 @@ novos_valores_formatted <- formatC(novos_valores, format = "f", digits = 5, deci
 # Atualiza as células de simulador (linhas 6 a 24, coluna 30) com os resultados
 simulador[6:24, 30] <- novos_valores_formatted
 
+# --- 1. Gerar o CSV limpo com BOM ---
+
+# Dados de entrada
 simulador <- as.data.frame(simulador)
 names(simulador) <- NULL
-write.csv2(simulador, "gs/SimuladorEletricidade_OF_MN_2025_3.csv", row.names = FALSE, na = "")
 
+# Caminho de saída
+ficheiro_csv <- "gs/SimuladorEletricidade_OF_MN_2025_3.csv"
 
-# Salvar o CSV mantendo a estrutura e as colunas em branco
-# Remover os nomes das colunas do dataframe
-
-# Primeiro, salva o conteúdo em um arquivo temporário
+# Salva sem col.names e sem row.names
 temp_file <- "temp_Simulador.csv"
 write.table(simulador,
             file = temp_file,
@@ -650,16 +651,147 @@ write.table(simulador,
             fileEncoding = "UTF-8",
             quote = FALSE)
 
-# Lê o conteúdo e adiciona o BOM
+# Adiciona BOM manualmente
 content <- readLines(temp_file, encoding = "UTF-8")
-bom <- "\ufeff"  # BOM em UTF-8
-
-# Se houver pelo menos uma linha, insira o BOM no começo da primeira
+bom <- "\ufeff"
 if (length(content) > 0) {
   content[1] <- paste0(bom, content[1])
 }
-
-# Agora salve normalmente
-writeLines(content, "gs/SimuladorEletricidade_OF_MN_2025_3.csv", useBytes = TRUE)
-
+writeLines(content, ficheiro_csv, useBytes = TRUE)
 file.remove(temp_file)
+
+# --- 2. Reabrir o CSV e gerar JSON estruturado ---
+
+# 🔸 Lê CSV sem cabeçalhos
+df <- read_delim(ficheiro_csv,
+                 delim = ";",
+                 col_names = FALSE,
+                 locale = locale(encoding = "UTF-8"),
+                 col_types = cols(.default = col_character()))
+
+# 🔸 Funções auxiliares (se ainda não tiveres definido)
+extrair_tabela <- function(df, ref_ini, ref_fim) {
+  ref_to_index <- function(ref) {
+    letras <- gsub("[0-9]", "", ref)
+    numeros <- as.integer(gsub("[A-Z]", "", ref))
+    col <- sum(sapply(1:nchar(letras), function(i) {
+      (match(substr(letras, i, i), LETTERS)) * 26^(nchar(letras)-i)
+    }))
+    list(row = numeros, col = col)
+  }
+  ini <- ref_to_index(ref_ini)
+  fim <- ref_to_index(ref_fim)
+  df[ini$row:fim$row, ini$col:fim$col]
+}
+
+extrair_valor <- function(df, ref) {
+  ref_to_index <- function(ref) {
+    letras <- gsub("[0-9]", "", ref)
+    numeros <- as.integer(gsub("[A-Z]", "", ref))
+    col <- sum(sapply(1:nchar(letras), function(i) {
+      (match(substr(letras, i, i), LETTERS)) * 26^(nchar(letras)-i)
+    }))
+    list(row = numeros, col = col)
+  }
+  pos <- ref_to_index(ref)
+  df[[pos$col]][pos$row]
+}
+
+# 🔸 Tabelas e variáveis como no JS
+tabelas <- list(
+  Meses = c("AB6", "AB24"),
+  Perdas = c("AC6", "AC24"),
+  OMIE = c("AD6", "AD24"),
+  descSocial = c("AQ12", "AQ15"),
+  Indexados = c("AS3", "AS9"),
+  diasMeses = c("AT14", "AT32"),
+  indexBase = c("AT3", "AT9"),
+  strDias = c("AU14", "AU32"),
+  Ciclos = c("AV5", "BC1"),
+  TData = c("AV2", "AV35041"),
+  TBTN_A = c("AZ2", "AZ35041"),
+  TBTN_B = c("BA2", "BA35041"),
+  TBTN_C = c("BB2", "BB35041"),
+  TPreco = c("BC2", "BC35041"),
+  TBD = c("AW2", "AW35041"),
+  TBS = c("AW2", "BC35041"),
+  TPT = c("AY2", "AY35041"),
+  intDatas = c("BE2", "BE368"),
+  empresasBiHorario = c("C41", "C61"),
+  empresasSimples = c("C5", "C25"),
+  preçosSimples = c("D5", "W25"),
+  preçosBiHorario = c("D41", "AG61"),
+  tabelasKVA = c("D2", "W2"),
+  tabelasKVABi = c("D38", "AG38"),
+  kVAsExtraTarSocial = c("U30", "U32"),
+  kVAsTarSocial = c("U30", "U35"),
+  descKVAsExtraTarSocial = c("V30", "V32"),
+  descKVAsTarSocial = c("V30", "V35"),
+  kVAs = c("Y6", "Y15"),
+  LuzigazFee = c("Z27", "Z36"),
+  TARPotencias = c("Z6", "Z15"),
+  detalheTarifarios = c("AM5", "AM25"),
+  tarifariosExtra = c("C68", "C80"),
+  detalheTarifariosExtra = c("B68", "B80"),
+  preçosSimplesExtra = c("D68", "W80")
+)
+
+variaveis <- list(
+  perdas2024 = "AC18", 
+  aano = "AP5", 
+  adata = "AP4", 
+  diasAno = "AP6",
+  pdata = "AQ5", 
+  pdatam7 = "AQ6", 
+  Medio = "AT26", 
+  luzboaCGS = "H29",
+  luzboaFA = "H30", 
+  luzboaK = "H31", 
+  repsolQTarifa = "H33", 
+  repsolFA = "H34",
+  coopernicoCGS = "J29", 
+  coopernicoK = "J30", 
+  luzigasCS = "J32",
+  luzigasK = "J33", 
+  ibelectraCS = "J35", 
+  ibelectraK = "J36",
+  plenitudeCGS = "L29", 
+  plenitudeGDOS = "L30", 
+  plenitudeFee = "L31",
+  EDPK1 = "L33", 
+  EDPK2 = "L34", 
+  EDPK3 = "L35", 
+  FTS = "N30",
+  Audiovisual = "R29", 
+  DGEG = "R30", 
+  IES = "R31", 
+  kWhIVAPromocional = "R34",
+  IVA_Audiovisual = "S29", 
+  IVA_DGEG = "S30", 
+  IVA_IES = "S31",
+  IVAPromocional = "S34", 
+  IVABase = "S35", 
+  precoACP = "S36",
+  descKWhTarSocial = "V36", 
+  TARSimples = "Z17", 
+  TARVazio = "Z18",
+  TARNaoVazio = "Z19"
+)
+
+# 🔸 Extrair e guardar como JSON
+output <- list(
+  tabelas = lapply(tabelas, function(x) extrair_tabela(df, x[1], x[2])),
+  variaveis = lapply(variaveis, function(x) extrair_valor(df, x))
+)
+
+# Caminhos finais
+ficheiro_json <- "gs/simulador.json"
+ficheiro_json_gz <- "gs/simulador.json.gz"
+
+# Escreve JSON bonito
+write_json(output, ficheiro_json, pretty = TRUE, auto_unbox = TRUE)
+
+# Comprime para .gz
+con_gz <- gzfile(ficheiro_json_gz, "w")
+writeLines(readLines(ficheiro_json), con_gz)
+close(con_gz)
