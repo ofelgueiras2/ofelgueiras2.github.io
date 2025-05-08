@@ -534,31 +534,29 @@ fig
 
 saveWidget(config(fig, displayModeBar = FALSE), "gs/grafico_omie_plotly.html", selfcontained = TRUE)
 html_file <- "gs/grafico_omie_plotly.html"
-# Confirma explicitamente que o ficheiro foi criado
-if (!file.exists(html_file)) {
-  stop("Erro: ficheiro HTML não foi criado corretamente!")
-}
 
-# Só depois ler com segurança
-html <- readLines(html_file, warn = FALSE)
 
-# Proteção adicional: verificar se encontrou script inline
-inicio <- grep('<script src="data:application/javascript.*base64', html)
-if (length(inicio) != 1) stop("Não encontrei o início do script inline do plotly.js no HTML gerado.")
+# Ler HTML criado
+html <- readLines("gs/grafico_omie_plotly.html", warn = FALSE)
 
-fim <- grep('</script>', html[(inicio + 1):length(html)]) + inicio
-if (length(fim) < 1) stop("Não encontrei o fim do script inline do plotly.js no HTML gerado.")
+# Encontrar início e fim do script Plotly de forma robusta (não depende de base64)
+inicio <- grep("window.PlotlyConfig", html)
+if (length(inicio) == 0) inicio <- grep("Plotly.newPlot", html)[1] - 1
 
-fim <- fim[1]
+fim <- inicio
+while (!grepl("</script>", html[fim]) && fim <= length(html)) fim <- fim + 1
 
-# Substitui o script embutido por CDN (Cartesian)
+# Validar resultados
+if (is.na(inicio) || is.na(fim)) stop("Não encontrei script Plotly corretamente!")
+
+# Substituir por CDN leve (cartesian)
 html_final <- c(
   html[1:(inicio - 1)],
   '<script src="https://cdn.plot.ly/plotly-cartesian-latest.min.js"></script>',
   html[(fim + 1):length(html)]
 )
 
-# Salvar HTML final robustamente
+# Gravar versão CDN otimizada
 writeLines(html_final, "gs/grafico_cartesian_cdn.html")
                        
 # 1. Criar um dataframe com todos os dias de 2025 e, para cada dia,
