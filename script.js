@@ -452,6 +452,8 @@ function atualizarResultados() {
     console.log("🔎 PerdasSelecionadoS atualizado:", PerdasSelecionadoS);
 
     let U3;
+    let PerfilS = "";
+    let PerfilM_S = "";
 
     if (DataS) {
         // 1) Carrega todas as colunas de uma só vez
