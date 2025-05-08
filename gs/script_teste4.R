@@ -10,6 +10,7 @@ library(data.table)
 library(arrow)
 library(htmlwidgets)
 library(plotly)
+library(jsonlite)
 
 ### 1 – Extração e processamento dos dados da web
 
