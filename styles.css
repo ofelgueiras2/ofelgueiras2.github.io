@@ -28,9 +28,9 @@ button {
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 16px;
+}
 
-
-
+button {
     background-color: #007bff;
     color: white;
     cursor: pointer;
@@ -692,7 +692,7 @@ input[type="radio"] {
     height: 100%;
     border: none;
   }
-
+  
 
   /* inicialmente tudo invisível */
 #postTableContent {
@@ -725,3 +725,4 @@ input[type="radio"] {
   .titulo-omie > div {
     margin-bottom: 4px;
   }
+  
