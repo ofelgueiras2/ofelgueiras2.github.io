@@ -1,82 +1,93 @@
-import { decompressSync, strFromU8 } from 'https://cdn.jsdelivr.net/npm/fflate/+esm';
+const urlCSV = "gs/SimuladorEletricidade_OF_MN_2025_3.csv";
+let dadosCSV = [];
 
-let tabelas = {};
-let variaveis = {};
+const tabelas = {
+    Meses: { inicio: "AB6", fim: "AB24" },
+    Perdas: { inicio: "AC6", fim: "AC24" },
+    OMIE: { inicio: "AD6", fim: "AD24" },
+    descSocial: { inicio: "AQ12", fim: "AQ15" },
+    Indexados: { inicio: "AS3", fim: "AS9" },
+    diasMeses: { inicio: "AT14", fim: "AT32" },
+    indexBase: { inicio: "AT3", fim: "AT9" },
+    strDias: { inicio: "AU14", fim: "AU32" },
+    Ciclos: { inicio: "AV5", fim: "BC1" },
+    TData: { inicio: "AV2", fim: "AV35041" },
+    TBTN_A: { inicio: "AZ2", fim: "AZ35041" },
+    TBTN_B: { inicio: "BA2", fim: "BA35041" },
+    TBTN_C: { inicio: "BB2", fim: "BB35041" },
+    TPreco: { inicio: "BC2", fim: "BC35041" },
+    TBD: { inicio: "AW2", fim: "AW35041" },
+    TBS: { inicio: "AW2", fim: "BC35041" },
+    TPT: { inicio: "AY2", fim: "AY35041" },
+    intDatas: { inicio: "BE2", fim: "BE368" },
+    empresasBiHorario: { inicio: "C41", fim: "C61" },
+    empresasSimples: { inicio: "C5", fim: "C25" },
+    preçosSimples: { inicio: "D5", fim: "W25" },
+    preçosBiHorario: { inicio: "D41", fim: "AG61" },
+    tabelasKVA: { inicio: "D2", fim: "W2" },
+    tabelasKVABi: { inicio: "D38", fim: "AG38" },
+    kVAsExtraTarSocial: { inicio: "U30", fim: "U32" },
+    kVAsTarSocial: { inicio: "U30", fim: "U35" },
+    descKVAsExtraTarSocial: { inicio: "V30", fim: "V32" },
+    descKVAsTarSocial: { inicio: "V30", fim: "V35" },
+    kVAs: { inicio: "Y6", fim: "Y15" },
+    LuzigazFee: { inicio: "Z27", fim: "Z36" },
+    TARPotencias: { inicio: "Z6", fim: "Z15" },
+    detalheTarifarios: { inicio: "AM5", fim: "AM25"},
+    tarifariosExtra: { inicio: "C68", fim: "C80"},
+    detalheTarifariosExtra: { inicio: "B68", fim: "B80"},
+    preçosSimplesExtra: { inicio: "D68", fim: "W80"},
+};
 
-// Função para obter a tabela, agora converte de objetos para arrays numéricos
-function obterTabela(nome) {
-    if (!tabelas[nome]) {
-        console.warn(`❌ Tabela "${nome}" não encontrada`);
-        return [];
-    }
-    const tabela = tabelas[nome];
-    return tabela.map(linha =>
-        Object.values(linha).map(v => {
-            // Converte para número (com "." em vez de ",") se for número
-            if (typeof v === "string" && v.match(/^\d+,\d+$/)) {
-                return parseFloat(v.replace(",", "."));
-            } else if (v === "-" || v === "" || v == null) {
-                return null;
-            } else {
-                return v;
-            }
-        })
-    );
-}
-
-// Função para obter a variável, agora converte para valor numérico se necessário
-function obterVariavel(nome) {
-    if (!variaveis[nome]) {
-        console.warn(`❌ Variável "${nome}" não encontrada`);
-        return null;
-    }
-    const valor = variaveis[nome];
-    if (typeof valor === "string" && valor.includes(",")) {
-        return parseFloat(valor.replace(",", "."));
-    }
-    return valor;
-}
-
-async function carregarJSON() {
-    const resposta = await fetch('gs/simulador.json.gz');
-    const buffer = await resposta.arrayBuffer();
-    const jsonString = strFromU8(decompressSync(new Uint8Array(buffer)));
-    const dados = JSON.parse(jsonString);
-
-    tabelas = dados.tabelas;
-    variaveis = dados.variaveis;
-
-    console.log("✅ JSON carregado");
-    console.log("🔍 Exemplo perdas2024:", obterVariavel("perdas2024"));
-    console.log("🔍 Exemplo preçosSimples:", obterTabela("preçosSimples"));
-}
-
-carregarJSON();
-
-
-
-
-
-
-
-
-
-// ⚠️ Removido: carregamento do CSV
-
-
-
-
-// ⚠️ Removido: definição antiga de tabelas com referências A1
-
-// ⚠️ Removido: definição antiga de variáveis com referências A1
-
-
-
+const variaveis = {
+    perdas2024: "AC18",
+    aano: "AP5",
+    adata: "AP4",
+    diasAno: "AP6",
+    pdata: "AQ5",
+    pdatam7: "AQ6",
+    Medio: "AT26",
+    luzboaCGS: "H29",
+    luzboaFA: "H30",
+    luzboaK: "H31",
+    repsolQTarifa: "H33",
+    repsolFA: "H34",
+    coopernicoCGS: "J29",
+    coopernicoK: "J30",
+    luzigasCS: "J32",
+    luzigasK: "J33",
+    ibelectraCS: "J35",
+    ibelectraK: "J36",
+    plenitudeCGS: "L29",
+    plenitudeGDOS: "L30",
+    plenitudeFee: "L31",
+    EDPK1: "L33",
+    EDPK2: "L34",
+    EDPK3: "L35",
+    FTS: "N30",
+    Audiovisual: "R29",
+    DGEG: "R30",
+    IES: "R31",
+    kWhIVAPromocional: "R34",
+    IVA_Audiovisual: "S29",
+    IVA_DGEG: "S30",
+    IVA_IES: "S31",
+    IVAPromocional: "S34",
+    IVABase: "S35",
+    precoACP: "S36",
+    descKWhTarSocial: "V36",
+    TARSimples: "Z17",
+    TARVazio: "Z18",
+    TARNaoVazio: "Z19"
+};
 
 let sortField = "price";   // Valores possíveis: "default", "price", "tariff", "power", "simple"
 let sortDirection = "asc";     // "asc" ou "desc"
 
-
+// Armazena estado dos paineis
+let estadoOmieAberto = false;
+let estadoCalendarioAberto = false;
+let estadoTsAberto = false;
   
 // Nova variável DataS
 let DataS = false;
@@ -85,37 +96,118 @@ let esquemaAtual = "azul-vermelho"; // pode ser "azul-vermelho" ou "azul-creme-v
 
 // 1) Função utilitária para converter "0,0323 €" em número
 function parseEuro(str) {
-    if (typeof str !== "string") {
-        return parseFloat(str) || 0;
-    }
     return parseFloat(
-        str
-            .replace("€", "")
-            .replace(",", ".")
-            .trim()
+      str
+        .replace("€", "")
+        .replace(",", ".")
+        .trim()
     ) || 0;
-}
-
+  }
 
 // utilitária para percentagens “23%” → 0.23
 function parsePercent(str) {
     return (parseFloat(str.replace("%", "").trim()) || 0) / 100;
   }
-
-
-window.setSort = function(field, direction) {
+  
+function setSort(field, direction) {
     sortField = field;
     sortDirection = direction;
     atualizarResultados();
-};
+}
 
 
-// ⚠️ Removido: obterTabela antiga com dadosCSV
+// 🔹 Função para converter referência A1 para índices numéricos (linha e coluna)
+function converterReferencia(ref) {
+    const match = ref.match(/^([A-Z]+)(\d+)$/);
+    if (!match) {
+        console.error(`❌ Erro ao processar referência: ${ref}`);
+        return null;
+    }
 
-// ⚠️ Removido: obterVariavel antiga com dadosCSV
+    let [, col, row] = match;
+    row = parseInt(row, 10) - 1; // Ajustar para índice zero-based
+
+    let colIndex = 0;
+    for (let i = 0; i < col.length; i++) {
+        colIndex = colIndex * 26 + (col.charCodeAt(i) - 64);
+    }
+
+    colIndex -= 1; // Ajuste para índice zero-based
+
+    console.log(`🔍 Conversão: ${ref} → Linha ${row}, Coluna ${colIndex}`);
+    return { col: colIndex, row };
+}
+
+// 🔹 Função para obter uma tabela pelo nome
+function obterTabela(nome) {
+    if (!dadosCSV.length || !tabelas[nome]) return "❌ Tabela não encontrada!";
+    
+    const { inicio, fim } = tabelas[nome];
+    const { col: colIni, row: rowIni } = converterReferencia(inicio);
+    const { col: colFim, row: rowFim } = converterReferencia(fim);
+    
+    let tabelaExtraida = [];
+    for (let i = rowIni; i <= rowFim; i++) {
+        if (dadosCSV[i]) {
+            tabelaExtraida.push(dadosCSV[i].slice(colIni, colFim + 1));
+        }
+    }
+    
+    console.log(`🔎 Conteúdo de ${nome}:`, tabelaExtraida);
+    return tabelaExtraida.length > 0 ? tabelaExtraida : "❌ Tabela vazia!";
+}
+
+// Função para obter variável pelo nome e mostrar a linha e coluna usadas
+function obterVariavel(nome) {
+    if (!dadosCSV.length || !variaveis[nome]) {
+        console.error(`❌ Variável "${nome}" não encontrada.`);
+        return "Variável não encontrada";
+    }
+
+    const { col, row } = converterReferencia(variaveis[nome]);
+
+    console.log(`🔍 Variável "${nome}" está na linha ${row}, coluna ${col}`);
+    const valor = dadosCSV[row]?.[col] || "Indefinido";
+    
+    console.log(`🔎 Teste variável ${nome}:`, valor);
+    return valor;
+}
 
 // 🔹 Função para carregar os dados do CSV
-// ⚠️ Removido: função carregarDadosCSV
+async function carregarDadosCSV() {
+    console.log("📥 Carregando dados do CSV...");
+    try {
+        const resposta = await fetch(urlCSV);
+        if (!resposta.ok) {
+            throw new Error(`Erro HTTP: ${resposta.status}`);
+        }
+
+        const texto = await resposta.text();
+
+        dadosCSV = texto.split("\n").map(linha =>
+            linha.split(";").map(valor => {
+                valor = valor.trim();
+                if (valor.match(/^-?\d+,\d+$/)) {
+                    return parseFloat(valor.replace(",", "."));
+                } else if (valor.match(/^-?\d+$/)) {
+                    return parseInt(valor, 10);
+                } else {
+                    return valor;
+                }
+            })
+        );
+
+        console.log("✅ Dados do CSV carregados com sucesso!");
+        console.log("📌 Tamanho do CSV:", dadosCSV.length, "linhas x", (dadosCSV[0]?.length || 0), "colunas");
+        console.log("📌 Primeiras 5 linhas do CSV:", dadosCSV.slice(0, 5));
+
+        console.log("🔎 Teste tabela preçosSimples:", obterTabela("preçosSimples"));
+        console.log("🔎 Teste variável aano:", obterVariavel("aano"));
+
+    } catch (erro) {
+        console.error("❌ Erro ao carregar CSV:", erro);
+    }
+}
 
 console.log("🔍 Testando extração de tabelas...");
 console.log("📌 Tabela kVAs:", obterTabela("kVAs"));
@@ -309,6 +401,8 @@ function atualizarResultados() {
     let EDPK2S = parseFloat(obterVariavel("EDPK2")) || 0;
     
     // já tens as variáveis mesSelecionadoIndex, OMIES, DataS, startDate, endDate disponíveis dentro de atualizarResultados()
+
+    
 
     let OMIESSelecionadoS;
     let PerdasSelecionadoS;
@@ -1197,14 +1291,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         estadoCalendarioAberto = false,
         estadoTsAberto = false;
 
-    // 1) Carregar JSON, aplicar esquema e popular meses
-console.log("🔄 Iniciando carregamento do JSON...");
-await carregarJSON();
-aplicarEsquema(esquemaAtual);
-preencherSelecaoMeses();
-document.getElementById("incluirACP").checked = true;
-atualizarResultados();
-revealPostTableContent();
+    // 1) Carregar CSV, aplicar esquema e popular meses
+    console.log("🔄 Iniciando carregamento do CSV...");
+    await carregarDadosCSV();
+    aplicarEsquema(esquemaAtual);
+    preencherSelecaoMeses();
+    document.getElementById("incluirACP").checked = true;
+    atualizarResultados();
+    revealPostTableContent();
 
     // 2) Listeners de Clear individuais
     btnClearAll.addEventListener("click", () => {
