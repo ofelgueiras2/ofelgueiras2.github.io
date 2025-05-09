@@ -47,7 +47,7 @@ const tabelasGrandes = {
     TPT: { inicio: "D2", fim: "D35041" }
 };
 
-let adiarGrandes = true;
+let adiarGrandes = false;
 
 const variaveis = {
     perdas2024: "AC18",
@@ -987,10 +987,12 @@ function atualizarResultados() {
 
     
         
-        let tabelaResultados = `<table>
+        let tabelaResultados = `<table style="border-spacing: 1px 1px; border-collapse: separate;">
+
+    
         <tr> 
           <th colspan="3" rowspan="2" 
-               style="background-color:${headerSecondary}; color:white; text-align:center; vertical-align:middle; position:relative;
+               style="background-color:${headerSecondary}; border-radius: 10px; color:white; text-align:center; vertical-align:middle; position:relative;
           font-weight: normal;line-height:1;">
             <button id="btnEsquema" title="Alterar cores" style="position:absolute;top:5px;left:5px;
             width: 30px;      /* nova largura */    
@@ -1019,39 +1021,39 @@ function atualizarResultados() {
               <span class="sort-arrow ${sortField==='default' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('default','desc')">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:${headerSecondary}; color:white; text-align:center;">
+          <th style="background-color:${headerSecondary}; border-radius: 10px;color:white; text-align:center;">
             Consumo (kWh)
           </th>
         </tr>
-
+        
         <tr>
-          <td style="background-color:${consumoBg}; font-weight:bold; color:black; text-align:center;">
+          <td style="background-color:${consumoBg}; font-weight:bold; border-radius: 10px;color:black; text-align:center;">
             ${consumo || 0}
           </td>
         </tr>
         <tr>
-          <th style="background-color:${headerPrimary}; font-weight:bold; color:white; text-align:center; position:relative;">
+          <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;">
             Tarifário
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='tariff' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('tariff','asc')">&#9650;</span>
               <span class="sort-arrow ${sortField==='tariff' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('tariff','desc')">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:${headerPrimary}; font-weight:bold; color:white; text-align:center; position:relative;">
+          <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;">
             Potência (€/dia)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='power' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('power','asc')">&#9650;</span>
               <span class="sort-arrow ${sortField==='power' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('power','desc')">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:${headerPrimary}; font-weight:bold; color:white; text-align:center; position:relative;">
+          <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;">
             Energia (€/kWh)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='simple' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('simple','asc')">&#9650;</span>
               <span class="sort-arrow ${sortField==='simple' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('simple','desc')">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:${headerPrimary}; font-weight:bold; color:white; text-align:center; position:relative;">
+          <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;">
             Preço (€)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='price' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('price','asc')">&#9650;</span>
@@ -1064,7 +1066,7 @@ function atualizarResultados() {
 
 
     
-        tarifarios.forEach(tarifa => {
+        tarifarios.forEach((tarifa, index) => {
             const corPotencia = calcularCor(tarifa.potencia, minPotencia, maxPotencia);
             const corSimples = calcularCor(tarifa.simples, minSimples, maxSimples);
             const corCusto = calcularCor(tarifa.custo, minCusto, maxCusto);
@@ -1074,16 +1076,12 @@ function atualizarResultados() {
             const isMinCusto = tarifa.custo === minCusto ? "font-weight:bold;" : "";
             
             // MODIFICAÇÃO 2: Se for "Meu tarifário" ou tarifário indexado, aplicar fundo amarelo
+            const isLinhaPar = index % 2 === 0;
+            const brilho = isLinhaPar ? .9 : 1.02;
             let nomeStyle = "";
-            if (tarifa.nome === "Meu tarifário") {
-                if (esquemaAtual === "azul-vermelho") {
-                  // o teu amarelo original
-                  nomeStyle = "background-color:#FFC000; font-weight:bold; color:black;";
-                } else {
-                  // quando estiver no esquema creme, usa um creme suave
-                  nomeStyle = "background-color:#F0B000; font-weight:bold; color:black;";
-                }
-            }
+            
+
+           
               
             if (tarifa.isIndexado) {
                 nomeStyle = "background-color:#FFF2CC;";
@@ -1094,12 +1092,33 @@ function atualizarResultados() {
                 } else {
                     nomeStyle += "color:black;";
                 }
+            } else {
+                nomeStyle += "background-color:#F4f4f4;"
             }
+            nomeStyle += "border-radius: 6px;";
+            nomeStyle += `filter: brightness(${brilho});`;
+
+            if (tarifa.nome === "Meu tarifário") {
+                if (esquemaAtual === "azul-vermelho") {
+                  // o teu amarelo original
+                  nomeStyle = "background-color:#FFC000; font-weight:bold; color:black;";
+                } else {
+                  // quando estiver no esquema creme, usa um creme suave
+                  nomeStyle = "background-color:#F0B000; font-weight:bold; color:black;";
+                }
+            }
+
+
+
+  
+
+  
+
             tabelaResultados += `<tr>
                                     <td style='${nomeStyle}'>${tarifa.nome}</td>
-                                    <td style='${isMinPotencia} background-color:${corPotencia}; color:black;'>${tarifa.potencia.toFixed(4)}</td>
-                                    <td style='${isMinSimples} background-color:${corSimples}; color:black;'>${tarifa.simples.toFixed(4)}</td>
-                                    <td style='${isMinCusto} background-color:${corCusto}; color:black;'>${tarifa.custo.toFixed(2)}</td>
+                                    <td style='${isMinPotencia} background-color:${corPotencia}; color:black; border-radius: 6px;'>${tarifa.potencia.toFixed(4)}</td>
+<td style='${isMinSimples} background-color:${corSimples}; color:black; border-radius: 6px;'>${tarifa.simples.toFixed(4)}</td>
+<td style='${isMinCusto} background-color:${corCusto}; color:black; border-radius: 6px;'>${tarifa.custo.toFixed(2)}</td>
                                  </tr>`;
         });
     
