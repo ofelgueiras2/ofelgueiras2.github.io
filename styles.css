@@ -17,9 +17,9 @@ body {
   }
 }
 
-h1, h2, h3 {
+h1 {
   text-align: center;
-  color: #333;
+  color: #314D23;
   margin-top: 10px;
   margin-bottom: 10px;
 }
