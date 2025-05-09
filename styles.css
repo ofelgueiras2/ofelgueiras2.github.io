@@ -1,310 +1,311 @@
 body {
-    font-family: Arial, sans-serif;
-    max-width: 800px;
-    margin: 10px auto;
-    padding: 10px;
-    background-color: #f4f4f4;
-    border-radius: 8px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 10px auto;
+  padding: 10px;
+  background-color: #fff8e1;
+
+  border-radius: 8px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Ajuste para telas menores */
 @media screen and (max-width: 800px) {
-    body {
-        max-width: 98%; /* Reduz ainda mais a margem lateral */
-        padding: 8px;
-    }
+  body {
+      max-width: 98%; /* Reduz ainda mais a margem lateral */
+      padding: 8px;
+  }
 }
 
 h1, h2, h3 {
-    text-align: center;
-    color: #333;
-    margin-top: 10px;
-    margin-bottom: 10px;
+  text-align: center;
+  color: #333;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 button {
-    width: 100%;
-    padding: 2px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
+  width: 100%;
+  padding: 2px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
 }
 
 button {
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
 }
 button:hover {
-    background-color: #0056b3;
+  background-color: #0056b3;
 }
 
 /* botão e input genérico já tratados lá em cima, então aqui concentramos só nos form-controls */
 input.form-control,
 select.form-control {
-  /* O padding que tu quiseres (8px é um bom valor) */
-  padding: 0 8px;
-  /* assegura que seja este padding a valer, não o do user agent */
-  box-sizing: border-box;
+/* O padding que tu quiseres (8px é um bom valor) */
+padding: 0 8px;
+/* assegura que seja este padding a valer, não o do user agent */
+box-sizing: border-box;
 }
 
 table {
-    width: 100%;
-    /* passa de collapse para separate para permitir border-radius */
-    border-collapse: separate;
-    border-spacing: 0;
-    margin-top: 20px;
-    border-radius: 8px;
-    overflow: hidden;
+  width: 100%;
+  /* passa de collapse para separate para permitir border-radius */
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 20px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 th, td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: center;
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
 }
 th {
-    background-color: #007bff;
-    color: white;
+  background-color: #007bff;
+  color: white;
 }
 #listaTarifarios {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
 .botao-excel, .botao-sheet {
-    display: inline-block;
-    padding: 12px 20px;
-    margin: 10px;
-    font-size: 16px;
-    font-weight: bold;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: background-color 0.3s;
+  display: inline-block;
+  padding: 12px 20px;
+  margin: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s;
 }
 
 /* Estilo para o botão de download do Excel */
 .botao-excel {
-    background-color: #006dff;
-    color: white;
+  background-color: #006dff;
+  color: white;
 }
 
 .botao-excel:hover {
-    background-color: #0056b3;
+  background-color: #0056b3;
 }
 
 /* Estilo para o botão de abrir Google Sheets */
 .botao-sheet {
-    background-color: #28863e;
-    color: white;
+  background-color: #28863e;
+  color: white;
 }
 
 .botao-sheet:hover {
-    background-color: #1e7e34;
+  background-color: #1e7e34;
 }
 
-  .btn-limpar {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    width: 30px;
-    height: 30px;
-    border: 1px solid #bbb;
-    border-radius: 4px;
-    background-color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: background-color 0.3s, border-color 0.3s;
-  }
-  
-  .btn-limpar:hover {
-    background-color: #f0f0f0;
-    border-color: #aaa;
-  }
-  
-  .btn-limpar i {
-    font-size: 20px;
-    color: #333;
-    transform: rotate(-10deg);
-  }
+.btn-limpar {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  background-color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.btn-limpar:hover {
+  background-color: #f0f0f0;
+  border-color: #aaa;
+}
+
+.btn-limpar i {
+  font-size: 20px;
+  color: #333;
+  transform: rotate(-10deg);
+}
 
 .conteudo-ts {
-    display: none;
-    padding: 10px;
-    border: 1px solid #bbb;
-    background-color: white;
-    border-bottom-right-radius: 4px;
-    border-bottom-left-radius: 4px;
-    border-top-right-radius: 4px;
+  display: none;
+  padding: 10px;
+  border: 1px solid #bbb;
+  background-color: white;
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 4px;
+  border-top-right-radius: 4px;
 }
 
 .aba {
-    padding: 10px;
-    color: #aaa;
-    cursor: pointer;
-    border: 1px solid #bbb;
-    border-bottom: none;
-    background-color: #e0e0e0;
-    font-weight: bold;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-    transition: background-color 0.3s;
+  padding: 10px;
+  color: #aaa;
+  cursor: pointer;
+  border: 1px solid #bbb;
+  border-bottom: none;
+  background-color: #e0e0e0;
+  font-weight: bold;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  transition: background-color 0.3s;
 }
 
 .aba:hover {
-    background-color: #d0d0d0;
+  background-color: #d0d0d0;
 }
 
 
 .conteudo-aba {
-    display: none;
-    padding: 10px;
-    border: 1px solid #bbb;
-    background-color: white;
-    border-bottom-right-radius: 4px;
-    border-bottom-left-radius: 4px;
-    border-top-right-radius: 4px;
+  display: none;
+  padding: 10px;
+  border: 1px solid #bbb;
+  background-color: white;
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 4px;
+  border-top-right-radius: 4px;
 }
 
 
 .aba.ativa {
-    background-color: white;
-    color: black;
-    border-bottom: 2px solid white;
+  background-color: white;
+  color: black;
+  border-bottom: 2px solid white;
 }
 
 .conteudo-aba.ativa {
-    display: block;
-    background-color: #f4f4f4; /* Igual ao fundo do <body> */
-    border: 1px solid #bbb;
-    padding: 10px;
+  display: block;
+  background-color: #f4f4f4; /* Igual ao fundo do <body> */
+  border: 1px solid #bbb;
+  padding: 10px;
 }
 
 #opcoesOutras {
-    margin-top: 15px;
-    font-size: 16px;
-    color: #555;
+  margin-top: 15px;
+  font-size: 16px;
+  color: #555;
 }
 
 .sort-container {
-    position: absolute;
-    right: 0.5px;           /* distância da borda direita da célula */
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: column; /* empilha verticalmente */
-    align-items: center;    /* centraliza horizontalmente dentro do container */
+  position: absolute;
+  right: 0.5px;           /* distância da borda direita da célula */
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column; /* empilha verticalmente */
+  align-items: center;    /* centraliza horizontalmente dentro do container */
 }
 
 .sort-arrow {
-    cursor: pointer;
-    margin: 0px 0;     /* espaço vertical reduzido entre as setas */
-    font-size: 14px;
+  cursor: pointer;
+  margin: 0px 0;     /* espaço vertical reduzido entre as setas */
+  font-size: 14px;
 }
 
 .sort-arrow.selected {
-    color: #bbb;
+  color: #bbb;
 }
 
 /* 1. Cards leves */
 .card {
-    background: rgb(227, 146, 96);
+  background: rgb(227, 146, 96);
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+/* 2. Feedback de foco em inputs */
+input:focus,
+select:focus,
+button:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+  background-color: #f0f8ff;
+}
+
+
+.parent {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  grid-template-rows: 
+    auto    /* div1: Mês + Dias */
+    auto    /* div3: Botões */
+    auto    /* div4: OMIE */
+    auto    /* div5: Datas */
+    auto    /* div6: Descontos Sociais */
+    auto;   /* div2: Potência + consumo */
+  grid-template-areas:
+    "div1  div1       btnDias"
+    "div3  div3       ."
+    "div4  l4          ."
+    "div5  div5       l5"
+    "div6  div6       l6"
+    "div2  div2       btnDefinicoes";
+    grid-column-gap: 10px;
+    grid-row-gap: 0px;
+    background: #f3e29f;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-  
-  /* 2. Feedback de foco em inputs */
-  input:focus,
-  select:focus,
-  button:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
-    background-color: #f0f8ff;
-  }
+    padding: 10px;
+    margin: 0 0 0 0;;
+}
 
- 
-  .parent {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    grid-template-rows: 
-      auto    /* div1: Mês + Dias */
-      auto    /* div3: Botões */
-      auto    /* div4: OMIE */
-      auto    /* div5: Datas */
-      auto    /* div6: Descontos Sociais */
-      auto;   /* div2: Potência + consumo */
-    grid-template-areas:
-      "div1  div1       btnDias"
-      "div3  div3       ."
-      "div4  l4          ."
-      "div5  div5       l5"
-      "div6  div6       l6"
-      "div2  div2       btnDefinicoes";
-      grid-column-gap: 10px;
-      grid-row-gap: 0px;
-      background: #f3e29f;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-      padding: 10px;
-      margin: 0 0 0 0;;
-  }
-  
-  /* area assignments */
-  .div1            { grid-area: div1; }
-  .div3            { grid-area: div3; }         /* switch-buttons */
-  .div4            { grid-area: div4; }         /* painel OMIE */
-  .div5            { grid-area: div5; }         /* painel datas */
-  .div6            { grid-area: div6; }         /* Descontos Sociais */
-  .div2            { grid-area: div2; }
-  #btnDias        { grid-area: btnDias; }
-  #btnDefinicoes  { grid-area: btnDefinicoes; }
-  
-  /* escondidos por padrão */
-  .div4.hidden,
-  .div5.hidden,
-  .div6.hidden {
-    display: none;
-  }
-  
-  /* opcional: layout interno de div4 */
-  .div4 {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 8px;
-    align-self: start;
+/* area assignments */
+.div1            { grid-area: div1; }
+.div3            { grid-area: div3; }         /* switch-buttons */
+.div4            { grid-area: div4; }         /* painel OMIE */
+.div5            { grid-area: div5; }         /* painel datas */
+.div6            { grid-area: div6; }         /* Descontos Sociais */
+.div2            { grid-area: div2; }
+#btnDias        { grid-area: btnDias; }
+#btnDefinicoes  { grid-area: btnDefinicoes; }
+
+/* escondidos por padrão */
+.div4.hidden,
+.div5.hidden,
+.div6.hidden {
+  display: none;
+}
+
+/* opcional: layout interno de div4 */
+.div4 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  align-self: start;
 }
 
 .div4:not(.hidden) {
-    margin-top: 10px;
+  margin-top: 10px;
 }
 
 
 .div5 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 10px;
-    margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 10px;
+  margin-top: 10px;
 }
 
 .div5.hidden {
-    display: none !important;
+  display: none !important;
 }
 
 .div6 {
-    display: grid;
-    grid-template-columns: 1fr;
-    column-gap: 10px;
-    align-items: end; /* garante alinhamento inferior */
-    margin-top: 10px;
-    overflow: hidden; /* ⬅️ impede o colapso da margem interna */
+  display: grid;
+  grid-template-columns: 1fr;
+  column-gap: 10px;
+  align-items: end; /* garante alinhamento inferior */
+  margin-top: 10px;
+  overflow: hidden; /* ⬅️ impede o colapso da margem interna */
 }
 
 .div6.hidden {
-    display: none !important;
+  display: none !important;
 }
 
 /* Posicionamento dos novos botões */
@@ -316,413 +317,441 @@ th {
 #btnClearOmie,
 #btnClearDates,
 #btnClearTs {
-  width: 30px; height: 30px;
-  border: 1px solid #bbb; border-radius: 4px;
-  background-color: #fff;
-  display: flex; justify-content: center; align-items: center;
-  cursor: pointer; transition: background-color .3s, border-color .3s;
+width: 30px; height: 30px;
+border: 1px solid #bbb; border-radius: 4px;
+background-color: #fff;
+display: flex; justify-content: center; align-items: center;
+cursor: pointer; transition: background-color .3s, border-color .3s;
 }
 #btnClearOmie:hover,
 #btnClearDates:hover,
 #btnClearTs:hover {
-  background-color: #f0f0f0; border-color: #aaa;
+background-color: #f0f0f0; border-color: #aaa;
 }
 #btnClearOmie i,
 #btnClearDates i,
 #btnClearTs i {
-  font-size: 20px; color: #333; transform: rotate(-10deg);
+font-size: 20px; color: #333; transform: rotate(-10deg);
 }
 
-  
-  
+
+
 /* área do botão do Dias */
 #btnDias {
-    grid-area: btnDias;
-    justify-self: center;  /* centra horizontalmente na coluna 3 */
-    align-self: end;       /* alinha ao fundo da área (base da linha 1) */
-  }
-  
-  
-  /* área do botão de Definições */
-  #btnDefinicoes {
-    grid-area: btnDefinicoes;
-    justify-self: center;  /* centra horizontalmente na coluna 3 */
-    align-self: end;    /* centra verticalmente na linha 3 */
-  }
+  grid-area: btnDias;
+  justify-self: center;  /* centra horizontalmente na coluna 3 */
+  align-self: end;       /* alinha ao fundo da área (base da linha 1) */
+}
+
+
+/* área do botão de Definições */
+#btnDefinicoes {
+  grid-area: btnDefinicoes;
+  justify-self: center;  /* centra horizontalmente na coluna 3 */
+  align-self: end;    /* centra verticalmente na linha 3 */
+}
 
 
 
-  .date-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
-    column-gap: 14px;
-    align-items: start;
-    width: 100%;
-  }
+.date-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  column-gap: 14px;
+  align-items: start;
+  width: 100%;
+}
 
-  /* quando div3 aparece, mostra os dois botões lado a lado */
+/* quando div3 aparece, mostra os dois botões lado a lado */
 .switch-buttons {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 0px;
-    position: relative;  /* referência correta para o botão absoluto */
-  }
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 0px;
+  position: relative;  /* referência correta para o botão absoluto */
+}
 
 
-  .date-cell {
-    display: grid;
-    grid-template-rows: auto 1fr;  /* label em cima, input em baixo */
-  }
-  
-  .date-cell label {
-    margin-bottom: 0px;   /* um bocadinho de espaço até ao input */
-  }
-  
-  .date-cell input {
-    width: 100%;          /* preenche toda a célula */
-    box-sizing: border-box;
-  }
-  
-  .month-days-container {
+.date-cell {
+  display: grid;
+  grid-template-rows: auto 1fr;  /* label em cima, input em baixo */
+}
 
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-column: 1 / 3;
-      /* duas colunas que se ajustam ao conteúdo */
-      column-gap: 10px;
-      /* mesmo gap que tinhas antes */
-      justify-content: start;
-      /* centra horizontalmente o conjunto */
-      align-items: start;
-      /* centra verticalmente os itens */
-  }
-  
-  /* 1) Faz da .div1 um grid interno para Mês/Dias/Intervalo */
-  .div1 {
+.date-cell label {
+  margin-bottom: 0px;   /* um bocadinho de espaço até ao input */
+}
+
+.date-cell input {
+  width: 100%;          /* preenche toda a célula */
+  box-sizing: border-box;
+}
+
+.month-days-container {
+
     display: grid;
-    grid-template-columns: auto auto;  /* 2 colunas que se ajustam ao conteúdo */
-    grid-template-rows: auto auto;     /* 2 linhas: 1ª linha Mês/Dias, 2ª linha Intervalo */
-    column-gap: 10px;                  /* espaçamento horizontal */
-    row-gap: 0px;                     /* espaçamento vertical */
-    margin-bottom: 0px;
-    justify-items: stretch;              /* cada célula alinhada à esquerda */
-    align-items: start;                /* cada célula alinhada ao topo */
-  }
-  
-  .div2 {
-    display: grid;
-    /* Duas colunas que dividem igualmente todo o espaço disponível */
     grid-template-columns: 1fr 1fr;
-    /* Espaçamento horizontal entre elas */
+    grid-column: 1 / 3;
+    /* duas colunas que se ajustam ao conteúdo */
     column-gap: 10px;
-    margin-top: 10px;
-    /* Espaçamento vertical entre linhas, caso venha a ter mais de uma */
-    row-gap: 0px;
-  }
+    /* mesmo gap que tinhas antes */
+    justify-content: start;
+    /* centra horizontalmente o conjunto */
+    align-items: start;
+    /* centra verticalmente os itens */
+}
+
+/* 1) Faz da .div1 um grid interno para Mês/Dias/Intervalo */
+.div1 {
+  display: grid;
+  grid-template-columns: auto auto;  /* 2 colunas que se ajustam ao conteúdo */
+  grid-template-rows: auto auto;     /* 2 linhas: 1ª linha Mês/Dias, 2ª linha Intervalo */
+  column-gap: 10px;                  /* espaçamento horizontal */
+  row-gap: 0px;                     /* espaçamento vertical */
+  margin-bottom: 0px;
+  justify-items: stretch;              /* cada célula alinhada à esquerda */
+  align-items: start;                /* cada célula alinhada ao topo */
+}
+
+.div2 {
+  display: grid;
+  /* Duas colunas que dividem igualmente todo o espaço disponível */
+  grid-template-columns: 1fr 1fr;
+  /* Espaçamento horizontal entre elas */
+  column-gap: 10px;
+  margin-top: 10px;
+  /* Espaçamento vertical entre linhas, caso venha a ter mais de uma */
+  row-gap: 0px;
+}
 
 
- 
-  
 
 
-  
-  
 
-  /* Posiciona cada bloco no seu sítio */
-  .monthBlock {
-    grid-column: 1;  /* 1ª coluna */
-    grid-row:    1;  /* 1ª linha */
-  }
-  
-  .daysBlock {
-    grid-column: 2;  /* 2ª coluna */
-    grid-row:    1;  /* 1ª linha */
-  }
-  
-  .rangeBlock {
-    margin-top: 10px;
-    grid-column: 1 / 3; /* do início da 1ª à 2ª coluna */
-    grid-row:    2;     /* 2ª linha */
-  }
-  
- /* Mantém sempre o grid para o intervalo de datas */
+
+
+
+
+/* Posiciona cada bloco no seu sítio */
+.monthBlock {
+  grid-column: 1;  /* 1ª coluna */
+  grid-row:    1;  /* 1ª linha */
+}
+
+.daysBlock {
+  grid-column: 2;  /* 2ª coluna */
+  grid-row:    1;  /* 1ª linha */
+}
+
+.rangeBlock {
+  margin-top: 10px;
+  grid-column: 1 / 3; /* do início da 1ª à 2ª coluna */
+  grid-row:    2;     /* 2ª linha */
+}
+
+/* Mantém sempre o grid para o intervalo de datas */
 #dateRangeFields {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
-    gap: 10px;
-    width: 100%;
-  }
-  
-  /* Classe de ocultação genérica */
-  .hidden {
-    display: none !important;
-  }
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
 
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    align-self: end;
-    margin-top: 0;
-  }
-  .form-group label {
-    display: block;            /* agora ocupa toda a largura do container */
-    width: 120%;               /* forçamos a 100% da célula do grid */
-    box-sizing: border-box;    /* faz o padding e a borda entrarem dentro desses 100% */
-    margin-bottom: 4px;
-    padding: 0 6px;            /* igual ao form-control */
-    
-    /* borda transparente para simular a borda do select */
-    font-weight: bold;
-    font-size: 15px;
-  }
-  .form-control {
-    width: 100%;
-    height: 30px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 0 10px;
-    box-sizing: border-box;
-  }
-  /* substitua 6px pelo valor que viu no select */
-input.form-control {
-    padding-left: 13px;    /* desloca o texto interno do input */
-    /* mantém o padding-right que já tem (e height, box-sizing, etc.) */
-  }
+/* Classe de ocultação genérica */
+.hidden {
+  display: none !important;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  align-self: end;
+  margin-top: 0;
+}
+.form-group label {
+  display: block;            /* agora ocupa toda a largura do container */
+  width: 120%;               /* forçamos a 100% da célula do grid */
+  box-sizing: border-box;    /* faz o padding e a borda entrarem dentro desses 100% */
+  margin-bottom: 4px;
+  padding: 0 6px;            /* igual ao form-control */
   
+  /* borda transparente para simular a borda do select */
+  font-weight: bold;
+  font-size: 15px;
+}
+.form-control {
+  width: 100%;
+  height: 30px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+/* substitua 6px pelo valor que viu no select */
+input.form-control {
+  padding-left: 13px;    /* desloca o texto interno do input */
+  /* mantém o padding-right que já tem (e height, box-sizing, etc.) */
+}
+
 /* Garante que date inputs têm o mesmo padding e alinhamento que os outros */
 input.form-control[type="date"] {
-  padding: 0 12px;
-  text-align: left;
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
-  font-size: 16px;
-  line-height: 1.4;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+padding: 0 12px;
+text-align: left;
+box-sizing: border-box;
+font-family: Arial, sans-serif;
+font-size: 16px;
+line-height: 1.4;
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
 }
 
 /* .div3 e stack vertical */
 .div3 {
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    align-self: start;
-    margin-top: 10px;
-    margin-bottom: 0px;
-  }
-  .button-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;              /* espaço entre os botões */
-  }
-  
-  /* estilo único para ambos os botões */
-  .btn-icon {
-    width: 50px;
-    height: 30px;
-    border: 1px solid #bbb;    /* mesma cor do antigo #btnDefinicoes */
-    border-radius: 4px;         /* mesma radius do antigo #btnDefinicoes */
-    background-color: #fff;     /* branco uniforme para os dois */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
-    color:#222
-  }
-  .btn-icon:hover {
-    background-color: #f0f0f0;
-    border-color: #aaa;
-  }
-  
-  .btn-icon i {
-    font-size: 18px;
-    color: #333;
-  }
-  
-  /* aplica ao <svg> container */
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  align-self: start;
+  margin-top: 10px;
+  margin-bottom: 0px;
+}
+.button-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;              /* espaço entre os botões */
+}
+
+/* estilo único para ambos os botões */
+.btn-icon {
+  width: 50px;
+  height: 30px;
+  border: 1px solid #bbb;    /* mesma cor do antigo #btnDefinicoes */
+  border-radius: 4px;         /* mesma radius do antigo #btnDefinicoes */
+  background-color: #fff;     /* branco uniforme para os dois */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  color:#222
+}
+.btn-icon:hover {
+  background-color: #f0f0f0;
+  border-color: #aaa;
+}
+
+.btn-icon i {
+  font-size: 18px;
+  color: #333;
+}
+
+/* aplica ao <svg> container */
 .btn-icon svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 
 
 
-  /* cria duas colunas iguais, com gap igual aos outros grids */
+/* cria duas colunas iguais, com gap igual aos outros grids */
 .form-row-duas-colunas {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
-    column-gap: 10px;   /* ou o gap que utilizas nos outros lugares */
-    margin-bottom: 0px;/* espaço abaixo do row, se quiseres */
-  }
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  column-gap: 10px;   /* ou o gap que utilizas nos outros lugares */
+  margin-bottom: 0px;/* espaço abaixo do row, se quiseres */
+}
+
+/* já tens .form-group e .form-control definidas,
+   então não precisas de mais nada aqui */
+
   
-  /* já tens .form-group e .form-control definidas,
-     então não precisas de mais nada aqui */
-  
-    
 /* layout de div3 (só o toggle principal) */   
-    
-  #btnShowOmie img {
-    max-width: 100%;
-    max-height: 100%;
-    width: 100px;   /* força largura fixa */
-    height: 30px;  /* força altura fixa */
-    object-fit: contain;
-  }
-         
-  .btn-limpar-inline {
-    width: 30px;
-    height: 30px;
-    border: 1px solid #bbb;
-    border-radius: 4px;
-    background-color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    color: #fff;
-    transition: background-color 0.3s, border-color 0.3s;
-    /* importante: NÃO TEM position:absolute */
+  
+#btnShowOmie img {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100px;   /* força largura fixa */
+  height: 30px;  /* força altura fixa */
+  object-fit: contain;
+}
+       
+.btn-limpar-inline {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  background-color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  color: #fff;
+  transition: background-color 0.3s, border-color 0.3s;
+  /* importante: NÃO TEM position:absolute */
 }
 
 .btn-limpar-inline:hover {
-    background-color: #f0f0f0;
-    border-color: #aaa;
+  background-color: #f0f0f0;
+  border-color: #aaa;
 }
 
 .btn-limpar-inline i {
-    font-size: 20px;
-    color: #333;
-    transform: rotate(-10deg);
+  font-size: 20px;
+  color: #333;
+  transform: rotate(-10deg);
 }
 
 @keyframes pulse {
-    0% {
-      transform: scale(1);
-      opacity: 1;
-    }
-    50% {
-      transform: scale(1.2);
-      opacity: 0.7;
-    }
-    100% {
-      transform: scale(1);
-      opacity: 1;
-    }
+  0% {
+    transform: scale(1);
+    opacity: 1;
   }
-  .pulse {
-    animation: pulse 0.6s ease;
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
   }
-  
-  @keyframes pulsar {
-    0%   { transform: scale(1); }
-    50%  { transform: scale(1.2); }
-    100% { transform: scale(1); }
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
-  .pulsar {
-    animation: pulsar 0.6s ease-out;
-  }
+}
+.pulse {
+  animation: pulse 0.6s ease;
+}
+
+@keyframes pulsar {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+.pulsar {
+  animation: pulsar 0.6s ease-out;
+}
 
 
-  
-  /* rótulo igual ao anterior */
-  .form-label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: #333;
-  }
-  
- 
-  
-  /* espaçamento entre linhas */
-  .form-check {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.5rem;
-  }
-  
-  .form-check.mt-2 {
-    margin-top: 0rem;
-  }
-  
-  /* cor dos radios/checkbox para combinar com o tema */
-  .form-check-input {
-    margin-right: 0.5rem;
-  }
-  
-  .form-check-label {
-    font-size: 1rem;
-    color: #222;
-    line-height: 1.2;
-  }
 
-  /* força todos os checkboxes e rádios a usar o mesmo cinzento */
+/* rótulo igual ao anterior */
+.form-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+
+
+/* espaçamento entre linhas */
+.form-check {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.form-check.mt-2 {
+  margin-top: 0rem;
+}
+
+/* cor dos radios/checkbox para combinar com o tema */
+.form-check-input {
+  margin-right: 0.5rem;
+}
+
+.form-check-label {
+  font-size: 1rem;
+  color: #222;
+  line-height: 1.2;
+}
+
+/* força todos os checkboxes e rádios a usar o mesmo cinzento */
 input[type="checkbox"],
 input[type="radio"] {
-  accent-color: #6c757d;  /* ou outro cinzento à tua escolha */
+accent-color: #6c757d;  /* ou outro cinzento à tua escolha */
 }
 
 .ts-options .form-check-label {
-    font-weight: normal;
-  }
+  font-weight: normal;
+}
 
-  /* Desativa o bold apenas nas labels de Descontos Sociais */
+/* Desativa o bold apenas nas labels de Descontos Sociais */
 #conteudoTs label {
-    font-weight: normal !important;
-  }
+  font-weight: normal !important;
+}
 
-  .grafico-wrapper {
-    position: relative;
-    width: 100%;
-    /* reserva sempre o espaço 16:9 */
-    padding-top: 56.25%;    /* = 9/16 x 100% */
-    overflow: hidden;
-    background: white;      /* opcional, esconde qualquer “gap” residual */
-  }
-  
-  .grafico-wrapper iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-  }
-  
+.grafico-wrapper {
+  position: relative;
+  width: 100%;
+  /* reserva sempre o espaço 16:9 */
+  padding-top: 56.25%;    /* = 9/16 x 100% */
+  overflow: hidden;
+  border-radius: 10px;
+  background: white;      /* opcional, esconde qualquer “gap” residual */
+}
 
-  /* inicialmente tudo invisível */
+.grafico-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+
+/* inicialmente tudo invisível */
 #postTableContent {
-    visibility: hidden;
-  }
-  
-  /* cada bloco começa transparente e deslocado levemente */
-  .post-table-content .reveal {
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity .4s ease, transform .4s ease;
-  }
-  
-  /* quando “ativo” cada bloco passa a visível */
-  .post-table-content .reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  visibility: hidden;
+}
 
-  /* no seu styles.css */
+/* cada bloco começa transparente e deslocado levemente */
+.post-table-content .reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .4s ease, transform .4s ease;
+}
+
+/* quando “ativo” cada bloco passa a visível */
+.post-table-content .reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* no seu styles.css */
 .titulo-omie {
-    background-color: #f3e29f;
-    padding: 12px;
-    font-family: sans-serif;
-    text-align: center;
-    border-radius: 12px;
-    margin-bottom: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  }
-  .titulo-omie > div {
-    margin-bottom: 4px;
-  }
+  background-color: #f3e29f;
+  padding: 12px;
+  font-family: sans-serif;
+  text-align: center;
+  border-radius: 12px;
+  margin-bottom: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.titulo-omie > div {
+  margin-bottom: 4px;
+}
+
+
+html {
+  background-color: black;
+}
+
+.tarifario-nome {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-color: white;
+  font-weight: bold;
+}
+
+/* Estilo para tarifários indexados */
+.tarifario-indexado {
+  border-color: #0070C0; /* azul vivo */
+  background-color: #eef6ff;
+}
+
+/* Estilo para tarifários normais */
+.tarifario-fixo {
+  border-color: #00853c; /* verde escuro */
+  background-color: #f1fdf4;
+}
+
   
