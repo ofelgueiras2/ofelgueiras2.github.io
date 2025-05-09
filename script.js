@@ -1095,7 +1095,6 @@ function atualizarResultados() {
             } else {
                 nomeStyle += "background-color:#F4f4f4;"
             }
-            nomeStyle += "border-radius: 6px;";
             nomeStyle += `filter: brightness(${brilho});`;
 
             if (tarifa.nome === "Meu tarifário") {
@@ -1107,6 +1106,8 @@ function atualizarResultados() {
                   nomeStyle = "background-color:#F0B000; font-weight:bold; color:black;";
                 }
             }
+            nomeStyle += "border-radius: 6px;";
+
 
 
 
