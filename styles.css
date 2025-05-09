@@ -10,10 +10,10 @@ body {
   background: linear-gradient(
   180deg,
   #fff8e1 0%,
-  #fff8e1 25%,   /* sobe a área uniforme para dar mais “respiro” */
+  #fff8e1 30%,   /* sobe a área uniforme para dar mais “respiro” */
   #ffe8a0 55%,   /* tom intermédio um pouco mais suave */
-  #fff8e1 70%,
-  #ffe57f 85%
+  #fff8e1 85%,
+  #ffe57f 100%
 );
 }
 
