@@ -1039,21 +1039,21 @@ function atualizarResultados() {
               <span class="sort-arrow ${sortField==='tariff' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('tariff','desc')">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;">
+          <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;" class="has-tooltip" title="Custo diário sem IVA">
             Potência (€/dia)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='power' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('power','asc')">&#9650;</span>
               <span class="sort-arrow ${sortField==='power' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('power','desc')">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;">
+          <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;" class="has-tooltip" title="Custo por kWh sem IVA">
             Energia (€/kWh)
             <span class="sort-container">
-              <span class="sort-arrow ${sortField==='simple' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('simple','asc')">&#9650;</span>
-              <span class="sort-arrow ${sortField==='simple' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('simple','desc')">&#9660;</span>
+              <span class="sort-arrow ${sortField==='simple' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('simple','asc')" title="Ordenar do menor para o maior">&#9650;</span>
+              <span class="sort-arrow ${sortField==='simple' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('simple','desc')" title="Ordenar do maior para o menor">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;">
+          <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;" class="has-tooltip" title="Preço final da fatura (com taxas e impostos)">
             Preço (€)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='price' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('price','asc')">&#9650;</span>
@@ -1095,6 +1095,7 @@ function atualizarResultados() {
             } else {
                 nomeStyle += "background-color:#F4f4f4;"
             }
+            
             nomeStyle += `filter: brightness(${brilho});`;
 
             if (tarifa.nome === "Meu tarifário") {
@@ -1107,8 +1108,6 @@ function atualizarResultados() {
                 }
             }
             nomeStyle += "border-radius: 6px;";
-
-
 
 
   
@@ -1496,5 +1495,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         adiarGrandes = false;
         console.log("✅ CSV grande carregado em background");
     }, 1000); // Aguarda 1 segundo para não interferir com o carregamento inicial
+
+    tippy.delegate(document.body, {
+        target: '.has-tooltip',
+        content(reference) {
+          return reference.getAttribute('title');
+        },
+        trigger: 'click',      // dispara no click/tap
+        hideOnClick: true,     // fecha ao clicar de novo ou noutro lugar
+        placement: 'top',
+        arrow: true,
+        // opcional: ancorar o quarto-círculo ao visível/invisível
+        onShow(instance) {
+          // fecha qualquer outro ativo
+          document.querySelectorAll('.has-tooltip-active')
+            .forEach(el => el !== instance.reference && el.classList.remove('has-tooltip-active'));
+          instance.reference.classList.add('has-tooltip-active');
+        },
+        onHidden(instance) {
+          instance.reference.classList.remove('has-tooltip-active');
+        }
+      });
 
 });
