@@ -1,30 +1,37 @@
 <!DOCTYPE html>
 <html lang="pt">
-<head>
-   
-    <link rel="stylesheet" href="styles.css">
-    
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-MNLD39E8FB"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-MNLD39E8FB');
-</script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comparador de Tarifários 2025</title>
-    <meta name="description"
-      content="Comparador de tarifários de eletricidade 2025: calcula em segundos o custo mensal consoante potência contratada, consumo e descontos sociais.">
-
-    <link rel="prefetch" href="icons.svg" as="image" type="image/svg+xml">
-
-    
-</head>
+    <head>
+        <!-- 1) Metas essenciais -->
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+        <!-- 2) Título e descrição -->
+        <title>Comparador de Tarifários 2025</title>
+        <meta name="description"
+              content="Comparador de tarifários de eletricidade 2025: calcula em segundos o custo mensal consoante potência contratada, consumo e descontos sociais.">
+      
+        <!-- 3) CSS principal -->
+        <link rel="stylesheet" href="styles.css">
+        
+        <!-- 4) Tippy.css (preload + link) -->
+        <link rel="preload" as="style" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
+        <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
+      
+        <!-- 5) Prefetch de ícones -->
+        <link rel="prefetch" href="icons.svg" as="image" type="image/svg+xml">
+      
+        <!-- 6) Google Tag (analytics) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-MNLD39E8FB"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-MNLD39E8FB');
+        </script>
+      </head>
 <body>
-    <h1>Comparador de Tarifários 2025</h1>
+    <h1 class="dynamic-title">Comparador de Tarifários 2025</h1>
+
 
     <div class="parent">
         <!-- 1) Mês + Dias -->
@@ -368,7 +375,11 @@
             </div>
         </div>
     </div>   
-         <script src="script.js"></script>
+    <!-- 1) Carrega as dependências externas -->
+  <script src="https://unpkg.com/@popperjs/core@2" defer></script>
+  <script src="https://unpkg.com/tippy.js@6" defer></script>
+  
+    <script src="/script.js"></script>
         </body>
         
         </html>
