@@ -1,3 +1,4 @@
+
 body {
   font-family: Arial, sans-serif;
   max-width: 800px;
@@ -17,6 +18,8 @@ body {
 );
 }
 
+
+
 /* Ajuste para telas menores */
 @media screen and (max-width: 800px) {
   body {
@@ -31,6 +34,9 @@ h1 {
   margin-top: 10px;
   margin-bottom: 10px;
 }
+
+
+
 button {
   width: 100%;
   padding: 2px;
@@ -760,6 +766,33 @@ html {
 .tarifario-fixo {
   border-color: #00853c; /* verde escuro */
   background-color: #f1fdf4;
+}
+
+.has-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+/* indicador sempre visível, muito discreto */
+.has-tooltip::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-top-right-radius: 100%;
+  pointer-events: none;
+  transition: background 0.2s ease, width 0.2s ease, height 0.2s ease;
+}
+
+/* no hover ou active, torna-se mais óbvio */
+.has-tooltip:hover::after,
+.has-tooltip.has-tooltip-active::after {
+  background: rgba(255, 255, 255, 0.6);
+  width: 10px;
+  height: 10px;
 }
 
   
