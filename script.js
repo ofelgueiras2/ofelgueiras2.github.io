@@ -1017,8 +1017,8 @@ function atualizarResultados() {
             <br>
             <div style="font-size: 14px;">OMIE = ${OMIESSelecionadoS} €/kWh</div>            
             <span class="sort-container">
-              <span class="sort-arrow ${sortField==='default' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('default','asc')">&#9650;</span>
-              <span class="sort-arrow ${sortField==='default' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('default','desc')">&#9660;</span>
+              <span class="sort-arrow ${sortField==='default' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('default','asc')" title="Ordenar conforme a ordem no Excel">&#9650;</span>
+              <span class="sort-arrow ${sortField==='default' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('default','desc')" title="Ordenar conforme a ordem inversa no Excel">&#9660;</span>
             </span>
           </th>
           <th style="background-color:${headerSecondary}; border-radius: 10px;color:white; text-align:center;">
@@ -1035,29 +1035,29 @@ function atualizarResultados() {
           <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;">
             Tarifário
             <span class="sort-container">
-              <span class="sort-arrow ${sortField==='tariff' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('tariff','asc')">&#9650;</span>
-              <span class="sort-arrow ${sortField==='tariff' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('tariff','desc')">&#9660;</span>
+              <span class="sort-arrow ${sortField==='tariff' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('tariff','asc')" title="Ordenar alfabeticamente (A → Z)">&#9650;</span>
+              <span class="sort-arrow ${sortField==='tariff' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('tariff','desc')" title="Ordenar alfabeticamente (Z → A)">&#9660;</span>
             </span>
           </th>
           <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;" class="has-tooltip" title="Custo diário sem IVA">
             Potência (€/dia)
             <span class="sort-container">
-              <span class="sort-arrow ${sortField==='power' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('power','asc')">&#9650;</span>
-              <span class="sort-arrow ${sortField==='power' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('power','desc')">&#9660;</span>
+              <span class="sort-arrow ${sortField==='power' && sortDirection==='asc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('power','asc')" title="Ordenar do menor para o maior">&#9650;</span>
+              <span class="sort-arrow ${sortField==='power' && sortDirection==='desc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('power','desc')" title="Ordenar do maior para o menor">&#9660;</span>
             </span>
           </th>
           <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;" class="has-tooltip" title="Custo por kWh sem IVA">
             Energia (€/kWh)
             <span class="sort-container">
-              <span class="sort-arrow ${sortField==='simple' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('simple','asc')" title="Ordenar do menor para o maior">&#9650;</span>
-              <span class="sort-arrow ${sortField==='simple' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('simple','desc')" title="Ordenar do maior para o menor">&#9660;</span>
+              <span class="sort-arrow ${sortField==='simple' && sortDirection==='asc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('simple','asc')" title="Ordenar do menor para o maior">&#9650;</span>
+              <span class="sort-arrow ${sortField==='simple' && sortDirection==='desc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('simple','desc')" title="Ordenar do maior para o menor">&#9660;</span>
             </span>
           </th>
           <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;" class="has-tooltip" title="Preço final da fatura (com taxas e impostos)">
             Preço (€)
             <span class="sort-container">
-              <span class="sort-arrow ${sortField==='price' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('price','asc')">&#9650;</span>
-              <span class="sort-arrow ${sortField==='price' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('price','desc')">&#9660;</span>
+              <span class="sort-arrow ${sortField==='price' && sortDirection==='asc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('price','asc')" title="Ordenar do menor para o maior">&#9650;</span>
+              <span class="sort-arrow ${sortField==='price' && sortDirection==='desc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('price','desc')" title="Ordenar do maior para o menor">&#9660;</span>
             </span>
           </th>
         </tr>`;
