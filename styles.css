@@ -795,4 +795,21 @@ html {
   height: 10px;
 }
 
-  
+/* 2) Indicador vermelho usa ::before e só em .mais-indicator */
+.mais-indicator {
+  position: relative;
+  overflow: hidden;  /* respeita o border-radius do <td> */
+}
+.mais-indicator::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: block;
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 0, 0, 0.6);
+  border-top-left-radius: 100%;
+  pointer-events: none;
+  z-index: 1; /* acima do bg do <td> */
+}
