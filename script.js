@@ -570,7 +570,7 @@ function atualizarResultados() {
         
                 if (conta > 0) {
                     const media = soma / conta;
-                    simples = parseFloat((media + TARSimplesS).toFixed(4)) + FTSS;
+                    simples = parseFloat((media + TARSimplesS).toFixed(4));
                 } else {
                     // fallback para simples padrão
                     const base = (OMIESSelecionadoS + luzboaCGSS)
@@ -578,7 +578,7 @@ function atualizarResultados() {
                                * luzboaFAS
                                + luzboaKS
                                + TARSimplesS;
-                    simples = parseFloat(base.toFixed(4)) + FTSS;
+                    simples = parseFloat(base.toFixed(4));
                 }
         
             } else {
@@ -588,12 +588,12 @@ function atualizarResultados() {
                            * luzboaFAS
                            + luzboaKS
                            + TARSimplesS;
-                simples = parseFloat(base.toFixed(4)) + FTSS;
+                simples = parseFloat(base.toFixed(4));
             }   
         } else if (nome === "Ibelectra indexado") {
-            simples = parseFloat(((OMIESSelecionadoS + ibelectraCSS) * (1 + perdas2024S) + ibelectraKS + TARSimplesS).toFixed(5)) + FTSS;
+            simples = parseFloat(((OMIESSelecionadoS + ibelectraCSS) * (1 + perdas2024S) + ibelectraKS + TARSimplesS).toFixed(5));
         } else if (nome.startsWith("Luzigás Energy 8.8")) {
-            simples = parseFloat(((OMIESSelecionadoS + luzigasCSS) * (1 + PerdasSelecionadoS) + luzigasKS + TARSimplesS).toFixed(4)) + FTSS;
+            simples = parseFloat(((OMIESSelecionadoS + luzigasCSS) * (1 + PerdasSelecionadoS) + luzigasKS + TARSimplesS).toFixed(4));
         } else if (nome === "EDP indexado") {
             simples = parseFloat((OMIESSelecionadoS * EDPK1S + EDPK2S + TARSimplesS).toFixed(4));
         } else if (nome === "Repsol indexado") {
@@ -622,15 +622,15 @@ function atualizarResultados() {
               if (conta > 0) {
                 // 2) calcula a média e divide por PerfilM_S
                 const media = soma / conta / PerfilM_S;
-                // 3) arredonda a 6 casas e adiciona TARSimplesS e FTSS
-                simples = parseFloat((media + TARSimplesS).toFixed(6)) + FTSS;
+                // 3) arredonda a 6 casas e adiciona TARSimplesS
+                simples = parseFloat((media + TARSimplesS).toFixed(6));
               } else {
                 // fallback idêntico ao “simples” quando não há dados no intervalo
                 const base = 
                   OMIESSelecionadoS * (1 + PerdasSelecionadoS) * repsolFAS
                   + repsolQTarifaS
                   + TARSimplesS;
-                simples = parseFloat(base.toFixed(6)) + FTSS;
+                simples = parseFloat(base.toFixed(6));
               }
           
             } else {
@@ -639,7 +639,7 @@ function atualizarResultados() {
                 OMIESSelecionadoS * (1 + PerdasSelecionadoS) * repsolFAS
                 + repsolQTarifaS
                 + TARSimplesS;
-              simples = parseFloat(base.toFixed(6)) + FTSS;
+              simples = parseFloat(base.toFixed(6));
             }
         } else if (nome === "Coopérnico") {
             if (DataS) {
@@ -669,8 +669,8 @@ function atualizarResultados() {
               if (conta > 0) {
                 // 2) média normalizada por PerfilM_S
                 const media = soma / conta / PerfilM_S;
-                // 3) arredonda a 6 casas, soma TARSimplesS antes do .toFixed e FTSS depois
-                simples = parseFloat((media + TARSimplesS).toFixed(6)) + FTSS;
+                // 3) arredonda a 6 casas, soma TARSimplesS antes do .toFixed
+                simples = parseFloat((media + TARSimplesS).toFixed(6));
               } else {
                 // fallback “simples” quando não houver dados no intervalo
                 simples = parseFloat(
@@ -679,7 +679,7 @@ function atualizarResultados() {
                     * (1 + PerdasSelecionadoS)
                     + TARSimplesS
                   ).toFixed(6)
-                ) + FTSS;
+                );
               }
           
             } else {
@@ -690,7 +690,7 @@ function atualizarResultados() {
                   * (1 + PerdasSelecionadoS)
                   + TARSimplesS
                 ).toFixed(6)
-              ) + FTSS;
+              );
             }
         } else if (nome === "Plenitude indexado") {
             if (DataS) {
@@ -792,7 +792,8 @@ function atualizarResultados() {
             custo += consumo * FTSS * (1 + IVABaseSimples);
         }
 
-        if (nome === "Repsol"  || nome === "G9") {
+        if (nome.startsWith("Repsol") || nome === "G9" || nome.startsWith("Luzboa") || nome === "Ibelectra indexado" || nome.startsWith("Luzigás Energy 8.8") ||
+            nome === "Coopérnico") {
             custo += (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
             Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS)) * FTSS;
         }
