@@ -1121,7 +1121,7 @@ function atualizarResultados() {
             // Apenas para “EDP indexado” criamos a tooltipText e a classe
             let cellAttrs = '';
             if (tarifa.nome === "EDP indexado" && incluirEDP && potenciaNum >=3.45) {
-                const descontoMsg = "Valor apresentado inclui desconto mensal de 10€ válido nos primeiros 10 meses";
+                const descontoMsg = "Valor apresentado inclui desconto mensal de 10€ válido nos primeiros 10 meses, para adesões até 15/5/2025";
                 const tooltipText = descontoMsg;
                 cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;        
             }
@@ -1137,6 +1137,11 @@ function atualizarResultados() {
             }
             if (tarifa.nome === "Goldenergy ACP" && !incluirACP) {
                 const descontoMsg = "Valor apresentado não inclui quota mensal ACP de 4.80€";
+                const tooltipText = descontoMsg;
+                cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
+            }
+            if (tarifa.nome.startsWith("G9: Net")) {
+                const descontoMsg = "Disponível para adesões até dia 13/5/2025";
                 const tooltipText = descontoMsg;
                 cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
             }
