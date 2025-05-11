@@ -1516,3 +1516,39 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("variavel").value = "";
         atualizarResultados();
     });
+    
+
+    // 9) Alternar abas “Meu tarifário” / “Outras opções”
+    document.getElementById("abaMeuTarifario")
+        .addEventListener("click", () => alternarAba("MeuTarifario"));
+    document.getElementById("abaOutrasOpcoes")
+        .addEventListener("click", () => alternarAba("OutrasOpcoes"));
+    
+    setTimeout(async () => {
+        dadosCSV_grande = await carregarCSV(urlCSV_grande);
+        adiarGrandes = false;
+        console.log("✅ CSV grande carregado em background");
+    }, 1000); // Aguarda 1 segundo para não interferir com o carregamento inicial
+
+    tippy.delegate(document.body, {
+        target: '.has-tooltip',
+        content(reference) {
+          return reference.getAttribute('title');
+        },
+        trigger: 'click',      // dispara no click/tap
+        hideOnClick: true,     // fecha ao clicar de novo ou noutro lugar
+        placement: 'top',
+        arrow: true,
+        // opcional: ancorar o quarto-círculo ao visível/invisível
+        onShow(instance) {
+          // fecha qualquer outro ativo
+          document.querySelectorAll('.has-tooltip-active')
+            .forEach(el => el !== instance.reference && el.classList.remove('has-tooltip-active'));
+          instance.reference.classList.add('has-tooltip-active');
+        },
+        onHidden(instance) {
+          instance.reference.classList.remove('has-tooltip-active');
+        }
+      });
+
+});
