@@ -205,6 +205,11 @@ async function carregarCSV(url) {
     );
 }
 
+function trimZeros(value, decimals = 2) {
+    // fixa decimals casas, converte para float (corta zeros) e volta a string
+    return parseFloat(value.toFixed(decimals)).toString();
+  }
+  
 
 console.log("🔍 Testando extração de tabelas...");
 console.log("📌 Tabela kVAs:", obterTabela("kVAs"));
@@ -830,11 +835,12 @@ function atualizarResultados() {
           String(tarifariosDadosExtra[i]?.[colSimples])
             .replace(",", ".")
         ) || 0;
+        
+        if (nome === "Galp Continente" && incluirContinente) {
+            potencia *= 0.9;
+            simples *= 0.9;
+        }
 
-            if (nome === "Galp Continente" && incluirContinente) {
-                potencia *= 0.9;
-                simples *= 0.9;
-            }
             
             const nomeExibido = mostrarNomesAlternativos && nomesTarifariosDetalhadosExtra[i] ? nomesTarifariosDetalhadosExtra[i] : nome;
             potencia -= tsFlag * descontoPotTS;
@@ -1110,16 +1116,41 @@ function atualizarResultados() {
             }
             nomeStyle += "border-radius: 6px;";
 
+    
 
-  
+            // Apenas para “EDP indexado” criamos a tooltipText e a classe
+            let cellAttrs = '';
+            if (tarifa.nome === "EDP indexado" && incluirEDP && potenciaNum >=3.45) {
+                const descontoMsg = "Valor apresentado inclui desconto mensal de 10€ válido nos primeiros 10 meses";
+                const tooltipText = descontoMsg;
+                cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;        
+            }
+            if (tarifa.nome === "Galp Continente" && incluirContinente) {
+                const descontoMsg = "Valor apresentado assume desconto de 10% em Cartão Continente";
+                const tooltipText = descontoMsg;
+                cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;        
+            }
+            if (tarifa.nome === "Meo" && incluirMeo) {
+                const descontoMsg = "Valor apresentado inclui desconto de 0.01€ na energia válido para clientes Meo";
+                const tooltipText = descontoMsg;
+                cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
+            }
+            if (tarifa.nome === "Goldenergy ACP" && !incluirACP) {
+                const descontoMsg = "Valor apresentado não inclui quota mensal ACP de 4.80€";
+                const tooltipText = descontoMsg;
+                cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
+            }
 
-  
-
+            // decide se sinalizamos este tarifário “Meo”
+           
             tabelaResultados += `<tr>
                                     <td style='${nomeStyle}'>${tarifa.nome}</td>
                                     <td style='${isMinPotencia} background-color:${corPotencia}; color:black; border-radius: 6px;'>${tarifa.potencia.toFixed(4)}</td>
 <td style='${isMinSimples} background-color:${corSimples}; color:black; border-radius: 6px;'>${tarifa.simples.toFixed(4)}</td>
-<td style='${isMinCusto} background-color:${corCusto}; color:black; border-radius: 6px;'>${tarifa.custo.toFixed(2)}</td>
+<td
+  td${cellAttrs} 
+  style="${isMinCusto} background-color:${corCusto}; color:black; border-radius: 6px;"
+>${tarifa.custo.toFixed(2)}</td>
                                  </tr>`;
         });
     
@@ -1310,8 +1341,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.log("✅ CSV básico carregado");
     aplicarEsquema(esquemaAtual);
     preencherSelecaoMeses();
-    document.getElementById("incluirACP").checked = true;
-
+    document.getElementById("incluirACP").checked = false;
+    document.getElementById("incluirEDP").checked = true;
+    document.getElementById("incluirMeo").checked = true;
+    document.getElementById("incluirContinente").checked = true;
 
     atualizarResultados();
     revealPostTableContent();
@@ -1483,39 +1516,3 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("variavel").value = "";
         atualizarResultados();
     });
-    
-
-    // 9) Alternar abas “Meu tarifário” / “Outras opções”
-    document.getElementById("abaMeuTarifario")
-        .addEventListener("click", () => alternarAba("MeuTarifario"));
-    document.getElementById("abaOutrasOpcoes")
-        .addEventListener("click", () => alternarAba("OutrasOpcoes"));
-    
-    setTimeout(async () => {
-        dadosCSV_grande = await carregarCSV(urlCSV_grande);
-        adiarGrandes = false;
-        console.log("✅ CSV grande carregado em background");
-    }, 1000); // Aguarda 1 segundo para não interferir com o carregamento inicial
-
-    tippy.delegate(document.body, {
-        target: '.has-tooltip',
-        content(reference) {
-          return reference.getAttribute('title');
-        },
-        trigger: 'click',      // dispara no click/tap
-        hideOnClick: true,     // fecha ao clicar de novo ou noutro lugar
-        placement: 'top',
-        arrow: true,
-        // opcional: ancorar o quarto-círculo ao visível/invisível
-        onShow(instance) {
-          // fecha qualquer outro ativo
-          document.querySelectorAll('.has-tooltip-active')
-            .forEach(el => el !== instance.reference && el.classList.remove('has-tooltip-active'));
-          instance.reference.classList.add('has-tooltip-active');
-        },
-        onHidden(instance) {
-          instance.reference.classList.remove('has-tooltip-active');
-        }
-      });
-
-});
