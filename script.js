@@ -1148,7 +1148,7 @@ function atualizarResultados() {
                                     <td style='${isMinPotencia} background-color:${corPotencia}; color:black; border-radius: 6px;'>${tarifa.potencia.toFixed(4)}</td>
 <td style='${isMinSimples} background-color:${corSimples}; color:black; border-radius: 6px;'>${tarifa.simples.toFixed(4)}</td>
 <td
-  td${cellAttrs} 
+  ${cellAttrs} 
   style="${isMinCusto} background-color:${corCusto}; color:black; border-radius: 6px;"
 >${tarifa.custo.toFixed(2)}</td>
                                  </tr>`;
