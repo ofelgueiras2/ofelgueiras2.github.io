@@ -803,13 +803,12 @@ html {
 .mais-indicator::before {
   content: "";
   position: absolute;
-  bottom: 0;
+  top: 0;                /* antes era bottom: 0; */
   right: 0;
-  display: block;
   width: 8px;
   height: 8px;
   background: rgba(255, 0, 0, 0.6);
-  border-top-left-radius: 100%;
+  border-bottom-left-radius: 100%;  /* antes era border-top-left-radius */
   pointer-events: none;
-  z-index: 1; /* acima do bg do <td> */
+  z-index: 1;
 }
