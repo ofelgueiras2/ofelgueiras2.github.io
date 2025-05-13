@@ -795,7 +795,6 @@ html {
   height: 10px;
 }
 
-/* 2) Indicador vermelho usa ::before e só em .mais-indicator */
 .mais-indicator {
   position: relative;
   overflow: hidden;  /* respeita o border-radius do <td> */
@@ -811,4 +810,95 @@ html {
   border-bottom-left-radius: 100%;  /* antes era border-top-left-radius */
   pointer-events: none;
   z-index: 1;
+}
+
+/* estilos gerais do tooltip */
+.tooltip-matrix {
+  background-color: #fafafa;
+  color: #000;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  line-height: 1.3;
+  padding: 4px;
+  table-layout: auto;
+  width: auto; /* deixa a tabela crescer conforme o conteúdo */
+  border-radius:8px;
+  border: none !important;
+}
+
+/* 2) Cabeçalhos sempre centrados */
+.tooltip-matrix th {
+  text-align: center;
+  padding: 4px 8px;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+}
+
+.tooltip-matrix td {
+  padding: 6px 10px;
+  text-align: left;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+/* 3) Primeira coluna sem wrap (força uma só linha) */
+.tooltip-matrix th:first-child,
+.tooltip-matrix td:first-child {
+  white-space: nowrap;
+}
+
+/* cabeçalho delimitado por linhas */
+.tooltip-matrix thead th {
+  text-align: center;
+  font-weight: bold;
+  border-bottom: 1px solid #ccc;
+  border-top:    1px solid #ccc;
+  background-color: none;
+  /*background-color: #00853c !important;  /* o teu novo tom de azul */
+  color: #fff !important;                /* garante contraste */
+}
+
+/* total — última linha em negrito e delimitada */
+.tooltip-matrix tfoot td {
+  font-weight: bold;
+  border-top: 1px solid #ccc;
+  border-bottom: none !important;
+}
+
+/* alinha à direita a 2ª coluna (preços) no corpo e no rodapé */
+.tooltip-matrix tbody td:nth-child(2),
+.tooltip-matrix tfoot td:nth-child(2) {
+  text-align: right;
+}
+
+/* --- no fim do styles.css --- */
+
+/* No fim do seu styles.css, depois de tudo */
+
+
+/* 1) Wrapper “apertado” mas com sombra suave */
+.tippy-box[data-theme~='light-border'] {
+  padding: 4px !important;    /* reduz ao mínimo o espaçamento interno */
+  margin: 0 !important;       /* garante que não há gap em redor */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; /* mantém a sombra */
+}
+
+/* 2) Tabela interna sem margens */
+.tippy-box[data-theme~='light-border'] .tooltip-matrix {
+  margin: 0 !important;
+}
+
+
+/* 2) Aplica a sombra é na tua tabela interna */
+.tippy-box[data-theme~='light-border'] .tooltip-matrix {
+  background-color: #fafafa;               /* ou o teu fundo */
+  box-shadow: 0 40px 120px rgba(0,0,0,0.15); /* mantém uma sombra suave */
+  border-radius: 8px;
+  margin: 0;                               /* garante que não acrescente gap extra */
+}
+
+/* 3) (Opcional) Ajusta a posição da seta se ficar demasiado longe */
+.tippy-box[data-theme~='light-border'][data-placement^='top'] .tippy-arrow {
+  margin-bottom: 0px; /* aproxima a seta do conteúdo */
 }
