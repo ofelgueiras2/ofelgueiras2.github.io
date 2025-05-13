@@ -517,12 +517,13 @@ function atualizarResultados() {
     const multiplicador = DataS === true
     ? diasS / MedioS // SE(DataS=true; diasS/MedioS; 1)
     : 1;
+    let luzigasFee0 = luzigasFeeS
     luzigasFeeS = parseFloat(
         (
           luzigasFeeS
           * multiplicador
           * (1 + IVABaseSimples)
-        ).toFixed(2)
+        )
       );
     
     let IVAFixoS;
@@ -786,7 +787,7 @@ function atualizarResultados() {
 
         if (nome.startsWith("Luzigás Energy 8.8") && diasS > 0) {
             potencia += luzigasFeeS / diasS / (1 + IVABaseSimples);
-            custo += luzigasFeeS;
+            custo += parseFloat(luzigasFeeS.toFixed(2));
         }
     
         if (nome.startsWith("Goldenergy ACP")) {
@@ -1141,25 +1142,155 @@ function atualizarResultados() {
                 cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
             }
             if (tarifa.nome.startsWith("G9: Net")) {
-                const descontoMsg = "Disponível para adesões até dia 18/5/2025";
+                const descontoMsg = "Disponível para adesões até dia 13/5/2025";
                 const tooltipText = descontoMsg;
                 cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
             }
 
             // decide se sinalizamos este tarifário “Meo”
+
+            // 1) Prepara o HTML do tooltip “matriz” só para a célula de Potência
+            // 1) Monta o HTML da tabela com <thead>, <tbody> e <tfoot>
+
+            // antes de montar o tooltip:
+            const descontoRow = tsFlag === 1
+                ? `<tr>
+     <td>Desconto da tarifa social</td>
+     <td style="padding-left:6px;">- ${(descontoPotTS).toFixed(4)}</td>
+   </tr>`
+                : ``;   
+                
+            // dentro do teu loop, logo antes de montar o potenciaTooltip:
+            let feeRow = '';
+            let dias =1;
+            let luzigasFee1 = 0;
+            if (tarifa.nome.startsWith("Luzigás Energy 8.8") && diasS!==0) {
+                // decides quantos dias usar
+                let diasLabel;
+                if (DataS) {
+                    dias *= 365 /12
+                    diasLabel = `(365/12) dias`;
+                } else {
+                    dias *= diasS;
+                    diasLabel = `${diasS} dia${diasS === 1 ? '' : 's'}`;
+                }
+                luzigasFee1 += parseFloat((luzigasFee0/dias).toFixed(4));
+                feeRow = `
+    <tr>
+      <td>Fee ${(luzigasFee0)}  € / ${diasLabel}</td>
+      <td style="padding-left:6px; text-align:right;">
+        ${luzigasFee1.toFixed(4)}
+      </td>
+    </tr>
+  `;
+            }
+
+            let valor = tarifa.potencia
+                - tarPotSnum
+                + tsFlag * descontoPotTS
+                - luzigasFee1;
+
+            let str = valor.toFixed(4);
+            if (str === "-0.0000") {
+                str = "0.0000";
+            }
+
+
+
+            const potenciaTooltip = `
+<table class="tooltip-matrix">
+  <thead>
+    <tr>
+      <th style="background-color: ${headerPrimary};"> Designação</th>
+      <th style="background-color: ${headerPrimary};">Preço s/ IVA (€/dia)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Potência (comercializador) - ${potenciaSelecionada2}</td>
+      <td>${str}</td>
+    </tr>
+    <tr>
+      <td>Potência (acesso às redes) - ${potenciaSelecionada2}</td>
+      <td>${tarPotSnum.toFixed(4)}</td>
+    </tr>
+    ${descontoRow}
+    ${feeRow}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td>Total</td>
+      <td>${tarifa.potencia.toFixed(4)}</td>
+    </tr>
+  </tfoot>
+</table>
+`.trim().replace(/\n\s*/g, '');
+
+            // 1) Constroi a string HTML do tooltip de Energia
+            const energiaTooltip = `
+<table class="tooltip-matrix">
+  <thead>
+    <tr>
+      <th style="background-color: ${headerPrimary};">Designação</th>
+      <th style="background-color: ${headerPrimary};">Preço s/ IVA (€/kWh)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Energia (comercializador)</td>
+      <td style="text-align:right;">${(tarifa.simples-TARSimplesS+tsFlag*descontoKwhTS).toFixed(4)}</td>
+    </tr>
+    <tr>
+      <td>Energia (acesso às redes)</td>
+      <td style="text-align:right;">${(TARSimplesS).toFixed(4)}</td>
+    </tr>
+    ${ tsFlag === 1 
+      ? `<tr>
+           <td>Desconto da tarifa social</td>
+           <td style="text-align:right;">- ${descontoKwhTS.toFixed(4)}</td>
+         </tr>` 
+      : `` }
+  </tbody>
+  <tfoot>
+    <tr>
+      <td>Total</td>
+      <td style="text-align:right;">${tarifa.simples.toFixed(4)}</td>
+    </tr>
+  </tfoot>
+</table>
+`.trim().replace(/\n\s*/g, '');
+
+
+
            
+            // 2) Agora injeta no <td> da Potência:
             tabelaResultados += `<tr>
-                                    <td style='${nomeStyle}'>${tarifa.nome}</td>
-                                    <td style='${isMinPotencia} background-color:${corPotencia}; color:black; border-radius: 6px;'>${tarifa.potencia.toFixed(4)}</td>
-<td style='${isMinSimples} background-color:${corSimples}; color:black; border-radius: 6px;'>${tarifa.simples.toFixed(4)}</td>
+<td style='${nomeStyle}'>${tarifa.nome}</td>
+
 <td
-  ${cellAttrs} 
-  style="${isMinCusto} background-color:${corCusto}; color:black; border-radius: 6px;"
->${tarifa.custo.toFixed(2)}</td>
-                                 </tr>`;
-        });
+  class="has-tooltip"
+  data-tippy-content='${potenciaTooltip}'
+  style='${isMinPotencia} background-color:${corPotencia}; color:black; border-radius: 6px;'
+>
+  ${tarifa.potencia.toFixed(4)}
+</td>
+
+<td
+    class="has-tooltip"
+    data-tippy-content='${energiaTooltip}' 
+    style='${isMinSimples} background-color:${corSimples}; color:black; border-radius: 6px;'>
+  ${tarifa.simples.toFixed(4)}
+</td>
+
+<td ${cellAttrs} style='${isMinCusto} background-color:${corCusto}; color:black; border-radius: 6px;'>
+  ${tarifa.custo.toFixed(2)}
+</td>
+</tr>`;
+});
     
         tabelaResultados += "</table>";
+
+
         document.getElementById("resultado").innerHTML = tabelaResultados;
         // Agora que a tabela foi desenhada, o botão já existe — associar o evento!
         document.getElementById("btnEsquema")?.addEventListener("click", () => {
@@ -1197,7 +1328,7 @@ function atualizarResultados() {
         
         
 
-    }
+    };
 }
 
 // --------------------------------------------------
@@ -1536,24 +1667,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, 1000); // Aguarda 1 segundo para não interferir com o carregamento inicial
 
     tippy.delegate(document.body, {
+        theme: 'light-border',    // usa um tema mais clean
+        distance: 4,              // distancia menor entre tooltip e célula
         target: '.has-tooltip',
+        allowHTML: true,
+        interactive: true,
+        trigger: 'click',
         content(reference) {
-          return reference.getAttribute('title');
+            return reference.getAttribute('title');
         },
-        trigger: 'click',      // dispara no click/tap
         hideOnClick: true,     // fecha ao clicar de novo ou noutro lugar
         placement: 'top',
         arrow: true,
         // opcional: ancorar o quarto-círculo ao visível/invisível
         onShow(instance) {
-          // fecha qualquer outro ativo
-          document.querySelectorAll('.has-tooltip-active')
-            .forEach(el => el !== instance.reference && el.classList.remove('has-tooltip-active'));
-          instance.reference.classList.add('has-tooltip-active');
+            // fecha qualquer outro ativo
+            document.querySelectorAll('.has-tooltip-active')
+                .forEach(el => el !== instance.reference && el.classList.remove('has-tooltip-active'));
+            instance.reference.classList.add('has-tooltip-active');
         },
         onHidden(instance) {
-          instance.reference.classList.remove('has-tooltip-active');
+            instance.reference.classList.remove('has-tooltip-active');
         }
       });
-
 });
