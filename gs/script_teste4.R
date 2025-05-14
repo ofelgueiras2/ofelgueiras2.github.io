@@ -30,6 +30,13 @@ extrair_dados <- function(url, seletor) {
 }
 
 url_web <- "https://www.omip.pt/pt"
+
+print("⏳ Testando extração da parte .header4.contrato...")
+print(extrair_dados(url_web, ".header4.contrato"))
+
+print("⏳ Testando extração da parte .date-value...")
+print(extrair_dados(url_web, ".date-value"))
+
 dados_web <- bind_rows(
   extrair_dados(url_web, ".header4.contrato"),
   extrair_dados(url_web, ".date-value")
