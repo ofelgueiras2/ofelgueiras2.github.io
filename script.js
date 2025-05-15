@@ -1122,7 +1122,7 @@ function atualizarResultados() {
             // Apenas para “EDP indexado” criamos a tooltipText e a classe
             let cellAttrs = '';
             if (tarifa.nome === "EDP indexado" && incluirEDP && potenciaNum >=3.45) {
-                const descontoMsg = "Valor apresentado inclui desconto mensal de 10€ válido nos primeiros 10 meses, para adesões até 15/5/2025";
+                const descontoMsg = "Valor apresentado inclui desconto mensal de 10€ válido nos primeiros 10 meses, para adesões até 30/5/2025";
                 const tooltipText = descontoMsg;
                 cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;        
             }
