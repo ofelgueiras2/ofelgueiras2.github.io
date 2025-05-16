@@ -1142,7 +1142,7 @@ function atualizarResultados() {
                 cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
             }
             if (tarifa.nome.startsWith("G9: Net")) {
-                const descontoMsg = "Disponível para adesões até dia 13/5/2025";
+                const descontoMsg = "Disponível para adesões até dia 18/5/2025";
                 const tooltipText = descontoMsg;
                 cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
             }
