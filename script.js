@@ -1121,27 +1121,27 @@ function atualizarResultados() {
 
             // Apenas para “EDP indexado” criamos a tooltipText e a classe
             let cellAttrs = '';
-            if (tarifa.nome === "EDP indexado" && incluirEDP && potenciaNum >=3.45) {
+            if ((tarifa.nome === "EDP indexado" || tarifa.nome.startsWith("EDP: Indexado")) && incluirEDP && potenciaNum >=3.45) {
                 const descontoMsg = "Valor apresentado inclui desconto mensal de 10€ válido nos primeiros 10 meses, para adesões até 30/5/2025";
                 const tooltipText = descontoMsg;
                 cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;        
             }
-            if (tarifa.nome === "Galp Continente" && incluirContinente) {
-                const descontoMsg = "Valor apresentado assume desconto de 10% em Cartão Continente";
+            if ((tarifa.nome === "Galp Continente" || tarifa.nome.startsWith("Galp: Plano Galp")) && incluirContinente) {
+                const descontoMsg = "Valor apresentado assume desconto de 10% na potência e energia em Cartão Continente";
                 const tooltipText = descontoMsg;
                 cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;        
             }
-            if (tarifa.nome === "Meo" && incluirMeo) {
+            if (tarifa.nome.startsWith("Meo") && incluirMeo) {
                 const descontoMsg = "Valor apresentado inclui desconto de 0.01€ na energia válido para clientes Meo";
                 const tooltipText = descontoMsg;
                 cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
             }
-            if (tarifa.nome === "Goldenergy ACP" && !incluirACP) {
+            if ((tarifa.nome === "Goldenergy ACP" || tarifa.nome.startsWith("Goldenergy: Tarifário Parceria ACP")) && !incluirACP) {
                 const descontoMsg = "Valor apresentado não inclui quota mensal ACP de 4.80€";
                 const tooltipText = descontoMsg;
                 cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
             }
-            if (tarifa.nome.startsWith("G9: Net")) {
+            if ((tarifa.nome.startsWith("G9: Net") || tarifa.nome.startsWith("G9 Net"))) {
                 const descontoMsg = "Disponível para adesões até dia 18/5/2025";
                 const tooltipText = descontoMsg;
                 cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
