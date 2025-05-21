@@ -31,9 +31,9 @@ const tabelasBasicas = {
     LuzigazFee: { inicio: "Z27", fim: "Z36" },
     TARPotencias: { inicio: "Z6", fim: "Z15" },
     detalheTarifarios: { inicio: "AM5", fim: "AM25" },
-    tarifariosExtra: { inicio: "C68", fim: "C80" },
-    detalheTarifariosExtra: { inicio: "B68", fim: "B80" },
-    preçosSimplesExtra: { inicio: "D68", fim: "W80" },
+    tarifariosExtra: { inicio: "C68", fim: "C79" },
+    detalheTarifariosExtra: { inicio: "B68", fim: "B79" },
+    preçosSimplesExtra: { inicio: "D68", fim: "W79" },
 };
 
 const tabelasGrandes = {
@@ -859,10 +859,7 @@ function atualizarResultados() {
                         custo -= (tarPotSnum - tsFlag * descontoPotTS) * diasS * (IVABaseSimples - IVAFixoS);
                     }
 
-            if (nome.startsWith("G9 Net Promo 7x7")) {
-                        custo += (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
-                        Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS)) * FTSS;
-                    }
+            
             
             tarifarios.push({
                 nome: nomeExibido,
@@ -1141,11 +1138,7 @@ function atualizarResultados() {
                 const tooltipText = descontoMsg;
                 cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
             }
-            if ((tarifa.nome.startsWith("G9: Net") || tarifa.nome.startsWith("G9 Net"))) {
-                const descontoMsg = "Disponível para adesões até dia 18/5/2025";
-                const tooltipText = descontoMsg;
-                cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
-            }
+            
 
             // decide se sinalizamos este tarifário “Meo”
 
