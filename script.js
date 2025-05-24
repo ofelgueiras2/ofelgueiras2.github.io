@@ -1091,7 +1091,7 @@ function atualizarResultados() {
             if (tarifa.isIndexado) {
                 nomeStyle = "background-color:#FFF2CC;";
                 if (tarifa.nome === "Repsol indexado" || tarifa.nome === "Coopérnico" || tarifa.nome === "Plenitude indexado" ||
-                    tarifa.nome === "Coopérnico: Base 2.0" || tarifa.nome === "Repsol: Tarifa Leve Sem Mais" || tarifa.nome === "Plenitude: Tarifa Tendência"
+                    tarifa.nome === "Coopérnico: Base 2.0" || tarifa.nome === "Repsol: Tarifa Leve Sem Mais" || tarifa.nome === "Plenitude: Tarifa Tendência Plus"
                 ) {
                     nomeStyle += "color:#0070C0;";
                 } else {
