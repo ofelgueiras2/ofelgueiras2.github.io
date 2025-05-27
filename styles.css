@@ -69,7 +69,7 @@ table {
   border-collapse: separate;
   border-spacing: 0;
   margin-top: 20px;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -212,15 +212,47 @@ th {
   align-items: center;    /* centraliza horizontalmente dentro do container */
 }
 
+.sort-arrow0 {
+  cursor: pointer;
+  margin: 0px 0;     /* espaço vertical reduzido entre as setas */
+  font-size: 12px;
+  -webkit-text-stroke: 1px #ffffff; /* traço interno preto */
+  text-rendering: optimizeLegibility;
+}
+
+.sort-arrow0.selected {
+  color: #bbb;
+  -webkit-text-stroke: 1px #ffffff; /* traço interno preto */
+  text-rendering: optimizeLegibility;
+}
+
+:root {
+  /* valor-padrão */
+  --header-ft-primary: #000;
+}
+
 .sort-arrow {
   cursor: pointer;
   margin: 0px 0;     /* espaço vertical reduzido entre as setas */
-  font-size: 14px;
+  font-size: 12px;
+  line-height: 1; 
+  -webkit-text-stroke: 1px var(--header-ft-primary);
+  text-rendering: optimizeLegibility;
 }
 
+
+
 .sort-arrow.selected {
+  /* usa a custom property para o stroke */
+  -webkit-text-stroke: 1px var(--header-ft-primary);
+  /* você já tinha: */
   color: #bbb;
+  line-height: 1; 
+  text-rendering: optimizeLegibility;
 }
+
+
+
 
 /* 1. Cards leves */
 .card {
@@ -856,7 +888,7 @@ html {
   border-top:    1px solid #ccc;
   background-color: none;
   /*background-color: #00853c !important;  /* o teu novo tom de azul */
-  color: #fff !important;                /* garante contraste */
+  /*color: #fff !important;                /* garante contraste */
 }
 
 /* total — última linha em negrito e delimitada */
@@ -902,3 +934,210 @@ html {
 .tippy-box[data-theme~='light-border'][data-placement^='top'] .tippy-arrow {
   margin-bottom: 0px; /* aproxima a seta do conteúdo */
 }
+
+.tooltip-hierarchical summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  list-style: none;
+  cursor: pointer;
+  padding: 6px 0;
+  font-weight: bold;
+}
+.tooltip-hierarchical summary::-webkit-details-marker {
+  display: none;
+}
+.tooltip-hierarchical summary::before {
+  content: '+';
+  width: 1em; text-align: center; margin-right: 4px;
+}
+.tooltip-hierarchical details[open] summary::before {
+  content: '–';
+}
+.tooltip-hierarchical .label {
+  flex: 1;           /* ocupa todo o espaço disponível */
+}
+.tooltip-hierarchical .value {
+  flex: 0 0 auto;    /* ocupa apenas o necessário */
+  text-align: right; /* alinha à direita */
+  margin-left: 8px;
+}
+/* mantém os estilos já existentes para .tooltip-matrix, .tooltip-total, etc. */
+
+/* container geral */
+.tooltip-invoice {
+  border-collapse: collapse;
+  font-size: 0.9em;
+  background: #fff;
+  color: #000;
+  width: auto;
+}
+
+/* cabeçalho */
+.tooltip-invoice th {
+  background-color: var(--background-secondary); /* usa a tua variável */
+  color: #fff;
+  padding: 4px 8px;
+  text-align: center;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
+
+/* células */
+.tooltip-invoice td {
+  padding: 4px 8px;
+}
+
+/* primeira coluna sempre à esquerda */
+.tooltip-invoice td:first-child {
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* todas as outras colunas à direita */
+.tooltip-invoice td:nth-child(n+2) {
+  text-align: right;
+}
+
+/* linha de grupo (Eletricidade, Taxas…) */
+.tooltip-invoice .group-header td {
+  font-weight: bold;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  background: #f4f4f4;
+}
+
+/* linhas filho com indentação leve */
+.tooltip-invoice .child-row td:first-child {
+  padding-left: 1em;
+}
+
+/* acrescenta uma leve sombra ao balão */
+.tippy-box {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+
+/* tira as linhas exteriores das tabelas internas */
+.tooltip-matrix {
+  border-collapse: collapse;
+  width: 100%;
+}
+.tooltip-matrix th,
+.tooltip-matrix td {
+  border: none;
+  padding: 4px 8px;
+}
+/* mantém apenas as separações internas */
+.tooltip-matrix thead th {
+  border-bottom: 1px solid #ccc;
+  text-align: center;
+}
+.tooltip-matrix tfoot td {
+  border-top: 1px solid #ccc;
+}
+/* espaços antes/depois do details para não ficar demasiado “colado” */
+.tooltip-invoice details {
+  margin: 4px 0;
+}
+.tooltip-invoice summary {
+  cursor: pointer;
+  font-weight: bold;
+  padding: 4px 0;
+  list-style: none; /* remove o bullet padrão */
+}
+/* substitui o bullet do summary por + / − */
+.tooltip-invoice summary::-webkit-details-marker {
+  display: none;
+}
+.tooltip-invoice summary::before {
+  content: '+';
+  display: inline-block;
+  width: 1em;
+}
+.tooltip-invoice details[open] summary::before {
+  content: '−';
+}
+
+.tooltip-invoice table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.tooltip-invoice th, .tooltip-invoice td {
+  border: 1px solid #ccc;
+  padding: 4px 6px;
+  text-align: right;
+}
+.tooltip-invoice td:first-child {
+  text-align: left;
+}
+.tooltip-invoice tfoot td {
+  font-weight: bold;
+  background: #f9f9f9;
+}
+.tooltip-grand-total {
+  margin-top: 6px;
+  text-align: right;
+  font-weight: bold;
+}
+
+#btnToggleCorners {
+  position: absolute;
+  bottom: 5px;
+  left:   5px;
+  width:  30px;
+  height: 30px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  display: flex;            /* 1. flex container */
+  align-items: center;      /* 2. centra verticalmente */
+  justify-content: center;  /* 3. centra horizontalmente */
+
+  color: white;             /* a cor do quadrado/círculo */
+}
+
+#shapeToggle {
+  font-size: 20px;   /* ajuste até que o símbolo tenha o tamanho desejado */
+  line-height: 1;    /* garante que ocupa exatamente 1em de altura */
+  user-select: none; /* evita seleção acidental */
+  font-weight: bold;
+}
+
+/* Estado “selected” (círculo) */
+#shapeToggle.circle {
+  line-height: 1;
+  /* troca o ■ pelo ● via JS */
+  font-weight: bold;
+}
+
+/* valor-padrão: células arredondadas */
+.interno {
+  border-radius: 10px !important;
+}
+
+.internop {
+  border-radius: 6px !important;
+}
+
+/* cabeçalhos “fixos” que precisam de 10px num canto externo */
+.fixed-trr { border-top-right-radius: 10px !important; }
+.fixed-tlr { border-top-left-radius: 10px !important; }
+
+/* quando body receber .no-rounded, zera TUDO */
+/* o !important garante que anula o inline antigo */
+body.no-rounded .interno,
+body.no-rounded .internop {
+  border-radius: 0 !important;
+}
+body.no-rounded .fixed-trr {
+  border-top-right-radius: 10px !important;
+}
+body.no-rounded .fixed-tlr {
+  border-top-left-radius: 10px !important;
+}
+
+
