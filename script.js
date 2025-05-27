@@ -102,7 +102,113 @@ let estadoTsAberto = false;
 // Nova variável DataS
 let DataS = false;
 
-let esquemaAtual = "azul-vermelho"; // pode ser "azul-vermelho" ou "azul-creme-vermelho"
+const esquemas = ["azul-vermelho-claro", "azul-vermelho", "azul-creme-vermelho"];
+
+// 1) Defina no topo do seu .js, junto aos outros mapas:
+const rowBgVariants = {
+  "azul-vermelho-claro": {
+    quenteClaro: "#FFF7D0",
+    quenteEscuro: "#F0E1BA",
+    neutroClaro: "#F6F6F6",
+    neutroEscuro: "#E2E2E2"
+  },
+  "azul-vermelho": {
+    quenteClaro: "#FFF7D0",
+    quenteEscuro: "#EAD8B1",
+    neutroClaro: "#F6F6F6",
+    neutroEscuro: "#D9D9D9"
+  },
+  "azul-creme-vermelho": {
+    quenteClaro: "#FFF7D0",
+    quenteEscuro: "#EAD8B1",
+    neutroClaro: "#F6F6F6",
+    neutroEscuro: "#D9D9D9"
+  }
+};
+
+// mapa de cores de ícone para cada esquema
+const coresIcone = {
+  "azul-vermelho-claro": "#77D99A",
+  "azul-vermelho":       "#FFFFFF",
+  "azul-creme-vermelho": "#FFF6E5"
+};
+
+// mapeamento de cores para o header, um entry pra cada esquema
+const headerColors = {
+  "azul-vermelho-claro":  "#77D99A",   // #B3FFC9 #9DF2B9 #6EC270 #78d979 #7dd97e #6ECF8F #80E0AA #72D09A #77D99A
+  "azul-vermelho":        "#00853c",   // #00853c
+  "azul-creme-vermelho":  "#003D77"    // #003D77
+};
+
+const headerFtColors = {
+  "azul-vermelho-claro":  "#000000",   // #B3FFC9 #9DF2B9 #6EC270 #78d979 #7dd97e
+  "azul-vermelho":        "#ffffff",   // #00853c
+  "azul-creme-vermelho":  "#ffffff"    // #003D77 #ffffff
+};
+
+// no topo do seu .js
+const headerSecondaryColors = {
+  "azul-vermelho-claro": "#375623",    // mantém o original
+  "azul-vermelho":       "#375623",    // mantém o original
+  "azul-creme-vermelho": "#007A1E"     // tom de verde pra esse esquema
+};
+
+const consumoBgColors = {
+  "azul-vermelho-claro": "#FFC000",    // amarelo suave
+  "azul-vermelho":       "#FFC000",    // laranja original
+  "azul-creme-vermelho": "#F0B000"     // amarelo-queimado pro creme
+};
+
+// paletas de cores para cada esquema
+const paletas = {
+  "azul-vermelho-claro": {
+    corMin: [158, 200, 255],
+    corMed: [252, 252, 255],
+    corMax: [255, 179, 179]
+  },
+  "azul-vermelho": {
+    corMin: [90, 138, 198],
+    corMed: [252, 252, 255],
+    corMax: [248, 106, 108]
+  },
+  "azul-creme-vermelho": {
+    corMin: [90, 138, 198],
+    corMed: [255, 246, 229],
+    corMax: [248, 106, 108]
+  }
+};
+
+const potStyles = {
+  "azul-vermelho-claro": { bg: "#375623", color: "#FFFFFF" },
+  "azul-vermelho":       { bg: "#375623", color: "#FFFFFF" },
+  "azul-creme-vermelho": { bg: "#007A1E", color: "#FFFFFF" }
+};
+
+const conStyles = {
+  "azul-vermelho-claro": { bg: "#FFC000", color: "#000000" },
+  "azul-vermelho":       { bg: "#FFC000", color: "#000000" },
+  "azul-creme-vermelho": { bg: "#F0B000", color: "#000000" }
+};
+
+// valores de fallback, caso esquemaAtual não exista no objeto
+const paletaDefault = paletas["azul-vermelho"];
+
+// no topo do seu .js
+const nomeStyles = {
+  "azul-vermelho-claro":   "background-color:#FFC000; font-weight:bold; color:black;",
+  "azul-vermelho":         "background-color:#FFC000; font-weight:bold; color:black;",
+  "azul-creme-vermelho":   "background-color:#F0B000; font-weight:bold; color:black;"
+};
+
+
+
+let indiceEsquema = 0;  // começa no primeiro
+// 3) Defina esquemaAtual a partir do índice
+let esquemaAtual = esquemas[indiceEsquema];
+// let esquemaAtual = "azul-vermelho-claro"; // pode ser "azul-vermelho" ou "azul-creme-vermelho"
+let cornersRounded = false;
+
+
 
 // 1) Função utilitária para converter "0,0323 €" em número
 function parseEuro(str) {
@@ -774,6 +880,14 @@ function atualizarResultados() {
         potencia -= tsFlag * descontoPotTS;
         simples -= tsFlag * descontoKwhTS;   
 
+        
+        let custo6 =
+            simples * Math.min(consumo, kWhIVAPromocionalS)
+            + AudiovisualS
+            + (potenciaNum <= 3.45 ? tarPotSnum : 0) * diasS
+            - tsFlag * (potenciaNum <= 3.45 ? descontoPotTS : 0) * diasS;
+        let custo23 = (potencia - (potenciaNum <= 3.45 ? tarPotSnum - tsFlag * descontoPotTS : 0)) * diasS 
+            + simples * Math.max(consumo - kWhIVAPromocionalS, 0) + DGEGS + consumo * IESS;
         let custo = (potencia * diasS * (1 + IVABaseSimples)) +
                     simples * (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
                                Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS)) +
@@ -859,7 +973,7 @@ function atualizarResultados() {
                         custo -= (tarPotSnum - tsFlag * descontoPotTS) * diasS * (IVABaseSimples - IVAFixoS);
                     }
 
-            
+           
             
             tarifarios.push({
                 nome: nomeExibido,
@@ -940,22 +1054,31 @@ function atualizarResultados() {
         const minCusto = Math.min(...tarifarios.map(t => t.custo));
         const maxCusto = Math.max(...tarifarios.map(t => t.custo));
 
-        // dentro de calcularPreco(), antes de montar tabelaResultados:
-        const iconColor = esquemaAtual === "azul-vermelho"
-        ? "#FFFFFF"
-        : "#FFF6E5";
+        // busca a cor correta pro ícone (fallback para "#FFF" se algo der errado)
+        const iconColor = coresIcone[esquemaAtual] || "#FFF";
+        
 
         // LOGO NO INÍCIO DE calcularPreco, antes de montar tabelaResultados: 00853c
-        const headerPrimary = esquemaAtual === "azul-creme-vermelho" ? "#003D77" : "#00853c";
+        // const headerPrimary = esquemaAtual === "azul-creme-vermelho" ? "#003D77" : "#6EC270";
         // — o “verde de cima” passa a azul escuro ou fica o verde original
+        const headerPrimary = headerColors[esquemaAtual] || "#000";
+        const headerFtPrimary = headerFtColors[esquemaAtual] || "#ffffff";
+        document.documentElement.style.setProperty(
+          "--header-ft-primary",
+          headerFtPrimary
+        );
 
-        const headerSecondary = esquemaAtual === "azul-creme-vermelho" ? "#007A1E" : "#375623";
+        // const headerSecondary = esquemaAtual === "azul-creme-vermelho" ? "#007A1E" : "#375623";
         // — a linha que era escura (o fundo do botão + Consumo) passa a este tom de azul ou ao original
 
-        const consumoBg = esquemaAtual === "azul-creme-vermelho" ? "#F0B000" : "#FFC000";
+        // const consumoBg = esquemaAtual === "azul-creme-vermelho" ? "#F0B000" : "#FFC000";
         // — o laranja original (FFC000) passa a amarelo suave (FFFF66)
 
-    
+        // escolhe as cores a partir do esquemaAtual
+        const headerSecondary = headerSecondaryColors[esquemaAtual] || "#375623";  // fallback
+        const consumoBg      = consumoBgColors[esquemaAtual] || "#FFC000";  // fallback
+
+
         // Funções auxiliares
         function calcularCor(valor, min, max) {
             if (min === max) {
@@ -964,17 +1087,9 @@ function atualizarResultados() {
         
             let t = (valor - min) / (max - min); // normalizar para [0,1]
         
-            let corMin, corMed, corMax;
+            // let corMin, corMed, corMax;
         
-            if (esquemaAtual === "azul-creme-vermelho") {
-                corMin = [90, 138, 198];     // Azul médio
-                corMed = [255, 246, 229];    // Creme
-                corMax = [248, 106, 108];    // Coral suave
-            } else {
-                corMin = [90, 138, 198];     // Azul médio
-                corMed = [252, 252, 255];    // Branco azulado
-                corMax = [248, 105, 107];    // Coral avermelhado
-            }
+            const { corMin, corMed, corMax } = paletas[esquemaAtual] || paletaDefault;
         
             let corFinal;
             if (t <= 0.5) {
@@ -990,14 +1105,14 @@ function atualizarResultados() {
         
         
 
-    
+        const toggleIcon = cornersRounded ? "\u25A1" /* □ */ : "\u25CB" /* ○ */;
         
         let tabelaResultados = `<table style="border-spacing: 1px 1px; border-collapse: separate;">
 
     
         <tr> 
           <th colspan="3" rowspan="2" 
-               style="background-color:${headerSecondary}; border-radius: 10px; color:white; text-align:center; vertical-align:middle; position:relative;
+                class="interno fixed-tlr" style="background-color:${headerSecondary}; color:white; text-align:center; vertical-align:middle; position:relative;
           font-weight: normal;line-height:1;">
             <button id="btnEsquema" title="Alterar cores" style="position:absolute;top:5px;left:5px;
             width: 30px;      /* nova largura */    
@@ -1016,49 +1131,53 @@ function atualizarResultados() {
 
             </button>
 
+            <button id="btnToggleCorners" title="Alternar cantos">
+            <span id="shapeToggle">${toggleIcon}</span>
+            </button>
+
             <div style="font-weight: bold;margin-top: 15px;margin-bottom: 10px;">Potência contratada ${potenciaSelecionada2}</div>
             <br>
             <div style="font-size: 14px;margin-bottom: -10px;">${strDiasSimples} dia${(typeof diasS === 'number' && diasS !== 1 ? 's' : '')}</div>
             <br>
             <div style="font-size: 14px;">OMIE = ${OMIESSelecionadoS} €/kWh</div>            
             <span class="sort-container">
-              <span class="sort-arrow ${sortField==='default' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('default','asc')" title="Ordenar conforme a ordem no Excel">&#9650;</span>
-              <span class="sort-arrow ${sortField==='default' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('default','desc')" title="Ordenar conforme a ordem inversa no Excel">&#9660;</span>
+              <span class="sort-arrow0 ${sortField==='default' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('default','asc')" title="Ordenar conforme a ordem no Excel">&#9650;</span>
+              <span class="sort-arrow0 ${sortField==='default' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('default','desc')" title="Ordenar conforme a ordem inversa no Excel">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:${headerSecondary}; border-radius: 10px;color:white; text-align:center;">
+          <th class="interno fixed-trr" style="background-color:${headerSecondary};color:white; text-align:center;">
             Consumo (kWh)
           </th>
         </tr>
         
         <tr>
-          <td style="background-color:${consumoBg}; font-weight:bold; border-radius: 10px;color:black; text-align:center;">
+          <td class="interno" style="background-color:${consumoBg}; font-weight:bold; color:black; text-align:center;">
             ${consumo || 0}
           </td>
         </tr>
         <tr>
-          <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;">
+          <th class="interno" style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:${headerFtPrimary}; text-align:center; position:relative;">
             Tarifário
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='tariff' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('tariff','asc')" title="Ordenar alfabeticamente (A → Z)">&#9650;</span>
               <span class="sort-arrow ${sortField==='tariff' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('tariff','desc')" title="Ordenar alfabeticamente (Z → A)">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;" class="has-tooltip" title="Custo diário sem IVA">
+          <th class="interno" style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:${headerFtPrimary}; text-align:center; position:relative;" class="has-tooltip" title="Custo diário sem IVA">
             Potência (€/dia)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='power' && sortDirection==='asc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('power','asc')" title="Ordenar do menor para o maior">&#9650;</span>
               <span class="sort-arrow ${sortField==='power' && sortDirection==='desc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('power','desc')" title="Ordenar do maior para o menor">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;" class="has-tooltip" title="Custo por kWh sem IVA">
+          <th class="interno" style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:${headerFtPrimary}; text-align:center; position:relative;" class="has-tooltip" title="Custo por kWh sem IVA">
             Energia (€/kWh)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='simple' && sortDirection==='asc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('simple','asc')" title="Ordenar do menor para o maior">&#9650;</span>
               <span class="sort-arrow ${sortField==='simple' && sortDirection==='desc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('simple','desc')" title="Ordenar do maior para o menor">&#9660;</span>
             </span>
           </th>
-          <th style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:white; text-align:center; position:relative;" class="has-tooltip" title="Preço final da fatura (com taxas e impostos)">
+          <th class="interno" style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:${headerFtPrimary}; text-align:center; position:relative;" class="has-tooltip" title="Preço final da fatura (com taxas e impostos)">
             Preço (€)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='price' && sortDirection==='asc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('price','asc')" title="Ordenar do menor para o maior">&#9650;</span>
@@ -1071,73 +1190,82 @@ function atualizarResultados() {
 
 
     
-        tarifarios.forEach((tarifa, index) => {
-            const corPotencia = calcularCor(tarifa.potencia, minPotencia, maxPotencia);
-            const corSimples = calcularCor(tarifa.simples, minSimples, maxSimples);
-            const corCusto = calcularCor(tarifa.custo, minCusto, maxCusto);
-    
-            const isMinPotencia = tarifa.potencia === minPotencia ? "font-weight:bold;" : "";
-            const isMinSimples = tarifa.simples === minSimples ? "font-weight:bold;" : "";
-            const isMinCusto = tarifa.custo === minCusto ? "font-weight:bold;" : "";
-            
-            // MODIFICAÇÃO 2: Se for "Meu tarifário" ou tarifário indexado, aplicar fundo amarelo
-            const isLinhaPar = index % 2 === 0;
-            const brilho = isLinhaPar ? .9 : 1.02;
-            let nomeStyle = "";
-            
+      tarifarios.forEach((tarifa, index) => {
+        const corPotencia = calcularCor(tarifa.potencia, minPotencia, maxPotencia);
+        const corSimples = calcularCor(tarifa.simples, minSimples, maxSimples);
+        const corCusto = calcularCor(tarifa.custo, minCusto, maxCusto);
 
-           
-              
-            if (tarifa.isIndexado) {
-                nomeStyle = "background-color:#FFF2CC;";
-                if (tarifa.nome === "Repsol indexado" || tarifa.nome === "Coopérnico" || tarifa.nome === "Plenitude indexado" ||
-                    tarifa.nome === "Coopérnico: Base 2.0" || tarifa.nome === "Repsol: Tarifa Leve Sem Mais" || tarifa.nome === "Plenitude: Tarifa Tendência Plus"
-                ) {
-                    nomeStyle += "color:#0070C0;";
-                } else {
-                    nomeStyle += "color:black;";
-                }
-            } else {
-                nomeStyle += "background-color:#F4f4f4;"
-            }
-            
-            nomeStyle += `filter: brightness(${brilho});`;
+        const isMinPotencia = tarifa.potencia === minPotencia ? "font-weight:bold;" : "";
+        const isMinSimples = tarifa.simples === minSimples ? "font-weight:bold;" : "";
+        const isMinCusto = tarifa.custo === minCusto ? "font-weight:bold;" : "";
+
+        // MODIFICAÇÃO 2: Se for "Meu tarifário" ou tarifário indexado, aplicar fundo amarelo
+        // antes de entrar no tarifarios.forEach:
+        const {
+          quenteClaro,
+          quenteEscuro,
+          neutroClaro,
+          neutroEscuro
+        } = rowBgVariants[esquemaAtual] || rowBgVariants["azul-vermelho-claro"];
+
+        let nomeStyle = "";
+
+        const radius = cornersRounded ? "6px" : "0px";
+
+        // Definir cor de fundo consoante indexado e paridade da linha
+        const isPar = index % 2 === 1;
+
+        if (tarifa.isIndexado) {
+          nomeStyle += `background-color: ${isPar ? quenteClaro : quenteEscuro};`;
+
+          // Cor do texto especial para alguns nomes
+          if (
+            tarifa.nome === "Repsol indexado" || tarifa.nome === "Coopérnico" ||
+            tarifa.nome === "Plenitude indexado" || tarifa.nome === "Coopérnico: Base 2.0" ||
+            tarifa.nome === "Repsol: Tarifa Leve Sem Mais" || tarifa.nome === "Plenitude: Tarifa Tendência"
+          ) {
+            nomeStyle += "color: #005FA8;";
+          } else {
+            nomeStyle += "color: black;";
+          }
+
+        } else {
+          nomeStyle += `background-color: ${isPar ? neutroClaro : neutroEscuro};`;
+          nomeStyle += "color: black;";
+        }
+
 
             if (tarifa.nome === "Meu tarifário") {
-                if (esquemaAtual === "azul-vermelho") {
-                  // o teu amarelo original
-                  nomeStyle = "background-color:#FFC000; font-weight:bold; color:black;";
-                } else {
-                  // quando estiver no esquema creme, usa um creme suave
-                  nomeStyle = "background-color:#F0B000; font-weight:bold; color:black;";
-                }
+              nomeStyle = nomeStyles[esquemaAtual] || nomeStyles["azul-vermelho"]; // fallback caso necessário
             }
-            nomeStyle += "border-radius: 6px;";
+            nomeStyle += `border-radius:${radius};`;
 
     
 
             // Apenas para “EDP indexado” criamos a tooltipText e a classe
-            let cellAttrs = '';
+            let cellAttrs = ' class="interno"';
             if ((tarifa.nome === "EDP indexado" || tarifa.nome.startsWith("EDP: Eletricidade Indexada")) && incluirEDP && potenciaNum >=3.45) {
                 const descontoMsg = "Valor apresentado inclui desconto mensal de 10€ válido nos primeiros 10 meses, para adesões até 30/5/2025";
                 const tooltipText = descontoMsg;
-                cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;        
+                cellAttrs = ` class="interno has-tooltip mais-indicator" title="${tooltipText}"`;        
             }
             if ((tarifa.nome === "Galp Continente" || tarifa.nome.startsWith("Galp: Plano Galp")) && incluirContinente) {
                 const descontoMsg = "Valor apresentado assume desconto de 10% na potência e energia em Cartão Continente";
                 const tooltipText = descontoMsg;
-                cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;        
+                cellAttrs = ` class="interno has-tooltip mais-indicator" title="${tooltipText}"`;        
             }
             if (tarifa.nome.startsWith("Meo") && incluirMeo) {
                 const descontoMsg = "Valor apresentado inclui desconto de 0.01€ na energia válido para clientes Meo";
                 const tooltipText = descontoMsg;
-                cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
+                cellAttrs = ` class="interno has-tooltip mais-indicator" title="${tooltipText}"`;  
             }
             if ((tarifa.nome === "Goldenergy ACP" || tarifa.nome.startsWith("Goldenergy: Tarifário Parceria ACP")) && !incluirACP) {
                 const descontoMsg = "Valor apresentado não inclui quota mensal ACP de 4.80€";
                 const tooltipText = descontoMsg;
-                cellAttrs = ` class="has-tooltip mais-indicator" title="${tooltipText}"`;  
+                cellAttrs = ` class="interno has-tooltip mais-indicator" title="${tooltipText}"`;  
             }
+            
+
             
 
             // decide se sinalizamos este tarifário “Meo”
@@ -1194,8 +1322,8 @@ function atualizarResultados() {
 <table class="tooltip-matrix">
   <thead>
     <tr>
-      <th style="background-color: ${headerPrimary};"> Designação</th>
-      <th style="background-color: ${headerPrimary};">Preço s/ IVA (€/dia)</th>
+      <th style="background-color: ${headerPrimary}; color: ${headerFtPrimary};"> Designação</th>
+      <th style="background-color: ${headerPrimary}; color: ${headerFtPrimary};">Preço s/ IVA (€/dia)</th>
     </tr>
   </thead>
   <tbody>
@@ -1224,8 +1352,8 @@ function atualizarResultados() {
 <table class="tooltip-matrix">
   <thead>
     <tr>
-      <th style="background-color: ${headerPrimary};">Designação</th>
-      <th style="background-color: ${headerPrimary};">Preço s/ IVA (€/kWh)</th>
+      <th style="background-color: ${headerPrimary}; color: ${headerFtPrimary};">Designação</th>
+      <th style="background-color: ${headerPrimary}; color: ${headerFtPrimary};">Preço s/ IVA (€/kWh)</th>
     </tr>
   </thead>
   <tbody>
@@ -1254,28 +1382,353 @@ function atualizarResultados() {
 `.trim().replace(/\n\s*/g, '');
 
 
+const nomePotBase = `Potência contratada - ${potenciaSelecionada2}`;
+const nomePotRedes = `Potência contratada - ${potenciaSelecionada2}`;
+const nomePotDesconto = `Desconto da tarifa social - ${potenciaSelecionada2}`;
+
+const temParcelaRedes = potenciaNum <= 3.45;
+const temParcelaDesconto = tsFlag === 1 && descontoPotTS > 0;
+
+// 1. Potência (comercializador)
+const precoBase = tarifa.potencia - (temParcelaRedes ? tarPotSnum : 0) + tsFlag * descontoPotTS;
+const valorPotBase = precoBase * diasS;
+
+// 2. Potência (redes)
+const valorPotRedes = tarPotSnum * diasS;
+
+// 3. Desconto TS
+const valorPotDesconto = -descontoPotTS * diasS;
+const ivaDescontoTS = potenciaNum <= 3.45 ? 0.06 : 0.23;
+
+// Construção das linhas
+const linhasPotencia = [
+  {
+    nome: nomePotBase,
+    quantidade: `${diasS} dia${diasS > 1 ? 's' : ''}`,
+    preco: precoBase.toFixed(4),
+    valor: valorPotBase.toFixed(2),
+    ivaPct: "23"
+  }
+];
+
+if (temParcelaRedes) {
+  linhasPotencia.push({
+    nome: nomePotRedes,
+    quantidade: `${diasS} dia${diasS > 1 ? 's' : ''}`,
+    preco: tarPotSnum.toFixed(4),
+    valor: valorPotRedes.toFixed(2),
+    ivaPct: "6"
+  });
+}
+
+if (temParcelaDesconto) {
+  linhasPotencia.push({
+    nome: nomePotDesconto,
+    quantidade: `${diasS} dia${diasS > 1 ? 's' : ''}`,
+    preco: (-descontoPotTS).toFixed(4),
+    valor: valorPotDesconto.toFixed(2),
+    ivaPct: (ivaDescontoTS * 100).toFixed(0)
+  });
+}
+
+const energia6kWh = potenciaNum <= 6.9
+  ? Math.min(consumo, kWhIVAPromocionalS)
+  : 0;
+
+const energia23kWh = consumo - energia6kWh;
+
+// Só há desconto se potência ≤ 6.9 e TS estiver ativa
+const temDescontoTS = tsFlag === 1 && potenciaNum <= 6.9;
+
+const desconto6kWh = temDescontoTS ? energia6kWh : 0;
+const desconto23kWh = temDescontoTS ? energia23kWh : 0;
+
+const precoEnergia = tarifa.simples;
+const valorEnergia6 = energia6kWh * precoEnergia;
+const valorEnergia23 = energia23kWh * precoEnergia;
+
+const valorDesconto6 = -desconto6kWh * descontoKwhTS;
+const valorDesconto23 = -desconto23kWh * descontoKwhTS;
+
+const linhasEnergia = [];
+
+if (energia23kWh > 0) {
+  linhasEnergia.push({
+    nome: "Consumo Simples",
+    quantidade: `${energia23kWh} kWh`,
+    preco: precoEnergia.toFixed(4),
+    valor: valorEnergia23.toFixed(2),
+    ivaPct: "23"
+  });
+}
+
+if (energia6kWh > 0) {
+  linhasEnergia.push({
+    nome: "Consumo Simples",
+    quantidade: `${energia6kWh} kWh`,
+    preco: precoEnergia.toFixed(4),
+    valor: valorEnergia6.toFixed(2),
+    ivaPct: "6"
+  });
+}
+
+if (desconto23kWh > 0) {
+  linhasEnergia.push({
+    nome: "Desconto da tarifa social",
+    quantidade: `${desconto23kWh} kWh`,
+    preco: `-${descontoKwhTS.toFixed(4)}`,
+    valor: valorDesconto23.toFixed(2),
+    ivaPct: "23"
+  });
+}
+
+if (desconto6kWh > 0) {
+  linhasEnergia.push({
+    nome: "Desconto da tarifa social",
+    quantidade: `${desconto6kWh} kWh`,
+    preco: `-${descontoKwhTS.toFixed(4)}`,
+    valor: valorDesconto6.toFixed(2),
+    ivaPct: "6"
+  });
+}
+
+
+
+
+
+// 1) Calcular como número
+const custoPotenciaNum = tarifa.potencia * diasS * (1 + IVABaseSimples);
+const custoEnergiaNum  = tarifa.simples   * consumo * (1 + IVABaseSimples);
+
+// 2) Somar e só aí aplicar toFixed
+const custoEletricidade = (custoPotenciaNum + custoEnergiaNum).toFixed(2);
+
+// 3) Calcular taxas (exemplo genérico)
+const custoTaxesNum = 
+    AudiovisualS * (1 + IVA_AudiovisualSimples) +
+    DGEGS       * (1 + IVA_DGEGSimples) +
+    consumo     * (IESS * (1 + IVA_IESS));
+
+// 4) Formatar o resultado final
+const custoTaxes = custoTaxesNum.toFixed(2);
+
+// Agora você pode usar `custoEletricidade` e `custoTaxes` (strings formatadas com 4 casas)
+console.log(custoEletricidade, custoTaxes);
+
+const totalFatura = (
+    parseFloat(custoEletricidade) +
+    parseFloat(custoTaxes)
+  ).toFixed(2);
+  
+
+// dentro do loop de cada tarifa:
+const custoPotencia   = (tarifa.potencia * diasS * (1 + IVABaseSimples)).toFixed(2);
+const custoEnergia    = (tarifa.simples   * consumo  * (1 + IVABaseSimples)).toFixed(2);
+const totalEletric    = (parseFloat(custoPotencia) + parseFloat(custoEnergia)).toFixed(2);
+
+// imagina que tens também taxaS e valorS para cada imposto…
+
+
+// 1) Define o array com as tuas taxas/impostos
+const taxItems = [];
+
+// Exemplo: Contribuição Audiovisual
+taxItems.push({
+  nome: 'Contribuição Audiovisual',
+  quantidade: `1 mês`,
+  preco: AudiovisualS.toFixed(2),      // ou a variável onde guardas o € por dia/mês
+  valor: AudiovisualS.toFixed(2),      // valor total
+  ivaPct: (IVA_AudiovisualSimples * 100).toFixed(0)
+});
+
+// Exemplo: Taxa DGEG
+taxItems.push({
+  nome: 'Taxa de Exploração DGEG',
+  quantidade: `1 mês`,
+  preco: DGEGS.toFixed(2),
+  valor: DGEGS.toFixed(2),
+  ivaPct: (IVA_DGEGSimples * 100).toFixed(0)
+});
+
+// E assim por diante para cada taxa/imposto...
+
+// — calcula os totais que vais usar no título e no rodapé —
+const totalEletricidade = (parseFloat(custoPotencia) + parseFloat(custoEnergia)).toFixed(2);
+const totalTaxes        = taxItems
+  .reduce((sum, t) => sum + parseFloat(t.valor), 0)
+  .toFixed(2);
+
+  // acrescenta isto:
+const totalGeral = (parseFloat(totalEletricidade) + parseFloat(totalTaxes)).toFixed(2);
+
+// — monta o tooltip —
+const invoiceTooltip = `
+<div class="tooltip-invoice">
+
+  <details open>
+    <summary>
+      Eletricidade — ${totalEletricidade} €
+    </summary>
+    <table class="tooltip-matrix">
+      <thead>
+        <tr>
+          <th>Descrição</th>
+          <th>Qtd.</th>
+          <th>Preço</th>
+          <th>Valor</th>
+          <th>IVA</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${linhasPotencia.map(p => `
+        <tr>
+        <td>${p.nome}</td>
+        <td>${p.quantidade}</td>
+        <td>${p.preco}</td>
+        <td>${p.valor}</td>
+        <td>${p.ivaPct}%</td>
+      </tr>
+      `).join('')}
+      </tbody>
+      <tbody>
+  ${linhasEnergia.map(e => `
+    <tr>
+      <td>${e.nome}</td>
+      <td>${e.quantidade}</td>
+      <td>${e.preco}</td>
+      <td>${e.valor}</td>
+      <td>${e.ivaPct}%</td>
+    </tr>
+  `).join('')}
+</tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3"><strong>Total Eletricidade</strong></td>
+          <td colspan="2"><strong>${totalEletricidade} €</strong></td>
+        </tr>
+      </tfoot>
+    </table>
+  </details>
+
+  <details>
+    <summary>
+      Taxas &amp; Impostos — ${totalTaxes} €
+    </summary>
+    <table class="tooltip-matrix">
+      <thead>
+        <tr>
+          <th>Descrição</th>
+          <th>Qtd.</th>
+          <th>Preço</th>
+          <th>Valor</th>
+          <th>IVA</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${taxItems.map(t => `
+          <tr>
+            <td>${t.nome}</td>
+            <td>${t.quantidade}</td>
+            <td>${t.preco}</td>
+            <td>${t.valor}</td>
+            <td>${t.ivaPct}%</td>
+          </tr>
+        `).join('')}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3"><strong>Total Taxas &amp; Impostos</strong></td>
+          <td colspan="2"><strong>${totalTaxes} €</strong></td>
+        </tr>
+      </tfoot>
+    </table>
+  </details>
+
+  <div class="tooltip-grand-total">
+    <strong>Total geral: ${totalGeral} €</strong>
+  </div>
+
+</div>
+`.trim();
+
+
+
+
+
+
+// dentro do teu loop, em vez de montar só a tabela plana, faz:
+const eletricidadeChildren = `
+  <table class="tooltip-matrix">
+    <tbody>
+      <tr>
+        <td>Potência – ${diasS} dia${diasS>1?'s':''}</td>
+        <td style="text-align:right">${custoPotenciaNum.toFixed(2)}</td>
+      </tr>
+      <tr>
+        <td>Energia – ${consumo} kWh</td>
+        <td style="text-align:right">${custoEnergiaNum.toFixed(2)}</td>
+      </tr>
+    </tbody>
+  </table>`.trim().replace(/\n\s*/g,'');
+
+const taxesChildren = `
+  <table class="tooltip-matrix">
+    <tbody>
+      <tr><td>Contribuição Audiovisual</td><td style="text-align:right">${AudiovisualS.toFixed(2)}</td></tr>
+      <tr><td>DGEG</td><td style="text-align:right">${DGEGS.toFixed(2)}</td></tr>
+      <tr><td>IES</td><td style="text-align:right">${(IESS*consumo).toFixed(2)}</td></tr>
+      <tr><td>IVA</td><td style="text-align:right">${((custoPotenciaNum + custoEnergiaNum) * IVABaseSimples).toFixed(2)}</td></tr>
+    </tbody>
+  </table>`.trim().replace(/\n\s*/g,'');
+
+// monta o HTML
+const hierarchicalTooltip = `
+  <div class="tooltip-hierarchical">
+    <details open>
+      <summary>
+        <span class="label">Eletricidade</span>
+        <span class="value">${custoEletricidade} €</span>
+      </summary>
+      ${eletricidadeChildren}
+    </details>
+    <details>
+      <summary>
+        <span class="label">Taxas & Impostos</span>
+        <span class="value">${custoTaxes} €</span>
+      </summary>
+      ${taxesChildren}
+    </details>
+    <div class="tooltip-total">
+      <span class="label">Total fatura:</span>
+      <span class="value">${totalFatura} €</span>
+    </div>
+  </div>
+`.trim().replace(/\n\s*/g,'');
+
+
 
            
             // 2) Agora injeta no <td> da Potência:
             tabelaResultados += `<tr>
-<td style='${nomeStyle}'>${tarifa.nome}</td>
+<td ${cellAttrs} style='${nomeStyle}'>${tarifa.nome}</td>
 
 <td
-  class="has-tooltip"
+  class="has-tooltip internop"
   data-tippy-content='${potenciaTooltip}'
-  style='${isMinPotencia} background-color:${corPotencia}; color:black; border-radius: 6px;'
+  style='${isMinPotencia} background-color:${corPotencia}; color:black; border-radius: ${radius};'
 >
   ${tarifa.potencia.toFixed(4)}
 </td>
 
 <td
-    class="has-tooltip"
+    class="has-tooltip internop"
     data-tippy-content='${energiaTooltip}' 
-    style='${isMinSimples} background-color:${corSimples}; color:black; border-radius: 6px;'>
+    style='${isMinSimples} background-color:${corSimples}; color:black; border-radius: ${radius};'>
   ${tarifa.simples.toFixed(4)}
 </td>
 
-<td ${cellAttrs} style='${isMinCusto} background-color:${corCusto}; color:black; border-radius: 6px;'>
+<td class="internop"
+    style='${isMinCusto} background-color:${corCusto}; color:black; border-radius: ${radius};'>
   ${tarifa.custo.toFixed(2)}
 </td>
 </tr>`;
@@ -1287,38 +1740,91 @@ function atualizarResultados() {
         document.getElementById("resultado").innerHTML = tabelaResultados;
         // Agora que a tabela foi desenhada, o botão já existe — associar o evento!
         document.getElementById("btnEsquema")?.addEventListener("click", () => {
+          // 1) avança esquema
+          indiceEsquema = (indiceEsquema + 1) % esquemas.length;
+          esquemaAtual = esquemas[indiceEsquema];
+
+          // 2) atualiza o ícone
+          const icone = document.getElementById("iconeRaio");
+          if (icone) {
+            icone.style.color = coresIcone[esquemaAtual];
+            icone.classList.add("pulsar");
+            setTimeout(() => icone.classList.remove("pulsar"), 600);
+          }
+
+          
+
+
             // inverte o esquema
-            esquemaAtual = (esquemaAtual === "azul-vermelho")
-                ? "azul-creme-vermelho"
-                : "azul-vermelho";
+            // esquemaAtual = (esquemaAtual === "azul-vermelho")
+            //    ? "azul-creme-vermelho"
+            //    : "azul-vermelho";
 
             // atualiza o ícone
-            const icone = document.getElementById("iconeRaio");
-            if (icone) {
-                icone.style.color = esquemaAtual === "azul-vermelho" ? "#FFFFFF" : "#FFF6E5";
-                icone.classList.add("pulsar");
-                setTimeout(() => icone.classList.remove("pulsar"), 600);
-            }
+            // const icone = document.getElementById("iconeRaio");
+            // if (icone) {
+            //    icone.style.color = esquemaAtual === "azul-vermelho" ? "#FFFFFF" : "#FFF6E5";
+            //    icone.classList.add("pulsar");
+            //    setTimeout(() => icone.classList.remove("pulsar"), 600);
+            //}
 
             // **NOVO**: troca também as cores do select de potência e do input de consumo
-            const pot = document.getElementById("potenciac");
-            const con = document.getElementById("consumo");
-            if (esquemaAtual === "azul-creme-vermelho") {
-                pot.style.backgroundColor = "#007A1E";  // azul escuro
-                pot.style.color = "#FFFFFF";
-                con.style.backgroundColor = "#F0B000";  // creme
-                con.style.color = "#000000";
-            } else {
-                pot.style.backgroundColor = "#375623";  // verde original
-                pot.style.color = "#FFFFFF";
-                con.style.backgroundColor = "#FFC000";  // amarelo original
-                con.style.color = "#000000";
-            }
+            
+
+            // 3) atualiza select de potência
+          const pot = document.getElementById("potenciac");
+          if (pot) {
+            const { bg, color } = potStyles[esquemaAtual];
+            pot.style.backgroundColor = bg;
+            pot.style.color = color;
+          }
+
+          // 4) atualiza input de consumo
+          const con = document.getElementById("consumo");
+          if (con) {
+            const { bg, color } = conStyles[esquemaAtual];
+            con.style.backgroundColor = bg;
+            con.style.color = color;
+          }
+            //if (esquemaAtual === "azul-creme-vermelho") {
+            //    pot.style.backgroundColor = "#007A1E";  // azul escuro
+            //    pot.style.color = "#FFFFFF";
+            //    con.style.backgroundColor = "#F0B000";  // creme
+            //    con.style.color = "#000000";
+            //} else {
+            //    pot.style.backgroundColor = "#375623";  // verde original
+            //    pot.style.color = "#FFFFFF";
+            //    con.style.backgroundColor = "#FFC000";  // amarelo original
+            //    con.style.color = "#000000";
+            //}
 
             // finalmente, redesenha tudo com o novo esquema de heat-map
+            
             atualizarResultados();
+            
         });
         
+        // —— AQUI ——
+        document.getElementById("btnToggleCorners")?.addEventListener("click", () => {
+          // 1) alterna variável de estado
+          cornersRounded = !cornersRounded;
+          
+          // 2) troca o conteúdo do span entre ■ e ●
+          document.getElementById("shapeToggle").textContent =
+            cornersRounded ? "\u25A1" : "\u25CB";
+        
+          // 3) adiciona/remove a classe que zera o border-radius (se estiver usando CSS)
+          document.body.classList.toggle("no-rounded", !cornersRounded);
+
+
+          // começo: aplica border-radius geral
+    
+
+          // 5) (opcional) redesenha resultados se realmente precisar
+          // atualizarResultados();
+        });
+
+
         
 
     };
@@ -1332,24 +1838,42 @@ function atualizarResultados() {
 // --------------------------------------------------
 // 2) Aplica o esquema de cores ao select de potência e input de consumo
 function aplicarEsquema(esquema) {
-    const pot = document.getElementById("potenciac");
-    const con = document.getElementById("consumo");
-    if (!pot || !con) return;
-    const temas = {
-        "azul-vermelho": {
-            potBg: "#375623", potFg: "#FFFFFF",
-            conBg: "#FFC000", conFg: "#000000"
-        },
-        "azul-creme-vermelho": {
-            potBg: "#007A1E", potFg: "#FFFFFF",
-            conBg: "#FFF6E5", conFg: "#000000"
-        }
-    }[esquema] || {};
-    pot.style.backgroundColor = temas.potBg;
-    pot.style.color           = temas.potFg;
-    con.style.backgroundColor = temas.conBg;
-    con.style.color           = temas.conFg;
+  const pot = document.getElementById("potenciac");
+  const con = document.getElementById("consumo");
+  if (!pot || !con) return;
+
+  // adicione aqui o terceiro tema
+  const temas = {
+      "azul-vermelho-claro": {
+          potBg: "#375623",  // ou outra cor que você prefira
+          potFg: "#FFFFFF",
+          conBg: "#FFC000",  // amarelo suave
+          conFg: "#000000"
+      },
+      "azul-vermelho": {
+          potBg: "#375623",
+          potFg: "#FFFFFF",
+          conBg: "#FFC000",
+          conFg: "#000000"
+      },
+      "azul-creme-vermelho": {
+          potBg: "#007A1E",
+          potFg: "#FFFFFF",
+          conBg: "#FFF6E5",
+          conFg: "#000000"
+      }
+  }[esquema] || {
+      // fallback genérico, caso esquema venha inválido
+      potBg: "#375623", potFg: "#FFFFFF",
+      conBg: "#FFC000", conFg: "#000000"
+  };
+
+  pot.style.backgroundColor = temas.potBg;
+  pot.style.color           = temas.potFg;
+  con.style.backgroundColor = temas.conBg;
+  con.style.color           = temas.conFg;
 }
+
 
 
 // --------------------------------------------------
@@ -1449,6 +1973,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const mesSelecionado  = document.getElementById("mesSelecionado");
     const diasInput       = document.getElementById("dias");
 
+
     // Controle de "DataS": desativa mês+dias se houver intervalo válido
     function atualizarEstadoDatas() {
         const inicioValido = startDate.value !== "";
@@ -1474,6 +1999,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("incluirEDP").checked = true;
     document.getElementById("incluirMeo").checked = true;
     document.getElementById("incluirContinente").checked = true;
+    document.body.classList.toggle("no-rounded", !cornersRounded);
+
 
     atualizarResultados();
     revealPostTableContent();
