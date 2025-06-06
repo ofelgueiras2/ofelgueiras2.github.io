@@ -559,33 +559,43 @@ if (rawConsumo === "") {
     let strDiasSimples;
 
     if (DataS) {
-        const dataInicio = new Date(startDate.value);
-        const dataFim = new Date(endDate.value);
+  const dataInicio = new Date(startDate.value);
+  const dataFim    = new Date(endDate.value);
 
-        if (!isNaN(dataInicio) && !isNaN(dataFim)) {
-            const diffMs = dataFim - dataInicio;
-            diasS = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-            strDiasSimples = `${diasS}`;
-            console.log(`🔎 DataS = true: diasS calculado = ${diasS}`);
-        } else {
-            console.warn("❗ Datas inválidas mesmo com DataS true — fallback para mês selecionado.");
-            diasS = parseFloat(diasMesesTabela[mesSelecionadoIndex]) || 30;
-            strDiasSimples = strDiasTabela[mesSelecionadoIndex] || "30";
-        }
-    } else {
-        let diasInput = document.getElementById("dias").value.trim();
-        diasInput = diasInput === "" ? NaN : parseFloat(diasInput.replace(",", "."));
+  if (!isNaN(dataInicio) && !isNaN(dataFim)) {
+    const diffMs = dataFim - dataInicio;
+    diasS        = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+    // Usa toLocaleString, para garantir vírgula (se houvesse decimal)
+    strDiasSimples = diasS.toLocaleString('pt-PT', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+    console.log(`🔎 DataS = true: diasS calculado = ${diasS}`);
+  } else {
+    console.warn("❗ Datas inválidas mesmo com DataS true — fallback para mês selecionado.");
+    diasS = parseFloat(diasMesesTabela[mesSelecionadoIndex]) || 30;
+    // strDiasTabela vem do CSV; pode já estar como “30” or “30,00”. Só garantimos vírgula:
+    strDiasSimples = String(strDiasTabela[mesSelecionadoIndex]).replace('.', ',') || "30";
+  }
+} else {
+  let diasInput = document.getElementById("dias").value.trim();
+  diasInput     = diasInput === "" ? NaN : parseFloat(diasInput.replace(",", "."));
 
-        if (!isNaN(diasInput)) {
-            diasS = diasInput;
-            strDiasSimples = String(diasS);
-        } else {
-            diasS = parseFloat(diasMesesTabela[mesSelecionadoIndex]) || 30;
-            strDiasSimples = strDiasTabela[mesSelecionadoIndex] || "30";
-        }       
+  if (!isNaN(diasInput)) {
+    diasS = diasInput;
+    // Formata com vírgula (com até 2 decimais, se precisar):
+    strDiasSimples = diasS.toLocaleString('pt-PT', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    });
+  } else {
+    diasS = parseFloat(diasMesesTabela[mesSelecionadoIndex]) || 30;
+    strDiasSimples = String(strDiasTabela[mesSelecionadoIndex]).replace('.', ',') || "30";
+  }
 
-        console.log(`🔎 DataS = false: diasS = ${diasS}`);
-    }
+  console.log(`🔎 DataS = false: diasS = ${diasS}`);
+}
+
 
     console.log(`✅ diasS final: ${diasS}, strDiasSimples: ${strDiasSimples}`);
     
