@@ -586,7 +586,7 @@ if (rawConsumo === "") {
     // Formata com vírgula (com até 2 decimais, se precisar):
     strDiasSimples = diasS.toLocaleString('pt-PT', {
       minimumFractionDigits: 0,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 4
     });
   } else {
     diasS = parseFloat(diasMesesTabela[mesSelecionadoIndex]) || 30;
