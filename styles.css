@@ -1196,10 +1196,36 @@ body.no-rounded .fixed-tlr {
 /* ===========================================================
    1) Ocultar as setas nativas do browser DENTRO de .spinner-wrapper
    =========================================================== */
+   /* ─────────────────────────────────────────────────────
+   1) Remover spinner nativo do Chrome/Safari (WebKit)
+   ───────────────────────────────────────────────────── */
    .spinner-wrapper input[type="number"]::-webkit-inner-spin-button,
    .spinner-wrapper input[type="number"]::-webkit-outer-spin-button {
      -webkit-appearance: none;
      margin: 0;
+   }
+   
+   /* ─────────────────────────────────────────────────────
+      2) Remover spinner nativo do Firefox
+      ───────────────────────────────────────────────────── */
+   /* Faz o input-number “se comportar” como um textfield, sem setas */
+   .spinner-wrapper input[type="number"] {
+    /* 1) Versão “padrão” (ouça o linter) */
+    appearance: textfield;
+  
+    /* 2) Prefixo Mozilla para Firefox */
+    -moz-appearance: textfield;
+  
+    /* 3) Prefixo WebKit (Chrome/Safari) para eliminar setas nativas */
+    -webkit-appearance: none;
+  }
+  
+   
+   /* (Opcionalmente, caso queira garantir que nenhuma pseudo-elemento 
+      de spinner apareça no Firefox)
+   */
+   .spinner-wrapper input[type="number"]::-moz-number-spin-box {
+     display: none;
    }
    
    /* ===========================================================
