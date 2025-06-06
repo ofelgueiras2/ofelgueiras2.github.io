@@ -364,6 +364,8 @@ button:focus {
 #btnClearDates,
 #btnClearTs {
 width: 30px; height: 30px;
+/* Garante que border+paddings fiquem dentro dos 30px totais */
+/*  box-sizing: border-box; */
 border: 1px solid #bbb; border-radius: 4px;
 background-color: #fff;
 display: flex; justify-content: center; align-items: center;
@@ -645,6 +647,12 @@ line-height: 1.4;
   color: #333;
   transform: rotate(-10deg);
 }
+
+.btn-limpar-inline svg {
+  width: 100%;
+  height: 100%;
+}
+
 
 @keyframes pulse {
   0% {
@@ -935,6 +943,8 @@ html {
   margin-bottom: 0px; /* aproxima a seta do conteúdo */
 }
 
+
+
 .tooltip-hierarchical summary {
   display: flex;
   justify-content: space-between;
@@ -1140,4 +1150,191 @@ body.no-rounded .fixed-tlr {
   border-top-left-radius: 10px !important;
 }
 
+.omie-info-icon {
+  display: inline-block;     /* transforma o span em “caixa” que podemos alinhar */
+  width: 1em;                /* 1em = mesmo tamanho do texto */
+  height: 1em;               /* 1em = mesmo tamanho do texto */
+  vertical-align: middle;    /* alinha o meio do span (e do SVG interno) com o meio da linha de texto */
+  /* color: white !important;
+  font-size: 1em;
+  font-weight: bold;
+  line-height: 1;            /* pode continuar como antes, sem afetar o texto pai */
+  cursor: help;
+}
+
+.omie-info-icon svg {
+  display: block;            /* elimina espaçamento interno extra */
+  width: 100%;
+  height: 100%;
+  /* Empurra o desenho uns décimos de em para cima: */
+  transform: translateY(-0.1em);
+}
+
+.omie-info-icon:focus,
+.omie-info-icon:active {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Exemplo de tema custom para tippy */
+.tippy-box.custom-info-theme {
+  background-color: #f9f9f9;
+  color: #333;
+  border: 1px solid #ccc;
+  font-size: 0.9em;
+  max-width: 220px;
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+.tippy-box.custom-info-theme .tippy-arrow:before {
+  border-top-color: #ccc;
+}
+
+
+
+
+/* ===========================================================
+   1) Ocultar as setas nativas do browser DENTRO de .spinner-wrapper
+   =========================================================== */
+   .spinner-wrapper input[type="number"]::-webkit-inner-spin-button,
+   .spinner-wrapper input[type="number"]::-webkit-outer-spin-button {
+     -webkit-appearance: none;
+     margin: 0;
+   }
+   
+   /* ===========================================================
+      2) Container pai (.spinner-wrapper) – position: relative
+      =========================================================== */
+   .spinner-wrapper {
+     position: relative;
+     width: 100%;
+   }
+   
+   /* ===========================================================
+      3) O <input> deve reservar espaço à direita para o spinner
+      =========================================================== */
+   .spinner-wrapper input[type="number"] {
+     width: 100%;
+     padding-right: 24px; /* espaço para o spinner */
+     box-sizing: border-box;
+   }
+   
+   /* ===========================================================
+      4) Esconder o próprio spinner (<div class="spinner">) por padrão
+      =========================================================== */
+   .spinner-wrapper .spinner {
+     position: absolute;
+     right: 8px;            /* distância da borda direita */
+     top: 50%;
+     transform: translateY(-50%);
+   
+     /* Dimensões do spinner */
+     height: 22px;
+     width: 14px;
+   
+     background-color: #FFF; /* fundo branco (igual ao input) */
+     border: 0;              /* sem borda visível */
+     border-radius: 4px;     /* cantos arredondados */
+     visibility: hidden;
+     opacity: 0;
+     pointer-events: none;   /* não capturar clique quando invisível */
+   
+     /* Transição suave para aparecer/desaparecer */
+     transition: opacity 0.15s ease, visibility 0.15s ease;
+   }
+   
+   /* ===========================================================
+      5) Exibir o spinner quando o wrapper estiver em hover
+      =========================================================== */
+   .spinner-wrapper:hover .spinner {
+     visibility: visible;
+     opacity: 1;
+     pointer-events: auto;
+   }
+   
+   /* ===========================================================
+      6) Exibir o spinner quando o <input> dentro do wrapper estiver em foco
+      (suporta teclado: ao usar Tab, por exemplo)
+      =========================================================== */
+   .spinner-wrapper:focus-within .spinner {
+     visibility: visible;
+     opacity: 1;
+     pointer-events: auto;
+   }
+   
+   /* ===========================================================
+      7) Cada botão interno (.spinner-btn):
+        – ocupa metade da altura do spinner (50%)
+        – centraliza o SVG (seta) com display:flex
+        – reseta completamente o estilo nativo de <button>
+        – adiciona transição para hover/active
+      =========================================================== */
+   .spinner-btn {
+     appearance: none;
+     -webkit-appearance: none;
+     -moz-appearance: none;
+   
+     background-color: transparent !important;
+     border: none !important;
+     padding: 0;
+     margin: 0;
+     cursor: pointer;
+   
+     width: 100%;
+     height: 50%;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     transform: scale(0.9);
+     
+     /* Transição de transform (encolher ao clicar) */
+     transition: transform 0.1s ease;
+   }
+   
+   /* Remove qualquer borda interna de foco do Firefox */
+   .spinner-btn::-moz-focus-inner {
+     border: 0;
+   }
+   
+   /* Quando o botão ganha foco, não mostrar outline azul nem sombra */
+   .spinner-btn:focus {
+     outline: none !important;
+     box-shadow: none !important;
+   }
+   
+   /* No estado “ativo” (pressionado), apenas encolher */
+   .spinner-btn:active {
+     background-color: transparent !important;
+     box-shadow: none !important;
+     transform: scale(0.8);
+   }
+   
+   /* ===========================================================
+      8) O SVG dentro de cada <button> continua usando a classe “spinner-arrow-svg”:
+        – define largura/altura (12×8)
+        – usa currentColor para cor
+        – sem pointer-events para o clique ir ao botão, não ao SVG
+        – transição suave de cor
+      =========================================================== */
+   .spinner-arrow-svg {
+     width: 12px;
+     height: 8px;
+     color: #8B8B8B;           /* cor padrão: cinza claro */
+     user-select: none;
+     pointer-events: none;  /* clique vai para .spinner-btn, não para o SVG */
+     transition: color 0.1s ease;
+   }
+   
+   /* ===========================================================
+      9) Ao passar o cursor sobre o botão (.spinner-btn), seta vira preta
+      =========================================================== */
+   .spinner-btn:hover .spinner-arrow-svg {
+     color: #636363;
+   }
+   
+   /* (Opcional) Durante o estado “:active”, manter preta */
+   .spinner-btn:active .spinner-arrow-svg {
+     color: #636363;
+   }
+   
 
