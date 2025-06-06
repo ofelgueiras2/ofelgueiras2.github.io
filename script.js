@@ -202,12 +202,104 @@ const nomeStyles = {
 
 
 
+
 let indiceEsquema = 0;  // começa no primeiro
 // 3) Defina esquemaAtual a partir do índice
 let esquemaAtual = esquemas[indiceEsquema];
 // let esquemaAtual = "azul-vermelho-claro"; // pode ser "azul-vermelho" ou "azul-creme-vermelho"
 let cornersRounded = false;
 
+let ultimoValidoStr = "";   // armazena a string que ficou visível (até 10000)
+let ultimoValidoNum = NaN;  // armazena o número (€/MWh) correspondente a essa string
+
+let ignoreInputEvent = false;
+
+
+/**
+ * Recebe uma string em notação científica (ex.: "123e-5" ou "1,23E-2")
+ * e devolve a mesma coisa em decimal puro (ex.: "0.00123", "0.0123").
+ * Se a string não tiver “e” ou não for um número válido, retorna ela mesma,
+ * trocando vírgula por ponto apenas.
+ */
+function expandirNotacaoCientifica(str) {
+  // 1) padroniza vírgula → ponto e remove espaços
+  let raw = str.replace(",", ".").trim();
+
+  // 2) se não houver “e”/“E”, devolve o texto bruto
+  if (!/[eE]/.test(raw)) return raw;
+
+  // 3) converte para Number e, se der NaN, devolve o texto bruto
+  const num = Number(raw);
+  if (isNaN(num)) return raw;
+
+  // 4) faz toExponential(), que em JS retorna algo como “1.23e-03”
+  const exponential = num.toExponential();
+  //    ^ ex.: “1.23e-03” ou “5e+4” etc.
+
+  // 5) extrai (mantissa inteira, mantissa decimal opcional, expoente)
+  const match = exponential.match(/^([-+]?\d+)(?:\.(\d+))?[eE]([+-]?\d+)$/);
+  if (!match) return raw;
+
+  const integerPart = match[1];         // ex.: “1”  ou “5”
+  const fracPart    = match[2] || "";   // ex.: “23” (sem o ponto) ou “” se não tiver fração
+  const expo        = parseInt(match[3], 10); // ex.: -3, +4, etc.
+
+  // 6) Se o expoente for ≥ 0, é algo como “5e+4” → basta puxar zeros à direita
+  if (expo >= 0) {
+    // → número final: “integerPart” + “fracPart” + (zeros até totalLength = integerPart.length + expo)
+    //    mas como fracPart tem “fracPart.length” dígitos, faltam (expo - fracPart.length) zeros.
+    const zerosToAdd = expo - fracPart.length;
+    if (zerosToAdd <= 0) {
+      // significa que a fração já cobre o expoente; basta inserir o ponto na posição correta
+      const allDigits = integerPart + fracPart;
+      const splitPos  = integerPart.length + expo;
+      return allDigits.slice(0, splitPos)
+           + "." 
+           + allDigits.slice(splitPos);
+    } else {
+      // só acrescenta zeros
+      return integerPart + fracPart + "0".repeat(zerosToAdd);
+    }
+  } else {
+    // expo < 0: precisamos empurrar zeros à esquerda do “1.23” para virar 0.00…123
+    // total de dígitos depois do ponto = |expo| + fracPart.length
+    const totalDecimals = Math.abs(expo) + fracPart.length;
+    // então basta usar toFixed(totalDecimals)
+    return num.toFixed(totalDecimals);
+  }
+}
+
+// — testes rápidos —
+console.log(expandirNotacaoCientifica("123e-5"));  // → "0.00123"
+console.log(expandirNotacaoCientifica("1,23E-2")); // → "0.0123"
+console.log(expandirNotacaoCientifica("5E+4"));    // → "50000"
+console.log(expandirNotacaoCientifica("3.14"));    // → "3.14"   (não havendo “e”)
+console.log(expandirNotacaoCientifica("abc"));     // → "abc"    (não numérico)
+
+
+let OMIESSelecionadoS;
+
+
+
+
+/**
+ * Formata um número usando vírgula como separador decimal.
+ * @param {number} num
+ * @param {number} dec        — casas decimais
+ * @param {boolean} trimZeros — se true, corta zeros finais; se false, mantém sempre dec casas
+ * @returns {string}
+ */
+function formatDecimal(num, dec = 2, trimZeros = false) {
+  // 1) faz o toFixed
+  let s = num.toFixed(dec);
+  if (trimZeros) {
+    // 2) corta zeros desnecessários
+    s = s.replace(/(\.\d*?[1-9])0+$/, "$1")
+         .replace(/\.0+$/, "");
+  }
+  // 3) troca ponto por vírgula
+  return s.replace(".", ",");
+}
 
 
 // 1) Função utilitária para converter "0,0323 €" em número
@@ -338,9 +430,43 @@ function preencherSelecaoMeses() {
 }
 
 function atualizarResultados() {
-    let consumo = parseFloat(document.getElementById("consumo").value);
+    // dentro de atualizarResultados(), logo no topo:
+const omieInputCampo = document.getElementById("omieInput");
+let omieRaw = omieInputCampo.value.replace(",", ".").trim();
+let omieNum = parseFloat(omieRaw);
+
+// Se for vazio ou inválido, considere zero (ou outro fallback)
+if (isNaN(omieNum)) {
+  omieNum = 0;
+}
+
+// Converta de €/kWh para €/kWh (ou de €/MWh para €/kWh, conforme o que precisar)
+// Exemplo: se o input estiver a ser preenchido em €/MWh e quiser dividir por 1000:
+OMIESSelecionadoS = Number((omieNum / 1000).toFixed(5));
+
+// Se o seu input já está em €/kWh, basta usar:
+ // OMIESSelecionadoS = omieNum; 
+
+console.log("└─ OMIESSelecionadoS (no início de atualizarResultados):", OMIESSelecionadoS);
+
+
+
+
+
+
+    // dentro de atualizarResultados():
+    // 1) Pega o texto bruto do input de consumo
+const rawConsumo = document.getElementById("consumoInput").value.trim();
+
+// 2) Se estiver vazio, fixa consumo = 0; senão, converte para número
+let consumo;
+if (rawConsumo === "") {
+  consumo = 0;
+} else {
+  consumo = parseFloat(rawConsumo.replace(",", ".")) || 0;
+}
+
     const raw = document.getElementById("potenciac").value;        // ex: "6.9"
-    const potenciaSelecionada2 = raw + " kVA";                // → "6.9 kVA"
     const withComma = raw.replace('.', ',');                       // → "6,9"
     const potenciaSelecionada = withComma + ' kVA';                // → "6,9 kVA"
     //const idx = potenciasArray.indexOf(potenciaNum);
@@ -379,7 +505,6 @@ function atualizarResultados() {
 
     console.log("Desconto potência TS:", descontoPotTS);
     console.log("Desconto kWh TS:", descontoKwhTS);
-
 
     const nomesTarifarios = obterTabela("empresasSimples")?.flat().map(nome => nome.replace(/\*+$/, "").trim()) || [];
     const nomesTarifariosDetalhados = obterTabela("detalheTarifarios")?.flat().map(nome => nome.replace(/\*+$/, "").trim()) || [];
@@ -463,7 +588,6 @@ function atualizarResultados() {
     }
 
     console.log(`✅ diasS final: ${diasS}, strDiasSimples: ${strDiasSimples}`);
-
     
     let IVABaseSimples = parsePercent(obterVariavel("IVABase"));
     let AudiovisualS = parseEuro(obterVariavel("Audiovisual"));
@@ -512,7 +636,6 @@ function atualizarResultados() {
 
     
 
-    let OMIESSelecionadoS;
     let PerdasSelecionadoS;
     let dataInicio, dataFim;
     let tudoTabela, tudoTPT, tDataTabela;
@@ -642,11 +765,30 @@ function atualizarResultados() {
     console.log("IVAFixoS:", IVAFixoS)
 
     console.log("OMIE:", OMIESSelecionadoS)
-    const omieInputValue = parseFloat(document.getElementById('omieInput')?.value);
-    if (!isNaN(omieInputValue)) {
-    OMIESSelecionadoS = omieInputValue;
-    }
-    console.log("OMIE:", OMIESSelecionadoS, omieInputValue, DataS)
+    // const omieInput = document.getElementById("omieInput");
+
+
+
+
+
+    
+
+
+// lê o valor literal do input OMIE (em €/MWh)
+const textoOmie = document
+  .getElementById("omieInput")
+  .value
+  .replace(",", ".")
+  .trim();
+
+const omieParseado = parseFloat(textoOmie);
+if (!isNaN(omieParseado)) {
+  // converte de €/MWh para €/kWh
+  OMIESSelecionadoS = Number((omieParseado / 1000).toFixed(5));
+}
+
+
+//    console.log("OMIE:", OMIESSelecionadoS, omieInputValue, DataS)
     console.log("potenciaNum:", potenciaNum)
 
     // --- Criação do array de tarifários a partir dos dados CSV ---
@@ -871,7 +1013,7 @@ function atualizarResultados() {
 
         const nomeExibido = mostrarNomesAlternativos && nomesTarifariosDetalhados[i] ? nomesTarifariosDetalhados[i] : nome;
         console.log("Potência, IVA, TS:", potenciaSelecionada, IVAFixoS, kVAsTarSocialS)
-        console.log("Potência, IVA, TS:", potenciaSelecionada, potenciaSelecionada2, potenciaNum)
+        console.log("Potência, IVA, TS:", potenciaSelecionada, potenciaNum)
 
         // —> IVA de 6% para potência <= 3,45 kVA
         //if (potenciaNum <= 3.45) {
@@ -1107,7 +1249,12 @@ function atualizarResultados() {
 
         const toggleIcon = cornersRounded ? "\u25A1" /* □ */ : "\u25CB" /* ○ */;
         
+        const omieMwh = OMIESSelecionadoS * 1000;
+        const omieMwhStr = formatDecimal(omieMwh, 2, true).replace(".", ",");
+
         let tabelaResultados = `<table style="border-spacing: 1px 1px; border-collapse: separate;">
+
+        
 
     
         <tr> 
@@ -1135,11 +1282,33 @@ function atualizarResultados() {
             <span id="shapeToggle">${toggleIcon}</span>
             </button>
 
-            <div style="font-weight: bold;margin-top: 15px;margin-bottom: 10px;">Potência contratada ${potenciaSelecionada2}</div>
+            <div style="font-weight: bold;margin-top: 15px;margin-bottom: 10px;">Potência contratada ${potenciaSelecionada}</div>
             <br>
             <div style="font-size: 14px;margin-bottom: -10px;">${strDiasSimples} dia${(typeof diasS === 'number' && diasS !== 1 ? 's' : '')}</div>
             <br>
-            <div style="font-size: 14px;">OMIE = ${OMIESSelecionadoS} €/kWh</div>            
+            <div style="font-size: 14px;">
+              OMIE = ${formatDecimal(OMIESSelecionadoS, 10, true)} €/kWh
+                <span
+                  class="omie-info-icon"
+                  tabindex="0"
+                  data-tippy-content="O preço OMIE oficial é divulgado em €/MWh (neste caso, ${omieMwhStr} €/MWh), mas aqui é apresentado em €/kWh para facilitar a comparação com os preços de energia na tabela."
+                  style="cursor: help; margin-left: 4px;"
+                ><svg
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      aria-hidden="true"
+      focusable="false"
+      style="vertical-align: middle;"
+    >
+      <circle cx="12" cy="12" r="10.5"/>
+      <rect x="11.75" y="13" width=".5" height="3.5" rx="0" fill="currentColor"/>
+      <circle cx="12" cy="8" r=".75" fill="currentColor"/>
+    </svg></span>
+            </div>            
             <span class="sort-container">
               <span class="sort-arrow0 ${sortField==='default' && sortDirection==='asc' ? 'selected' : ''}" onclick="setSort('default','asc')" title="Ordenar conforme a ordem no Excel">&#9650;</span>
               <span class="sort-arrow0 ${sortField==='default' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('default','desc')" title="Ordenar conforme a ordem inversa no Excel">&#9660;</span>
@@ -1152,7 +1321,7 @@ function atualizarResultados() {
         
         <tr>
           <td class="interno" style="background-color:${consumoBg}; font-weight:bold; color:black; text-align:center;">
-            ${consumo || 0}
+            ${formatDecimal(consumo,4,trimZeros=true) || 0}
           </td>
         </tr>
         <tr>
@@ -1163,21 +1332,21 @@ function atualizarResultados() {
               <span class="sort-arrow ${sortField==='tariff' && sortDirection==='desc' ? 'selected' : ''}" onclick="setSort('tariff','desc')" title="Ordenar alfabeticamente (Z → A)">&#9660;</span>
             </span>
           </th>
-          <th class="interno" style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:${headerFtPrimary}; text-align:center; position:relative;" class="has-tooltip" title="Custo diário sem IVA">
+          <th class="interno has-tooltip" data-tippy-content="Custo diário sem IVA" style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:${headerFtPrimary}; text-align:center; position:relative;">
             Potência (€/dia)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='power' && sortDirection==='asc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('power','asc')" title="Ordenar do menor para o maior">&#9650;</span>
               <span class="sort-arrow ${sortField==='power' && sortDirection==='desc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('power','desc')" title="Ordenar do maior para o menor">&#9660;</span>
             </span>
           </th>
-          <th class="interno" style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:${headerFtPrimary}; text-align:center; position:relative;" class="has-tooltip" title="Custo por kWh sem IVA">
+          <th class="interno has-tooltip" data-tippy-content="Custo por kWh sem IVA" style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:${headerFtPrimary}; text-align:center; position:relative;">
             Energia (€/kWh)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='simple' && sortDirection==='asc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('simple','asc')" title="Ordenar do menor para o maior">&#9650;</span>
               <span class="sort-arrow ${sortField==='simple' && sortDirection==='desc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('simple','desc')" title="Ordenar do maior para o menor">&#9660;</span>
             </span>
           </th>
-          <th class="interno" style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:${headerFtPrimary}; text-align:center; position:relative;" class="has-tooltip" title="Preço final da fatura (com taxas e impostos)">
+          <th class="interno has-tooltip" data-tippy-content="Preço final da fatura (com taxas e impostos)" style="background-color:${headerPrimary}; font-weight:bold; border-radius: 10px;color:${headerFtPrimary}; text-align:center; position:relative;">
             Preço (€)
             <span class="sort-container">
               <span class="sort-arrow ${sortField==='price' && sortDirection==='asc' ? 'selected' : ''}" onclick="event.stopPropagation();setSort('price','asc')" title="Ordenar do menor para o maior">&#9650;</span>
@@ -1245,24 +1414,24 @@ function atualizarResultados() {
             // Apenas para “EDP indexado” criamos a tooltipText e a classe
             let cellAttrs = ' class="internop"';
             if ((tarifa.nome === "EDP indexado" || tarifa.nome.startsWith("EDP: Eletricidade Indexada")) && incluirEDP && potenciaNum >=3.45) {
-                const descontoMsg = "Valor apresentado inclui desconto mensal de 10€ válido nos primeiros 10 meses, para adesões até 30/6/2025";
+                const descontoMsg = "Valor apresentado inclui desconto mensal de 10€ válido nos primeiros 10 meses, para adesões até 30/5/2025";
                 const tooltipText = descontoMsg;
-                cellAttrs = ` class="internop has-tooltip mais-indicator" title="${tooltipText}"`;        
+                cellAttrs = ` class="internop has-tooltip mais-indicator" data-tippy-content="${tooltipText}"`;        
             }
             if ((tarifa.nome === "Galp Continente" || tarifa.nome.startsWith("Galp: Plano Galp")) && incluirContinente) {
                 const descontoMsg = "Valor apresentado assume desconto de 10% na potência e energia em Cartão Continente";
                 const tooltipText = descontoMsg;
-                cellAttrs = ` class="internop has-tooltip mais-indicator" title="${tooltipText}"`;        
+                cellAttrs = ` class="internop has-tooltip mais-indicator" data-tippy-content="${tooltipText}"`;        
             }
             if (tarifa.nome.startsWith("Meo") && incluirMeo) {
                 const descontoMsg = "Valor apresentado inclui desconto de 0.01€ na energia válido para clientes Meo";
                 const tooltipText = descontoMsg;
-                cellAttrs = ` class="internop has-tooltip mais-indicator" title="${tooltipText}"`;  
+                cellAttrs = ` class="internop has-tooltip mais-indicator" data-tippy-content="${tooltipText}"`;  
             }
             if ((tarifa.nome === "Goldenergy ACP" || tarifa.nome.startsWith("Goldenergy: Tarifário Parceria ACP")) && !incluirACP) {
                 const descontoMsg = "Valor apresentado não inclui quota mensal ACP de 4.80€";
                 const tooltipText = descontoMsg;
-                cellAttrs = ` class="internop has-tooltip mais-indicator" title="${tooltipText}"`;  
+                cellAttrs = ` class="internop has-tooltip mais-indicator" data-tippy-content="${tooltipText}"`;  
             }
             
 
@@ -1277,7 +1446,7 @@ function atualizarResultados() {
             const descontoRow = tsFlag === 1
                 ? `<tr>
      <td>Desconto da tarifa social</td>
-     <td style="padding-left:6px;">- ${(descontoPotTS).toFixed(4)}</td>
+     <td style="padding-left:6px;">- ${formatDecimal(descontoPotTS,4)}</td>
    </tr>`
                 : ``;   
                 
@@ -1298,9 +1467,9 @@ function atualizarResultados() {
                 luzigasFee1 += parseFloat((luzigasFee0/dias).toFixed(4));
                 feeRow = `
     <tr>
-      <td>Fee ${(luzigasFee0)}  € / ${diasLabel}</td>
+      <td>Fee ${formatDecimal(luzigasFee0,2)}  € / ${diasLabel}</td>
       <td style="padding-left:6px; text-align:right;">
-        ${luzigasFee1.toFixed(4)}
+        ${formatDecimal(luzigasFee1,4)}
       </td>
     </tr>
   `;
@@ -1311,9 +1480,9 @@ function atualizarResultados() {
                 + tsFlag * descontoPotTS
                 - luzigasFee1;
 
-            let str = valor.toFixed(4);
-            if (str === "-0.0000") {
-                str = "0.0000";
+            let str = formatDecimal(valor, 4);
+            if (str === "-0,0000") {
+                str = "0,0000";
             }
 
 
@@ -1328,12 +1497,12 @@ function atualizarResultados() {
   </thead>
   <tbody>
     <tr>
-      <td>Potência (comercializador) - ${potenciaSelecionada2}</td>
+      <td>Potência (comercializador) - ${potenciaSelecionada}</td>
       <td>${str}</td>
     </tr>
     <tr>
-      <td>Potência (acesso às redes) - ${potenciaSelecionada2}</td>
-      <td>${tarPotSnum.toFixed(4)}</td>
+      <td>Potência (acesso às redes) - ${potenciaSelecionada}</td>
+      <td>${formatDecimal(tarPotSnum, 4)}</td>
     </tr>
     ${descontoRow}
     ${feeRow}
@@ -1341,7 +1510,7 @@ function atualizarResultados() {
   <tfoot>
     <tr>
       <td>Total</td>
-      <td>${tarifa.potencia.toFixed(4)}</td>
+      <td>${formatDecimal(tarifa.potencia, 4)}</td>
     </tr>
   </tfoot>
 </table>
@@ -1359,32 +1528,32 @@ function atualizarResultados() {
   <tbody>
     <tr>
       <td>Energia (comercializador)</td>
-      <td style="text-align:right;">${(tarifa.simples-TARSimplesS+tsFlag*descontoKwhTS).toFixed(4)}</td>
+      <td style="text-align:right;">${formatDecimal(tarifa.simples-TARSimplesS+tsFlag*descontoKwhTS, 4)}</td>
     </tr>
     <tr>
       <td>Energia (acesso às redes)</td>
-      <td style="text-align:right;">${(TARSimplesS).toFixed(4)}</td>
+      <td style="text-align:right;">${formatDecimal(TARSimplesS, 4)}</td>
     </tr>
     ${ tsFlag === 1 
       ? `<tr>
            <td>Desconto da tarifa social</td>
-           <td style="text-align:right;">- ${descontoKwhTS.toFixed(4)}</td>
+           <td style="text-align:right;">- ${formatDecimal(descontoKwhTS, 4)}</td>
          </tr>` 
       : `` }
   </tbody>
   <tfoot>
     <tr>
       <td>Total</td>
-      <td style="text-align:right;">${tarifa.simples.toFixed(4)}</td>
+      <td style="text-align:right;">${formatDecimal(tarifa.simples,4)}</td>
     </tr>
   </tfoot>
 </table>
 `.trim().replace(/\n\s*/g, '');
 
 
-const nomePotBase = `Potência contratada - ${potenciaSelecionada2}`;
-const nomePotRedes = `Potência contratada - ${potenciaSelecionada2}`;
-const nomePotDesconto = `Desconto da tarifa social - ${potenciaSelecionada2}`;
+const nomePotBase = `Potência contratada - ${potenciaSelecionada}`;
+const nomePotRedes = `Potência contratada - ${potenciaSelecionada}`;
+const nomePotDesconto = `Desconto da tarifa social - ${potenciaSelecionada}`;
 
 const temParcelaRedes = potenciaNum <= 3.45;
 const temParcelaDesconto = tsFlag === 1 && descontoPotTS > 0;
@@ -1717,19 +1886,19 @@ const hierarchicalTooltip = `
   data-tippy-content='${potenciaTooltip}'
   style='${isMinPotencia} background-color:${corPotencia}; color:black; border-radius: ${radius};'
 >
-  ${tarifa.potencia.toFixed(4)}
+  ${formatDecimal(tarifa.potencia,4)}
 </td>
 
 <td
     class="has-tooltip internop"
     data-tippy-content='${energiaTooltip}' 
     style='${isMinSimples} background-color:${corSimples}; color:black; border-radius: ${radius};'>
-  ${tarifa.simples.toFixed(4)}
+  ${formatDecimal(tarifa.simples,4)}
 </td>
 
 <td class="internop"
     style='${isMinCusto} background-color:${corCusto}; color:black; border-radius: ${radius};'>
-  ${tarifa.custo.toFixed(2)}
+  ${formatDecimal(tarifa.custo,2)}
 </td>
 </tr>`;
 });
@@ -1780,7 +1949,7 @@ const hierarchicalTooltip = `
           }
 
           // 4) atualiza input de consumo
-          const con = document.getElementById("consumo");
+          const con = document.getElementById("consumoInput");
           if (con) {
             const { bg, color } = conStyles[esquemaAtual];
             con.style.backgroundColor = bg;
@@ -1839,7 +2008,7 @@ const hierarchicalTooltip = `
 // 2) Aplica o esquema de cores ao select de potência e input de consumo
 function aplicarEsquema(esquema) {
   const pot = document.getElementById("potenciac");
-  const con = document.getElementById("consumo");
+  const con = document.getElementById("consumoInput");
   if (!pot || !con) return;
 
   // adicione aqui o terceiro tema
@@ -1898,31 +2067,36 @@ function resetDescontosSociais() {
 }
 
 
+
+
 // --------------------------------------------------
 // 5) Agrupar listeners “simples” de atualização
 [
-    { id: "mesSelecionado",    evt: "change" },
-    { id: "dias",             evt: "input" },
-    { id: "consumo",          evt: "input" },
-    { id: "potenciac",        evt: "change" },
-    { id: "fixo",             evt: "input" },
-    { id: "variavel",         evt: "input" },
-    { id: "omieInput",        evt: "input" },
-    { id: "mostrarNomes",     evt: "change" },
-    { id: "incluirACP",       evt: "change" },
-    { id: "incluirContinente",evt: "change" },
-    { id: "incluirMeo",       evt: "change" },
-    { id: "restringir",       evt: "change" },
-    { id: "incluirEDP",       evt: "change" },
-].forEach(({id, evt}) => {
-    document.getElementById(id)?.addEventListener(evt, atualizarResultados);
+  { id: "mesSelecionado",    evt: "change" },
+  { id: "dias",             evt: "input" },
+  { id: "consumoInput",          evt: "input" },
+  { id: "potenciac",        evt: "change" },
+  { id: "fixo",             evt: "input" },
+  { id: "variavel",         evt: "input" },
+  { id: "omieInput",         evt: "input" },
+  { id: "mostrarNomes",     evt: "change" },
+  { id: "incluirACP",       evt: "change" },
+  { id: "incluirContinente",evt: "change" },
+  { id: "incluirMeo",       evt: "change" },
+  { id: "restringir",       evt: "change" },
+  { id: "incluirEDP",       evt: "change" },
+].forEach(({ id, evt }) => {
+  document.getElementById(id)
+    ?.addEventListener(evt, atualizarResultados);
 });
+
 document.querySelectorAll('input[name="tsType"]').forEach(r =>
     r.addEventListener("change", atualizarResultados)
 );
 document.getElementById("familiasNumerosas")
     ?.addEventListener("change", atualizarResultados);
 
+  
 
 function alternarAba(abaSelecionada) {
     const abas = ["MeuTarifario", "OutrasOpcoes"];
@@ -1951,263 +2125,479 @@ function revealPostTableContent() {
 // --------------------------------------------------
 // 6) Toda inicialização em um só lugar
 document.addEventListener("DOMContentLoaded", async () => {
-    // referências principais
-    const btnDias         = document.getElementById("btnDias");
-    const div3            = document.querySelector(".div3");
-    const div4            = document.querySelector(".div4");
-    const div5            = document.querySelector(".div5");
-    const div6            = document.querySelector(".div6");
-    const btnShowOmie     = document.getElementById("btnShowOmie");
-    const btnShowCalendar = document.getElementById("btnShowCalendar");
-    const btnShowTs       = document.getElementById("btnShowTs");
-    const btnClearOmie    = document.getElementById("btnClearOmie");
-    const btnClearDates   = document.getElementById("btnClearDates");
-    const btnClearTs      = document.getElementById("btnClearTs");
-    const btnClearAll     = document.getElementById("btnClearForms");
-    const btnDef          = document.getElementById("btnDefinicoes");
-    const secaoDef        = document.getElementById(btnDef.dataset.target);
-    const arrowUseDef        = btnDef.querySelector("use");
-    const arrowUseDias    = btnDias.querySelector("use");
-    const startDate       = document.getElementById("startDate");
-    const endDate         = document.getElementById("endDate");
-    const mesSelecionado  = document.getElementById("mesSelecionado");
-    const diasInput       = document.getElementById("dias");
+  // referências principais
+  const btnDias         = document.getElementById("btnDias");
+  const div3            = document.querySelector(".div3");
+  const div4            = document.querySelector(".div4");
+  const div5            = document.querySelector(".div5");
+  const div6            = document.querySelector(".div6");
+  const btnShowOmie     = document.getElementById("btnShowOmie");
+  const btnShowCalendar = document.getElementById("btnShowCalendar");
+  const btnShowTs       = document.getElementById("btnShowTs");
+  const btnClearOmie    = document.getElementById("btnClearOmie");
+  const btnClearDates   = document.getElementById("btnClearDates");
+  const btnClearTs      = document.getElementById("btnClearTs");
+  const btnClearAll     = document.getElementById("btnClearForms");
+  const btnDef          = document.getElementById("btnDefinicoes");
+  const secaoDef        = document.getElementById(btnDef.dataset.target);
+  const arrowUseDef        = btnDef.querySelector("use");
+  const arrowUseDias    = btnDias.querySelector("use");
+  const startDate       = document.getElementById("startDate");
+  const endDate         = document.getElementById("endDate");
+  const mesSelecionado  = document.getElementById("mesSelecionado");
+  const diasInput       = document.getElementById("dias");
+
+  const omieInput = document.getElementById("omieInput");
+// onst upBtn     = document.getElementById("upBtn");
+// const downBtn   = document.getElementById("downBtn");
 
 
-    // Controle de "DataS": desativa mês+dias se houver intervalo válido
-    function atualizarEstadoDatas() {
-        const inicioValido = startDate.value !== "";
-        const fimValido    = endDate.value   !== "";
-        DataS = inicioValido && fimValido && (startDate.value <= endDate.value);
-    
-        mesSelecionado.disabled = DataS;
-        diasInput.disabled      = DataS;
+  // imediatamente depois de carregar o DOM:
+// 2.1) Referência ao <input>
+
+const REPEAT_INTERVAL = 25;  // ms entre incrementos ao manter pressionado
+const INITIAL_DELAY   = 200; // ms até começar o auto-repeat
+
+// Seleciona todos os containers .spinner-wrapper
+const wrappers = document.querySelectorAll(".spinner-wrapper");
+
+wrappers.forEach(wrapper => {
+  // Dentro do .spinner-wrapper, busque o <input type="number">
+  const input = wrapper.querySelector('input[type="number"]');
+  // Botões de incremento/decremento dentro do mesmo wrapper
+  const btnUp   = wrapper.querySelector(".spinner-up");
+  const btnDown = wrapper.querySelector(".spinner-down");
+
+  // Estado interno DE CADA spinner (isolado por wrapper)
+  let ultimoValidoNum = parseFloat(input.value) || 0;
+  let ignoreInput = false;
+  let debounceTimeout;
+  let repeatTimeoutId = null;
+  let repeatIntervalId = null;
+  let keyDownActive = false;
+
+  // 2.1) Função que ajusta o valor do input em ±step
+  function ajustarValor(delta) {
+    let atualNum;
+  
+    // 1) Se for OMIE e vazio, usar OMIESSelecionadoS*1000 (como já estava)
+    if (input.id === "omieInput" && input.value.trim() === "") {
+      atualNum = Number((OMIESSelecionadoS * 1000).toFixed(2));
+    }
+    // 2) Se for “dias” e vazio, buscar o valor padrão da tabela de dias do mês
+    else if (input.id === "dias" && input.value.trim() === "") {
+      // 2.1) Obtenha o índice do mês selecionado
+      const mesIndice = document.getElementById("mesSelecionado").selectedIndex;
+      // 2.2) Recrie rapidamente a mesma extração que você faz em atualizarResultados():
+      //       pegar a tabela “diasMeses” (já carregada no CSV básico) e “achatar” em array
+      const diasMesesBruto = obterTabela("diasMeses")?.flat() || [];
+      // 2.3) Caso esse array exista, converter a string para número:
+      const padrao = parseFloat(String(diasMesesBruto[mesIndice]).replace(",", ".")) || 0;
+      atualNum = padrao;
+    }
+    // 3) Se for qualquer outro campo (ou dias NÃO vazio), partir do último válido
+    else {
+      atualNum = isNaN(ultimoValidoNum) ? 0 : ultimoValidoNum;
+    }
+  
+    // 4) Aplicar o passo normalmente
+    const passo = parseFloat(input.step) || 1;
+    let novoNum = atualNum + delta * passo;
+  
+    // 5) Validar min/max (se existir)
+    if (input.min !== undefined && input.min !== "") {
+      const minValor = parseFloat(input.min);
+      if (!isNaN(minValor) && novoNum < minValor) {
+        novoNum = minValor;
       }
-
-    // estado para o botão Dias
-    let estadoOmieAberto = false,
-        estadoCalendarioAberto = false,
-        estadoTsAberto = false;
-
-    // 1) Carregar CSV, aplicar esquema e popular meses
-    console.log("🔄 Iniciando carregamento do CSV...");
-    dadosCSV_basico = await carregarCSV(urlCSV_basico);
-    console.log("✅ CSV básico carregado");
-    aplicarEsquema(esquemaAtual);
-    preencherSelecaoMeses();
-    document.getElementById("incluirACP").checked = false;
-    document.getElementById("incluirEDP").checked = true;
-    document.getElementById("incluirMeo").checked = true;
-    document.getElementById("incluirContinente").checked = true;
-    document.body.classList.toggle("no-rounded", !cornersRounded);
-
-
-    atualizarResultados();
-    revealPostTableContent();
-
-    // 2) Listeners de Clear individuais
-    btnClearAll.addEventListener("click", () => {
-        document.getElementById("omieInput").value = "";
-        startDate.value = endDate.value = "";
-        // 2) Restaura os limites originais
-        startDate.min = "2025-01-01";
-        startDate.max = "2025-12-31";
-        endDate.min = "2025-01-01";
-        endDate.max = "2025-12-31";
-        resetDescontosSociais();
-        atualizarEstadoDatas();
-        atualizarResultados();
-    });
-    btnClearOmie.addEventListener("click", () => {
-        document.getElementById("omieInput").value = "";
-        atualizarResultados();
-    });
-    btnClearDates.addEventListener("click", () => {
-        startDate.value = endDate.value = "";
-        // 2) Restaura os limites originais
-        startDate.min = "2025-01-01";
-        startDate.max = "2025-12-31";
-        endDate.min = "2025-01-01";
-        endDate.max = "2025-12-31";
-        atualizarEstadoDatas();
-        atualizarResultados();
-    });
-    btnClearTs.addEventListener("click", () => {
-        resetDescontosSociais();
-        atualizarResultados();
-    });
-
-    // 3) Toggle OMIE + clear
-    btnShowOmie.addEventListener("click", () => {
-        div4.classList.toggle("hidden");
-        // esconde Datas e TS e limpa as Datas sempre que OMIE aparece
-        if (!div4.classList.contains("hidden")) {
-            div5.classList.add("hidden");
-            startDate.value = "";
-            endDate.value = "";
-            btnClearDates.classList.add("hidden");
-            div6.classList.add("hidden");
-            btnClearTs.classList.add("hidden");
-        }
-        // mostra/esconde o botão “limpar OMIE”
-        btnClearOmie.classList.toggle("hidden", div4.classList.contains("hidden"));
-        atualizarResultados();
-    });
-    // 4) Toggle Datas + clear
-    btnShowCalendar.addEventListener("click", () => {
-        div5.classList.toggle("hidden");
-        // esconde OMIE e TS e limpa OMIE sempre que Datas aparecem
-        if (!div5.classList.contains("hidden")) {
-            div4.classList.add("hidden");
-            document.getElementById("omieInput").value = "";
-            btnClearOmie.classList.add("hidden");
-            div6.classList.add("hidden");
-            btnClearTs.classList.add("hidden");
-        }
-        btnClearDates.classList.toggle("hidden", div5.classList.contains("hidden"));
-        atualizarResultados();
-    });
-    // 5) Toggle TS + clear
-    btnShowTs.addEventListener("click", () => {
-        div6.classList.toggle("hidden");
-        if (!div6.classList.contains("hidden")) {
-            div4.classList.add("hidden");
-            btnClearOmie.classList.add("hidden");
-            div5.classList.add("hidden");
-            btnClearDates.classList.add("hidden");
-        }
-        btnClearTs.classList.toggle("hidden", div6.classList.contains("hidden"));
-        atualizarResultados();
-    });
-
-    // 6) Botão Definições
-    // espera que o DOM esteja pronto
+    }
+    if (input.max !== undefined && input.max !== "") {
+      const maxValor = parseFloat(input.max);
+      if (!isNaN(maxValor) && novoNum > maxValor) {
+        novoNum = maxValor;
+      }
+    }
   
-    console.log("btnDef:", btnDef);
-  console.log("secaoDef:", secaoDef);
+    // 6) Corrigir ponto flutuante e arredondar (até 10 casas, por exemplo)
+    novoNum = Number(novoNum.toFixed(10));
   
+    // 7) Atualizar o input sem disparar listener de “input”
+    ignoreInput = true;
+    input.valueAsNumber = novoNum;
+    ignoreInput = false;
+  
+    // 8) Salvar como “último válido”
+    ultimoValidoNum = novoNum;
+  
+    // 9) Disparar atualizarResultados() com debounce
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+      if (typeof atualizarResultados === "function") {
+        atualizarResultados();
+      }
+    }, 0);
+  }
   
 
-    // 7) Dates → DataS + resultados
-    // Função de callback comum para startDate
-    function onStartDateChange() {
-        // ajustar min do endDate
-        endDate.min = startDate.value || "2025-01-01";
-        atualizarEstadoDatas();
-        atualizarResultados();
+  // 2.2) Limpa timeouts/intervals de repetição
+  function limparRepeticao() {
+    keyDownActive = false;
+    if (repeatTimeoutId !== null) {
+      clearTimeout(repeatTimeoutId);
+      repeatTimeoutId = null;
+    }
+    if (repeatIntervalId !== null) {
+      clearInterval(repeatIntervalId);
+      repeatIntervalId = null;
+    }
+  }
+
+  // 2.3) Listeners de teclado (setas ↑/↓) no INPUT
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      e.preventDefault(); // Impede o incremento nativo do browser
+      if (!keyDownActive) {
+        keyDownActive = true;
+        const delta = (e.key === "ArrowUp") ? 1 : -1;
+        ajustarValor(delta);
+        // Inicia auto-repeat após INITIAL_DELAY
+        repeatTimeoutId = setTimeout(() => {
+          repeatIntervalId = setInterval(() => ajustarValor(delta), REPEAT_INTERVAL);
+        }, INITIAL_DELAY);
+      }
+    }
+  });
+  input.addEventListener("keyup", (e) => {
+    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      limparRepeticao();
+    }
+  });
+  input.addEventListener("blur", limparRepeticao);
+
+  // 2.4) Listener “input” (edição manual)
+  input.addEventListener("input", function() {
+    if (ignoreInput) return;
+    // Normaliza vírgula → ponto, se precisar
+    const tentativa = this.value.replace(",", ".");
+    const x = parseFloat(tentativa);
+
+    if (tentativa === "") {
+      // Se apagar tudo, mantemos ultimoValidoNum como estava
+      return;
+    }
+    // Se for número e respeitar limites (min/max), atualiza; senão, restaura
+    if (!isNaN(x)) {
+      // Validação mínima, se tiver input.min
+      if (input.min !== undefined && input.min !== "") {
+        const minValor = parseFloat(input.min);
+        if (!isNaN(minValor) && x < minValor) {
+          this.value = ultimoValidoNum;
+          return;
+        }
+      }
+      // Validação máxima, se tiver input.max
+      if (input.max !== undefined && input.max !== "") {
+        const maxValor = parseFloat(input.max);
+        if (!isNaN(maxValor) && x > maxValor) {
+          this.value = ultimoValidoNum;
+          return;
+        }
+      }
+      // Se passou nas validações, atualiza último
+      ultimoValidoNum = x;
+    } else {
+      // Invalido: restaura
+      this.value = ultimoValidoNum;
+    }
+    // Chama atualizarResultados()
+    if (typeof atualizarResultados === "function") {
+      atualizarResultados();
+    }
+  });
+
+  // 2.5) Listeners para clicar/segurar nos botões ▲ e ▼
+  // ▲
+  btnUp.addEventListener("mousedown", () => {
+    ajustarValor(1);
+    repeatTimeoutId = setTimeout(() => {
+      repeatIntervalId = setInterval(() => ajustarValor(1), REPEAT_INTERVAL);
+    }, INITIAL_DELAY);
+  });
+  btnUp.addEventListener("touchstart", () => {
+    ajustarValor(1);
+    repeatTimeoutId = setTimeout(() => {
+      repeatIntervalId = setInterval(() => ajustarValor(1), REPEAT_INTERVAL);
+    }, INITIAL_DELAY);
+  });
+  btnUp.addEventListener("mouseup", limparRepeticao);
+  btnUp.addEventListener("mouseleave", limparRepeticao);
+  btnUp.addEventListener("touchend", limparRepeticao);
+
+  // ▼
+  btnDown.addEventListener("mousedown", () => {
+    ajustarValor(-1);
+    repeatTimeoutId = setTimeout(() => {
+      repeatIntervalId = setInterval(() => ajustarValor(-1), REPEAT_INTERVAL);
+    }, INITIAL_DELAY);
+  });
+  btnDown.addEventListener("touchstart", () => {
+    ajustarValor(-1);
+    repeatTimeoutId = setTimeout(() => {
+      repeatIntervalId = setInterval(() => ajustarValor(-1), REPEAT_INTERVAL);
+    }, INITIAL_DELAY);
+  });
+  btnDown.addEventListener("mouseup", limparRepeticao);
+  btnDown.addEventListener("mouseleave", limparRepeticao);
+  btnDown.addEventListener("touchend", limparRepeticao);
+});
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+
+
+  // Controle de "DataS": desativa mês+dias se houver intervalo válido
+  function atualizarEstadoDatas() {
+      const inicioValido = startDate.value !== "";
+      const fimValido    = endDate.value   !== "";
+      DataS = inicioValido && fimValido && (startDate.value <= endDate.value);
+  
+      mesSelecionado.disabled = DataS;
+      diasInput.disabled      = DataS;
     }
 
-    // Função de callback comum para endDate
-    function onEndDateChange() {
-        // ajustar max do startDate
-        startDate.max = endDate.value || "2025-12-31";
-        atualizarEstadoDatas();
-        atualizarResultados();
-    }
+  // estado para o botão Dias
+  let estadoOmieAberto = false,
+      estadoCalendarioAberto = false,
+      estadoTsAberto = false;
 
-    // Atachar em input e change para robustez
-    startDate.addEventListener("input", onStartDateChange);
-    startDate.addEventListener("change", onStartDateChange);
-
-    endDate.addEventListener("input", onEndDateChange);
-    endDate.addEventListener("change", onEndDateChange);
-
-
-    btnDef.addEventListener("click", () => {
-        // 1) alterna visibilidade da secção
-        const isHidden = getComputedStyle(secaoDef).display === "none";
-        secaoDef.style.display = isHidden ? "block" : "none";
-
-        
-        // 3) escolhe o símbolo certo
-        const newId = isHidden ? "chevron-up-logo" : "chevron-down-logo";
-    
-        // 4) atualiza o href (ou xlink:href, conforme o teu SVG)
-        arrowUseDef.setAttribute("href", `icons.svg#${newId}`);
-        // se o teu <use> usa xlink:href em vez de href, usa esta linha em vez da anterior:
-        // arrowUse.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", `icons.svg#${newId}`);
-      });
+  // 1) Carregar CSV, aplicar esquema e popular meses
+  console.log("🔄 Iniciando carregamento do CSV...");
+  dadosCSV_basico = await carregarCSV(urlCSV_basico);
+  console.log("✅ CSV básico carregado");
+  aplicarEsquema(esquemaAtual);
+  preencherSelecaoMeses();
+  document.getElementById("incluirACP").checked = false;
+  document.getElementById("incluirEDP").checked = true;
+  document.getElementById("incluirMeo").checked = true;
+  document.getElementById("incluirContinente").checked = true;
+  document.body.classList.toggle("no-rounded", !cornersRounded);
 
 
-    // 8) Botão Dias (chevron/menu)
-    btnDias.addEventListener("click", () => {
-        // 1) Toggle do painel .div3
-        const aberto = !div3.classList.contains("hidden");
-        div3.classList.toggle("hidden", aberto);
+  atualizarResultados();
+  revealPostTableContent();
+
+  // 2) Listeners de Clear individuais
+  btnClearAll.addEventListener("click", () => {
+      document.getElementById("omieInput").value = "";
+      startDate.value = endDate.value = "";
+      // 2) Restaura os limites originais
+      startDate.min = "2025-01-01";
+      startDate.max = "2025-12-31";
+      endDate.min = "2025-01-01";
+      endDate.max = "2025-12-31";
+      resetDescontosSociais();
+      atualizarEstadoDatas();
+      atualizarResultados();
+  });
+  btnClearOmie.addEventListener("click", () => {
+      document.getElementById("omieInput").value = "";
+      atualizarResultados();
+  });
+  btnClearDates.addEventListener("click", () => {
+      startDate.value = endDate.value = "";
+      // 2) Restaura os limites originais
+      startDate.min = "2025-01-01";
+      startDate.max = "2025-12-31";
+      endDate.min = "2025-01-01";
+      endDate.max = "2025-12-31";
+      atualizarEstadoDatas();
+      atualizarResultados();
+  });
+  btnClearTs.addEventListener("click", () => {
+      resetDescontosSociais();
+      atualizarResultados();
+  });
+
+  // 3) Toggle OMIE + clear
+  btnShowOmie.addEventListener("click", () => {
+      div4.classList.toggle("hidden");
+      // esconde Datas e TS e limpa as Datas sempre que OMIE aparece
+      if (!div4.classList.contains("hidden")) {
+          div5.classList.add("hidden");
+          startDate.value = "";
+          endDate.value = "";
+          btnClearDates.classList.add("hidden");
+          div6.classList.add("hidden");
+          btnClearTs.classList.add("hidden");
+      }
+      // mostra/esconde o botão “limpar OMIE”
+      btnClearOmie.classList.toggle("hidden", div4.classList.contains("hidden"));
+      atualizarResultados();
+  });
+  // 4) Toggle Datas + clear
+  btnShowCalendar.addEventListener("click", () => {
+      div5.classList.toggle("hidden");
+      // esconde OMIE e TS e limpa OMIE sempre que Datas aparecem
+      if (!div5.classList.contains("hidden")) {
+          div4.classList.add("hidden");
+          document.getElementById("omieInput").value = "";
+          btnClearOmie.classList.add("hidden");
+          div6.classList.add("hidden");
+          btnClearTs.classList.add("hidden");
+      }
+      btnClearDates.classList.toggle("hidden", div5.classList.contains("hidden"));
+      atualizarResultados();
+  });
+  // 5) Toggle TS + clear
+  btnShowTs.addEventListener("click", () => {
+      div6.classList.toggle("hidden");
+      if (!div6.classList.contains("hidden")) {
+          div4.classList.add("hidden");
+          btnClearOmie.classList.add("hidden");
+          div5.classList.add("hidden");
+          btnClearDates.classList.add("hidden");
+      }
+      btnClearTs.classList.toggle("hidden", div6.classList.contains("hidden"));
+      atualizarResultados();
+  });
+
+  // 6) Botão Definições
+  // espera que o DOM esteja pronto
+
+  console.log("btnDef:", btnDef);
+console.log("secaoDef:", secaoDef);
+
+
+
+  // 7) Dates → DataS + resultados
+  // Função de callback comum para startDate
+  function onStartDateChange() {
+      // ajustar min do endDate
+      endDate.min = startDate.value || "2025-01-01";
+      atualizarEstadoDatas();
+      atualizarResultados();
+  }
+
+  // Função de callback comum para endDate
+  function onEndDateChange() {
+      // ajustar max do startDate
+      startDate.max = endDate.value || "2025-12-31";
+      atualizarEstadoDatas();
+      atualizarResultados();
+  }
+
+  // Atachar em input e change para robustez
+  startDate.addEventListener("input", onStartDateChange);
+  startDate.addEventListener("change", onStartDateChange);
+
+  endDate.addEventListener("input", onEndDateChange);
+  endDate.addEventListener("change", onEndDateChange);
+
+
+  btnDef.addEventListener("click", () => {
+      // 1) alterna visibilidade da secção
+      const isHidden = getComputedStyle(secaoDef).display === "none";
+      secaoDef.style.display = isHidden ? "block" : "none";
+
       
-        // 2) Altera o símbolo (chevron-down ↔ chevron-up)
-        //    se 'aberto' era true, vamos fechar => down; se false, vamos abrir => up
-        const novoIcon = aberto ? "chevron-down-logo" : "chevron-up-logo";
-        arrowUseDias.setAttribute("href", `icons.svg#${novoIcon}`);
-    
-        if (aberto) {
-            estadoOmieAberto       = !div4.classList.contains("hidden");
-            estadoCalendarioAberto = !div5.classList.contains("hidden");
-            estadoTsAberto         = !div6.classList.contains("hidden");
-    
-            div4.classList.add("hidden");
-            div5.classList.add("hidden");
-            div6.classList.add("hidden");
-    
-            // 🟨 Esconder também os botões “Clear”
-            btnClearOmie.classList.add("hidden");
-            btnClearDates.classList.add("hidden");
-            btnClearTs.classList.add("hidden");
-    
-        } else {
-            div4.classList.toggle("hidden", !estadoOmieAberto);
-            div5.classList.toggle("hidden", !estadoCalendarioAberto);
-            div6.classList.toggle("hidden", !estadoTsAberto);
-    
-            // 🟩 Mostrar os “Clear” se o painel estiver visível
-            btnClearOmie.classList.toggle("hidden", !estadoOmieAberto);
-            btnClearDates.classList.toggle("hidden", !estadoCalendarioAberto);
-            btnClearTs.classList.toggle("hidden", !estadoTsAberto);
-        }
+      // 3) escolhe o símbolo certo
+      const newId = isHidden ? "chevron-up-logo" : "chevron-down-logo";
+  
+      // 4) atualiza o href (ou xlink:href, conforme o teu SVG)
+      arrowUseDef.setAttribute("href", `icons.svg#${newId}`);
+      // se o teu <use> usa xlink:href em vez de href, usa esta linha em vez da anterior:
+      // arrowUse.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", icons.svg#${newId});
     });
 
-    // Botão limpar meu tarifário
-    document.getElementById("btnLimpar")?.addEventListener("click", () => {
-        document.getElementById("fixo").value = "";
-        document.getElementById("variavel").value = "";
-        atualizarResultados();
-    });
-    
 
-    // 9) Alternar abas “Meu tarifário” / “Outras opções”
-    document.getElementById("abaMeuTarifario")
-        .addEventListener("click", () => alternarAba("MeuTarifario"));
-    document.getElementById("abaOutrasOpcoes")
-        .addEventListener("click", () => alternarAba("OutrasOpcoes"));
+  // 8) Botão Dias (chevron/menu)
+  btnDias.addEventListener("click", () => {
+      // 1) Toggle do painel .div3
+      const aberto = !div3.classList.contains("hidden");
+      div3.classList.toggle("hidden", aberto);
     
-    setTimeout(async () => {
-        dadosCSV_grande = await carregarCSV(urlCSV_grande);
-        adiarGrandes = false;
-        console.log("✅ CSV grande carregado em background");
-    }, 1000); // Aguarda 1 segundo para não interferir com o carregamento inicial
+      // 2) Altera o símbolo (chevron-down ↔ chevron-up)
+      //    se 'aberto' era true, vamos fechar => down; se false, vamos abrir => up
+      const novoIcon = aberto ? "chevron-down-logo" : "chevron-up-logo";
+      arrowUseDias.setAttribute("href", `icons.svg#${novoIcon}`);
+  
+      if (aberto) {
+          estadoOmieAberto       = !div4.classList.contains("hidden");
+          estadoCalendarioAberto = !div5.classList.contains("hidden");
+          estadoTsAberto         = !div6.classList.contains("hidden");
+  
+          div4.classList.add("hidden");
+          div5.classList.add("hidden");
+          div6.classList.add("hidden");
+  
+          // 🟨 Esconder também os botões “Clear”
+          btnClearOmie.classList.add("hidden");
+          btnClearDates.classList.add("hidden");
+          btnClearTs.classList.add("hidden");
+  
+      } else {
+          div4.classList.toggle("hidden", !estadoOmieAberto);
+          div5.classList.toggle("hidden", !estadoCalendarioAberto);
+          div6.classList.toggle("hidden", !estadoTsAberto);
+  
+          // 🟩 Mostrar os “Clear” se o painel estiver visível
+          btnClearOmie.classList.toggle("hidden", !estadoOmieAberto);
+          btnClearDates.classList.toggle("hidden", !estadoCalendarioAberto);
+          btnClearTs.classList.toggle("hidden", !estadoTsAberto);
+      }
+  });
 
-    tippy.delegate(document.body, {
-        theme: 'light-border',    // usa um tema mais clean
-        distance: 4,              // distancia menor entre tooltip e célula
-        target: '.has-tooltip',
-        allowHTML: true,
-        interactive: true,
-        trigger: 'click',
-        content(reference) {
-            return reference.getAttribute('title');
-        },
-        hideOnClick: true,     // fecha ao clicar de novo ou noutro lugar
-        placement: 'top',
-        arrow: true,
-        // opcional: ancorar o quarto-círculo ao visível/invisível
-        onShow(instance) {
-            // fecha qualquer outro ativo
-            document.querySelectorAll('.has-tooltip-active')
-                .forEach(el => el !== instance.reference && el.classList.remove('has-tooltip-active'));
-            instance.reference.classList.add('has-tooltip-active');
-        },
-        onHidden(instance) {
-            instance.reference.classList.remove('has-tooltip-active');
+  // Botão limpar meu tarifário
+  document.getElementById("btnLimpar")?.addEventListener("click", () => {
+      document.getElementById("fixo").value = "";
+      document.getElementById("variavel").value = "";
+      atualizarResultados();
+  });
+  
+
+  // 9) Alternar abas “Meu tarifário” / “Outras opções”
+  document.getElementById("abaMeuTarifario")
+      .addEventListener("click", () => alternarAba("MeuTarifario"));
+  document.getElementById("abaOutrasOpcoes")
+      .addEventListener("click", () => alternarAba("OutrasOpcoes"));
+  
+  setTimeout(async () => {
+      dadosCSV_grande = await carregarCSV(urlCSV_grande);
+      adiarGrandes = false;
+      console.log("✅ CSV grande carregado em background");
+  }, 1000); // Aguarda 1 segundo para não interferir com o carregamento inicial
+
+  tippy.delegate(document.body, {
+    theme: 'light-border',
+    distance: 4,
+    target: '.has-tooltip, .omie-info-icon',
+    trigger: 'click',
+    allowHTML: true,
+    appendTo: () => document.body, // força anexar direto no <body>
+    content(reference) {
+      return reference.getAttribute('data-tippy-content');
+    },
+    // Se mesmo assim precisar, pode usar popperOptions para elevar z-index:
+    popperOptions: {
+      modifiers: [
+        {
+          name: 'preventOverflow',
+          options: {
+            boundary: document.body
+          }
         }
-      });
+      ]
+    }
+  });
+  
 });
