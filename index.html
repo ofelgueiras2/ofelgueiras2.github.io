@@ -48,8 +48,38 @@
                 </div>
                 <div class="daysBlock form-group">
                     <label for="dias">Dias</label>
-                    <input type="number" id="dias" min="0" class="form-control" />
-                </div>
+                    <div class="spinner-wrapper">
+                      <input
+                        type="number"
+                        id="dias"
+                        class="form-control"
+                        value=""
+                        min="0"
+                        step="any"
+                      />
+                      <div class="spinner">
+                        <button
+                          type="button"
+                          class="spinner-btn spinner-up"
+                          aria-label="Aumentar Dias"
+                        >
+                          <svg class="spinner-arrow-svg" width="12" height="8">
+                            <use href="icons.svg#arrow-up"></use>
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          class="spinner-btn spinner-down"
+                          aria-label="Diminuir Dias"
+                        >
+                          <svg class="spinner-arrow-svg" width="12" height="8">
+                            <use href="icons.svg#arrow-down"></use>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
             </div>
         </div>
         <!-- 3) .btnDias com o único btnDias -->
@@ -72,25 +102,49 @@
             <!-- Potência contratada -->
             <div class="form-group">
                 <label for="potenciac">Potência (kVA)</label>
-                <select id="potenciac" class="form-control"  style="background-color: #375623; color:white;font-weight: bold;">
-                    <option>1.15</option>
-                    <option>2.3</option>
-                    <option>3.45</option>
-                    <option>4.6</option>
-                    <option>5.75</option>
-                    <option selected>6.9</option>
-                    <option>10.35</option>
-                    <option>13.8</option>
-                    <option>17.25</option>
-                    <option>20.7</option>
+                <select id="potenciac" class="form-control" style="background-color: #375623; color:white;font-weight: bold;">
+                    <option value=1.15>1,15</option>
+                    <option value=2.3>2,3</option>
+                    <option value=3.45>3,45</option>
+                    <option value=4.6>4,6</option>
+                    <option value=5.75>5,75</option>
+                    <option value=6.9 selected>6,9</option>
+                    <option value=10.35>10,35</option>
+                    <option value=13.8>13,8</option>
+                    <option value=17.25>17,25</option>
+                    <option value=20.7>20,7</option>
                 </select>
             </div>
     
             <!-- Consumo -->
             <div class="form-group">
-                <label for="consumo">Consumo (kWh)</label>
-                <input type="number" id="consumo" class="form-control" style="background-color: #FFC000;font-weight: bold;" value="250" min="0" />
-            </div>
+                <label for="consumoInput">Consumo (kWh)</label>
+                <div class="spinner-wrapper">
+                  <input
+                    type="number"
+                    id="consumoInput"
+                    class="form-control"
+                    style="background-color: #FFC000; font-weight: bold;"
+                    value="250"
+                    min="0"
+                    step="any"
+                  />
+                  <div class="spinner">
+                    <button type="button" class="spinner-btn spinner-up" aria-label="Aumentar Consumo">
+                      <svg class="spinner-arrow-svg" width="12" height="8">
+                        <use href="icons.svg#arrow-up"></use>
+                      </svg>
+                    </button>
+                    <button type="button" class="spinner-btn spinner-down" aria-label="Diminuir Consumo">
+                      <svg class="spinner-arrow-svg" width="12" height="8">
+                        <use href="icons.svg#arrow-down"></use>
+                      </svg>
+                    </button>
+                  </div>
+                  
+                </div>
+              </div>
+              
         </div>
     
         <!-- 4) div3: esconde à partida, e dentro vem os dois botões + campos -->
@@ -126,9 +180,29 @@
         <!-- 4) div4: painel OMIE -->
         <div class="div4 hidden">
             <div id="omieField" class="form-group">
-                <label for="omieInput">OMIE (€/kWh)</label>
-                <input type="number" id="omieInput" class="form-control" step="0.0001" />
-            </div>
+                <label for="omieInput">OMIE (€/MWh)</label>
+                <div class="spinner-wrapper">
+                  <input
+                    type="number"
+                    id="omieInput"
+                    class="form-control"
+                    step="any"
+                    max="10000"
+                  >
+                  <div class="spinner">
+                    <button type="button" class="spinner-btn spinner-up" aria-label="Aumentar OMIE">
+                      <svg class="spinner-arrow-svg" width="12" height="8">
+                        <use href="icons.svg#arrow-up"></use>
+                      </svg>
+                    </button>
+                    <button type="button" class="spinner-btn spinner-down" aria-label="Diminuir OMIE">
+                      <svg class="spinner-arrow-svg" width="12" height="8">
+                        <use href="icons.svg#arrow-down"></use>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
         </div>
         
         <!-- 5) div5: painel Datas -->
@@ -238,12 +312,54 @@
                     <div class="form-row-duas-colunas">
                         <div class="form-group">
                             <label for="fixo">Potência (€/dia)</label>
-                            <input type="number" id="fixo" class="form-control" min="0" step="0.01" />
-                        </div>
-                        <div class="form-group">
+                            <div class="spinner-wrapper">
+                              <input
+                                type="number"
+                                id="fixo"
+                                class="form-control"
+                                min="0"
+                                step="0.01"
+                              />
+                              <div class="spinner">
+                                <button type="button" class="spinner-btn spinner-up" aria-label="Aumentar Potência">
+                                  <svg class="spinner-arrow-svg" width="12" height="8">
+                                    <use href="icons.svg#arrow-up"></use>
+                                  </svg>
+                                </button>
+                                <button type="button" class="spinner-btn spinner-down" aria-label="Diminuir Potência">
+                                  <svg class="spinner-arrow-svg" width="12" height="8">
+                                    <use href="icons.svg#arrow-down"></use>
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div class="form-group">
                             <label for="variavel">Energia (€/kWh)</label>
-                            <input type="number" id="variavel" class="form-control" min="0" step="0.01" />
-                        </div>
+                            <div class="spinner-wrapper">
+                              <input
+                                type="number"
+                                id="variavel"
+                                class="form-control"
+                                min="0"
+                                step="0.01"
+                              />
+                              <div class="spinner">
+                                <button type="button" class="spinner-btn spinner-up" aria-label="Aumentar Energia">
+                                  <svg class="spinner-arrow-svg" width="12" height="8">
+                                    <use href="icons.svg#arrow-up"></use>
+                                  </svg>
+                                </button>
+                                <button type="button" class="spinner-btn spinner-down" aria-label="Diminuir Energia">
+                                  <svg class="spinner-arrow-svg" width="12" height="8">
+                                    <use href="icons.svg#arrow-down"></use>
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          
                     </div>
         
                     <!-- Botão de limpeza -->
