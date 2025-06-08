@@ -1125,6 +1125,11 @@ if (!isNaN(omieParseado)) {
                         custo -= (tarPotSnum - tsFlag * descontoPotTS) * diasS * (IVABaseSimples - IVAFixoS);
                     }
 
+                    if (nome.startsWith("Nossa")) {
+                      custo += (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
+                      Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS)) * FTSS;
+                    }
+
            
             
             tarifarios.push({
