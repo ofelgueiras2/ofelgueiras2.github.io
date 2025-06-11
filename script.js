@@ -559,43 +559,43 @@ if (rawConsumo === "") {
     let strDiasSimples;
 
     if (DataS) {
-  const dataInicio = new Date(startDate.value);
-  const dataFim    = new Date(endDate.value);
-
-  if (!isNaN(dataInicio) && !isNaN(dataFim)) {
-    const diffMs = dataFim - dataInicio;
-    diasS        = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-    // Usa toLocaleString, para garantir vírgula (se houvesse decimal)
-    strDiasSimples = diasS.toLocaleString('pt-PT', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    });
-    console.log(`🔎 DataS = true: diasS calculado = ${diasS}`);
-  } else {
-    console.warn("❗ Datas inválidas mesmo com DataS true — fallback para mês selecionado.");
-    diasS = parseFloat(diasMesesTabela[mesSelecionadoIndex]) || 30;
-    // strDiasTabela vem do CSV; pode já estar como “30” or “30,00”. Só garantimos vírgula:
-    strDiasSimples = String(strDiasTabela[mesSelecionadoIndex]).replace('.', ',') || "30";
-  }
-} else {
-  let diasInput = document.getElementById("dias").value.trim();
-  diasInput     = diasInput === "" ? NaN : parseFloat(diasInput.replace(",", "."));
-
-  if (!isNaN(diasInput)) {
-    diasS = diasInput;
-    // Formata com vírgula (com até 2 decimais, se precisar):
-    strDiasSimples = diasS.toLocaleString('pt-PT', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 4
-    });
-  } else {
-    diasS = parseFloat(diasMesesTabela[mesSelecionadoIndex]) || 30;
-    strDiasSimples = String(strDiasTabela[mesSelecionadoIndex]).replace('.', ',') || "30";
-  }
-
-  console.log(`🔎 DataS = false: diasS = ${diasS}`);
-}
-
+      const dataInicio = new Date(startDate.value);
+      const dataFim    = new Date(endDate.value);
+    
+      if (!isNaN(dataInicio) && !isNaN(dataFim)) {
+        const diffMs = dataFim - dataInicio;
+        diasS        = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+        // Usa toLocaleString, para garantir vírgula (se houvesse decimal)
+        strDiasSimples = diasS.toLocaleString('pt-PT', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        });
+        console.log(`🔎 DataS = true: diasS calculado = ${diasS}`);
+      } else {
+        console.warn("❗ Datas inválidas mesmo com DataS true — fallback para mês selecionado.");
+        diasS = parseFloat(diasMesesTabela[mesSelecionadoIndex]) || 30;
+        // strDiasTabela vem do CSV; pode já estar como “30” or “30,00”. Só garantimos vírgula:
+        strDiasSimples = String(strDiasTabela[mesSelecionadoIndex]).replace('.', ',') || "30";
+      }
+    } else {
+      let diasInput = document.getElementById("dias").value.trim();
+      diasInput     = diasInput === "" ? NaN : parseFloat(diasInput.replace(",", "."));
+    
+      if (!isNaN(diasInput)) {
+        diasS = diasInput;
+        // Formata com vírgula (com até 2 decimais, se precisar):
+        strDiasSimples = diasS.toLocaleString('pt-PT', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 4
+        });
+      } else {
+        diasS = parseFloat(diasMesesTabela[mesSelecionadoIndex]) || 30;
+        strDiasSimples = String(strDiasTabela[mesSelecionadoIndex]).replace('.', ',') || "30";
+      }
+    
+      console.log(`🔎 DataS = false: diasS = ${diasS}`);
+    }
+    
 
     console.log(`✅ diasS final: ${diasS}, strDiasSimples: ${strDiasSimples}`);
     
@@ -778,7 +778,19 @@ if (rawConsumo === "") {
     // const omieInput = document.getElementById("omieInput");
 
 
-
+    function aplicaEncargoTS(nome) {
+      return (
+        nome.startsWith("Goldenergy") ||
+        nome.startsWith("Repsol") ||
+        nome === "G9" ||
+        nome.startsWith("Luzboa") ||
+        nome === "Ibelectra indexado" ||
+        nome.startsWith("Luzigás Energy 8.8") ||
+        nome === "Coopérnico" ||
+        nome.startsWith("Nossa")
+      );
+    }
+    
 
 
     
@@ -1060,15 +1072,21 @@ if (!isNaN(omieParseado)) {
             custo += precoACPS;
         }
 
+      let encargoTS = 0;
+      if (aplicaEncargoTS(nome)) {
         if (nome.startsWith("Goldenergy")) {
-            custo += consumo * FTSS * (1 + IVABaseSimples);
+          encargoTS = consumo * FTSS * (1 + IVABaseSimples);
+        } else {
+          encargoTS = (
+            Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
+            Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS)
+          ) * FTSS;
         }
+      }
 
-        if (nome.startsWith("Repsol") || nome === "G9" || nome.startsWith("Luzboa") || nome === "Ibelectra indexado" || nome.startsWith("Luzigás Energy 8.8") ||
-            nome === "Coopérnico") {
-            custo += (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
-            Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS)) * FTSS;
-        }
+        custo += encargoTS
+
+    
 
         if (nome.startsWith("EDP indexado")) {
             custo += descontoEDP;
@@ -1108,6 +1126,8 @@ if (!isNaN(omieParseado)) {
             simples *= 0.9;
         }
 
+        
+
             
             const nomeExibido = mostrarNomesAlternativos && nomesTarifariosDetalhadosExtra[i] ? nomesTarifariosDetalhadosExtra[i] : nome;
             potencia -= tsFlag * descontoPotTS;
@@ -1128,8 +1148,7 @@ if (!isNaN(omieParseado)) {
                     if (nome.startsWith("Nossa")) {
                       custo += (Math.max(consumo - kWhIVAPromocionalS, 0) * (1 + IVABaseSimples) +
                       Math.min(consumo, kWhIVAPromocionalS) * (1 + IVAFixoS)) * FTSS;
-                    }
-
+                  }
            
             
             tarifarios.push({
@@ -1566,328 +1585,241 @@ if (!isNaN(omieParseado)) {
 `.trim().replace(/\n\s*/g, '');
 
 
-const nomePotBase = `Potência contratada - ${potenciaSelecionada}`;
-const nomePotRedes = `Potência contratada - ${potenciaSelecionada}`;
-const nomePotDesconto = `Desconto da tarifa social - ${potenciaSelecionada}`;
-
+// 1) Nomes e flags
+const nomePotBase     = `Potência – ${potenciaSelecionada}`;
+const nomePotRedes    = `Potência – ${potenciaSelecionada}`;
 const temParcelaRedes = potenciaNum <= 3.45;
-const temParcelaDesconto = tsFlag === 1 && descontoPotTS > 0;
 
-// 1. Potência (comercializador)
-const precoBase = tarifa.potencia - (temParcelaRedes ? tarPotSnum : 0) + tsFlag * descontoPotTS;
-const valorPotBase = precoBase * diasS;
+// 2) Potência (redes) com desconto TS
+// usa exatamente a tua fórmula: tarPotSnum - tsFlag * descontoPotTS
+const tarPotBp       = tarPotSnum - tsFlag * descontoPotTS;
+const valorPotRedes  = tarPotBp * diasS;
 
-// 2. Potência (redes)
-const valorPotRedes = tarPotSnum * diasS;
+// 3) Potência (comercializador)
+const precoBase      = tarifa.potencia - (temParcelaRedes ? tarPotBp : 0);
+const valorPotBase   = precoBase * diasS;
 
-// 3. Desconto TS
-const valorPotDesconto = -descontoPotTS * diasS;
-const ivaDescontoTS = potenciaNum <= 3.45 ? 0.06 : 0.23;
-
-// Construção das linhas
-const linhasPotencia = [
-  {
-    nome: nomePotBase,
-    quantidade: `${diasS} dia${diasS > 1 ? 's' : ''}`,
-    preco: precoBase.toFixed(4),
-    valor: valorPotBase.toFixed(2),
-    ivaPct: "23"
-  }
-];
-
+// 4) Linhas de potência
+const linhasPotencia = [{
+  nome: nomePotBase,
+  quantidade: `${diasS} dia${diasS>1?'s':''}`,
+  preco: precoBase.toFixed(4).replace('.',','),
+  valor: valorPotBase.toFixed(2).replace('.',','),
+  ivaPct: "23"
+}];
 if (temParcelaRedes) {
   linhasPotencia.push({
     nome: nomePotRedes,
-    quantidade: `${diasS} dia${diasS > 1 ? 's' : ''}`,
-    preco: tarPotSnum.toFixed(4),
-    valor: valorPotRedes.toFixed(2),
+    quantidade: `${diasS} dia${diasS>1?'s':''}`,
+    preco: tarPotBp.toFixed(4).replace('.',','),
+    valor: valorPotRedes.toFixed(2).replace('.',','),
     ivaPct: "6"
   });
 }
 
-if (temParcelaDesconto) {
-  linhasPotencia.push({
-    nome: nomePotDesconto,
-    quantidade: `${diasS} dia${diasS > 1 ? 's' : ''}`,
-    preco: (-descontoPotTS).toFixed(4),
-    valor: valorPotDesconto.toFixed(2),
-    ivaPct: (ivaDescontoTS * 100).toFixed(0)
-  });
-}
 
-const energia6kWh = potenciaNum <= 6.9
-  ? Math.min(consumo, kWhIVAPromocionalS)
-  : 0;
+// 5) Energia
+const energia6kWh   = potenciaNum <= 6.9 ? Math.min(consumo, kWhIVAPromocionalS) : 0;
+const energia23kWh  = consumo - energia6kWh;
+const valorEnergia6  = energia6kWh  * tarifa.simples;
+const valorEnergia23 = energia23kWh * tarifa.simples;
 
-const energia23kWh = consumo - energia6kWh;
-
-// Só há desconto se potência ≤ 6.9 e TS estiver ativa
-const temDescontoTS = tsFlag === 1 && potenciaNum <= 6.9;
-
-const desconto6kWh = temDescontoTS ? energia6kWh : 0;
-const desconto23kWh = temDescontoTS ? energia23kWh : 0;
-
-const precoEnergia = tarifa.simples;
-const valorEnergia6 = energia6kWh * precoEnergia;
-const valorEnergia23 = energia23kWh * precoEnergia;
-
-const valorDesconto6 = -desconto6kWh * descontoKwhTS;
-const valorDesconto23 = -desconto23kWh * descontoKwhTS;
-
+// 6) Linhas de energia
 const linhasEnergia = [];
-
-if (energia23kWh > 0) {
-  linhasEnergia.push({
-    nome: "Consumo Simples",
-    quantidade: `${energia23kWh} kWh`,
-    preco: precoEnergia.toFixed(4),
-    valor: valorEnergia23.toFixed(2),
-    ivaPct: "23"
-  });
-}
-
-if (energia6kWh > 0) {
-  linhasEnergia.push({
-    nome: "Consumo Simples",
-    quantidade: `${energia6kWh} kWh`,
-    preco: precoEnergia.toFixed(4),
-    valor: valorEnergia6.toFixed(2),
-    ivaPct: "6"
-  });
-}
-
-if (desconto23kWh > 0) {
-  linhasEnergia.push({
-    nome: "Desconto da tarifa social",
-    quantidade: `${desconto23kWh} kWh`,
-    preco: `-${descontoKwhTS.toFixed(4)}`,
-    valor: valorDesconto23.toFixed(2),
-    ivaPct: "23"
-  });
-}
-
-if (desconto6kWh > 0) {
-  linhasEnergia.push({
-    nome: "Desconto da tarifa social",
-    quantidade: `${desconto6kWh} kWh`,
-    preco: `-${descontoKwhTS.toFixed(4)}`,
-    valor: valorDesconto6.toFixed(2),
-    ivaPct: "6"
-  });
-}
+if (energia23kWh > 0) linhasEnergia.push({
+  nome: "Consumo Simples",
+  quantidade: `${energia23kWh} kWh`,
+  preco: tarifa.simples.toFixed(4).replace('.',','),
+  valor: valorEnergia23.toFixed(2).replace('.',','),
+  ivaPct: "23"
+});
+if (energia6kWh > 0) linhasEnergia.push({
+  nome: "Consumo Simples",
+  quantidade: `${energia6kWh} kWh`,
+  preco: tarifa.simples.toFixed(4).replace('.',','),
+  valor: valorEnergia6.toFixed(2).replace('.',','),
+  ivaPct: "6"
+});
 
 
+// 7) Total Eletricidade — soma de cada parcela já arredondada a 2 casas
+const potBase2    = parseFloat(valorPotBase.toFixed(2));
+const potRedes2   = parseFloat((temParcelaRedes ? valorPotRedes : 0).toFixed(2));
+const ene23_2     = parseFloat(valorEnergia23.toFixed(2));
+const ene6_2      = parseFloat(valorEnergia6.toFixed(2));
+
+const totalElecNum = potBase2 + potRedes2 + ene23_2 + ene6_2;
+
+const totalEletricidade    = totalElecNum.toFixed(2).replace('.',',');
+const totalEletricidadeNum = totalElecNum;
 
 
-
-// 1) Calcular como número
-const custoPotenciaNum = tarifa.potencia * diasS * (1 + IVABaseSimples);
-const custoEnergiaNum  = tarifa.simples   * consumo * (1 + IVABaseSimples);
-
-// 2) Somar e só aí aplicar toFixed
-const custoEletricidade = (custoPotenciaNum + custoEnergiaNum).toFixed(2);
-
-// 3) Calcular taxas (exemplo genérico)
-const custoTaxesNum = 
-    AudiovisualS * (1 + IVA_AudiovisualSimples) +
-    DGEGS       * (1 + IVA_DGEGSimples) +
-    consumo     * (IESS * (1 + IVA_IESS));
-
-// 4) Formatar o resultado final
-const custoTaxes = custoTaxesNum.toFixed(2);
-
-// Agora você pode usar `custoEletricidade` e `custoTaxes` (strings formatadas com 4 casas)
-console.log(custoEletricidade, custoTaxes);
-
-const totalFatura = (
-    parseFloat(custoEletricidade) +
-    parseFloat(custoTaxes)
-  ).toFixed(2);
-  
-
-// dentro do loop de cada tarifa:
-const custoPotencia   = (tarifa.potencia * diasS * (1 + IVABaseSimples)).toFixed(2);
-const custoEnergia    = (tarifa.simples   * consumo  * (1 + IVABaseSimples)).toFixed(2);
-const totalEletric    = (parseFloat(custoPotencia) + parseFloat(custoEnergia)).toFixed(2);
-
-// imagina que tens também taxaS e valorS para cada imposto…
-
-
-// 1) Define o array com as tuas taxas/impostos
+// 8) Taxas & Outros (sem IVA)
 const taxItems = [];
-
-// Exemplo: Contribuição Audiovisual
+// Taxa DGEG
 taxItems.push({
-  nome: 'Contribuição Audiovisual',
-  quantidade: `1 mês`,
-  preco: AudiovisualS.toFixed(2),      // ou a variável onde guardas o € por dia/mês
-  valor: AudiovisualS.toFixed(2),      // valor total
-  ivaPct: (IVA_AudiovisualSimples * 100).toFixed(0)
+  nome: "Taxa DGEG",
+  quantidade: "1 mês",
+  preco: DGEGS.toFixed(2).replace('.',','),
+  valor: DGEGS.toFixed(2).replace('.',','),
+  ivaPct: "23"
+});
+// Taxa IEC
+taxItems.push({
+  nome: "Taxa IEC",
+  quantidade: `${consumo} kWh`,
+  preco: IESS.toFixed(3).replace('.',','),
+  valor: (IESS * consumo).toFixed(2).replace('.',','),
+  ivaPct: "23"
+});
+// Contribuição Audiovisual
+taxItems.push({
+  nome: "Cont. Audiovisual",
+  quantidade: "1 mês",
+  preco: AudiovisualS.toFixed(2).replace('.',','),
+  valor: AudiovisualS.toFixed(2).replace('.',','),
+  ivaPct: "6"
 });
 
-// Exemplo: Taxa DGEG
-taxItems.push({
-  nome: 'Taxa de Exploração DGEG',
-  quantidade: `1 mês`,
-  preco: DGEGS.toFixed(2),
-  valor: DGEGS.toFixed(2),
-  ivaPct: (IVA_DGEGSimples * 100).toFixed(0)
+// Encargo Tarifa Social (somente por nome, sem tsFlag)
+let enc23 = 0, enc6 = 0;
+if (aplicaEncargoTS(tarifa.nome)) {
+  if (tarifa.nome.startsWith("Goldenergy")) {
+    enc23 = consumo * FTSS;
+  } else {
+    enc23 = energia23kWh * FTSS;
+    enc6  = energia6kWh  * FTSS;
+  }
+}
+if (enc23 > 0) taxItems.push({
+  nome: "Enc. tarifa social",
+  quantidade: `${tarifa.nome.startsWith("Goldenergy") ? consumo : energia23kWh} kWh`,
+  preco: FTSS.toFixed(6).replace('.',','),
+  valor: enc23.toFixed(2).replace('.',','),
+  ivaPct: "23"
+});
+if (enc6 > 0) taxItems.push({
+  nome: "Enc. tarifa social",
+  quantidade: `${energia6kWh} kWh`,
+  preco: FTSS.toFixed(6).replace('.',','),
+  valor: enc6.toFixed(2).replace('.',','),
+  ivaPct: "6"
 });
 
-// E assim por diante para cada taxa/imposto...
+//  X) Se for EDP indexado e incluído, acrescenta desconto de 10€
+if (
+  (tarifa.nome === "EDP indexado" 
+    || tarifa.nome.startsWith("EDP: Eletricidade Indexada")) 
+  && incluirEDP 
+  && potenciaNum >= 3.45
+) {
+  const descontoEDP = 10;
+  taxItems.push({
+    nome: "Desconto EDP (10€)",
+    quantidade: "1 mês",
+    preco: `-${descontoEDP.toFixed(2).replace('.', ',')}`,
+    valor: `-${descontoEDP.toFixed(2).replace('.', ',')}`,
+    ivaPct: ""  // sem IVA
+  });
+}
 
-// — calcula os totais que vais usar no título e no rodapé —
-const totalEletricidade = (parseFloat(custoPotencia) + parseFloat(custoEnergia)).toFixed(2);
-const totalTaxes        = taxItems
-  .reduce((sum, t) => sum + parseFloat(t.valor), 0)
-  .toFixed(2);
 
-  // acrescenta isto:
-const totalGeral = (parseFloat(totalEletricidade) + parseFloat(totalTaxes)).toFixed(2);
 
-// — monta o tooltip —
+// 9) Totais de Taxas & Outros
+const totalOtherNum = taxItems.reduce((s,t)=> s + parseFloat(t.valor.replace(',','.')), 0);
+
+const totalOther    = totalOtherNum.toFixed(2).replace('.',',');
+
+// 10) Valor sem IVA
+const totalSemIVANum = totalEletricidadeNum + totalOtherNum;
+const totalSemIVA    = totalSemIVANum.toFixed(2).replace('.',',');
+
+// 11) Bases de IVA agrupadas
+const base23 = [
+  ...linhasPotencia.filter(l=>l.ivaPct==="23"),
+  ...linhasEnergia.filter(l=>l.ivaPct==="23"),
+  ...taxItems.filter(t=>t.ivaPct==="23")
+].reduce((s,x)=> s + parseFloat(x.valor.replace(',','.')), 0);
+
+const base6 = [
+  ...linhasPotencia.filter(l=>l.ivaPct==="6"),
+  ...linhasEnergia.filter(l=>l.ivaPct==="6"),
+  ...taxItems.filter(t=>t.ivaPct==="6")
+].reduce((s,x)=> s + parseFloat(x.valor.replace(',','.')), 0);
+
+const base23Str = base23.toFixed(2).replace('.',',');
+const base6Str  = base6.toFixed(2).replace('.',',');
+
+
+// 12) Calcula IVA agrupado
+const iva23    = base23 * 0.23;
+const iva6     = base6  * 0.06;
+const iva23Str = iva23.toFixed(2).replace('.',',');
+const iva6Str  = iva6.toFixed(2).replace('.',',');
+// Arredonda cada IVA a 2 casas
+const iva23Rounded = parseFloat(iva23.toFixed(2));
+const iva6Rounded  = parseFloat(iva6.toFixed(2));
+
+
+// 13) Total com IVA
+const totalComIVANum = totalSemIVANum + iva23Rounded + iva6Rounded;
+const totalComIVA    = totalComIVANum.toFixed(2).replace('.',',');
+
+// 14) Tooltip plano
 const invoiceTooltip = `
 <div class="tooltip-invoice">
-
-  <details open>
-    <summary>
-      Eletricidade — ${totalEletricidade} €
-    </summary>
-    <table class="tooltip-matrix">
-      <thead>
-        <tr>
-          <th>Descrição</th>
-          <th>Qtd.</th>
-          <th>Preço</th>
-          <th>Valor</th>
-          <th>IVA</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${linhasPotencia.map(p => `
-        <tr>
-        <td>${p.nome}</td>
-        <td>${p.quantidade}</td>
-        <td>${p.preco}</td>
-        <td>${p.valor}</td>
-        <td>${p.ivaPct}%</td>
+  <table class="tooltip-matrix">
+    <thead>
+      <tr>
+        <th style="white-space: nowrap; background-color: ${headerPrimary}; color: ${headerFtPrimary};">Designação</th>
+        <th style="white-space: nowrap; background-color: ${headerPrimary}; color: ${headerFtPrimary};">Quantidade</th>
+        <th style="white-space: nowrap; background-color: ${headerPrimary}; color: ${headerFtPrimary};">Preço (€)</th>
+        <th style="white-space: nowrap; background-color: ${headerPrimary}; color: ${headerFtPrimary};">Valor (€)</th>
+        <th style="white-space: nowrap; background-color: ${headerPrimary}; color: ${headerFtPrimary};">IVA</th>
       </tr>
+    </thead>
+        <tbody>
+      ${[...linhasPotencia, ...linhasEnergia].map(l => `
+        <tr>
+          <td>${l.nome}</td><td>${l.quantidade}</td>
+          <td>${l.preco}</td><td>${l.valor}</td>
+          <td>${l.ivaPct ? l.ivaPct+'%' : ''}</td>
+        </tr>
       `).join('')}
-      </tbody>
-      <tbody>
-  ${linhasEnergia.map(e => `
-    <tr>
-      <td>${e.nome}</td>
-      <td>${e.quantidade}</td>
-      <td>${e.preco}</td>
-      <td>${e.valor}</td>
-      <td>${e.ivaPct}%</td>
-    </tr>
-  `).join('')}
-</tbody>
-      <tfoot>
+      <tr class="total">
+        <td colspan="3"><strong>Eletricidade</strong></td>
+        <td><strong>${totalEletricidade}</strong></td>
+      </tr>
+      ${taxItems.map(t => `
         <tr>
-          <td colspan="3"><strong>Total Eletricidade</strong></td>
-          <td colspan="2"><strong>${totalEletricidade} €</strong></td>
+          <td>${t.nome}</td><td>${t.quantidade}</td>
+          <td>${t.preco}</td><td>${t.valor}</td>
+          <td>${t.ivaPct ? t.ivaPct+'%' : ''}</td>
         </tr>
-      </tfoot>
-    </table>
-  </details>
-
-  <details>
-    <summary>
-      Taxas &amp; Impostos — ${totalTaxes} €
-    </summary>
-    <table class="tooltip-matrix">
-      <thead>
-        <tr>
-          <th>Descrição</th>
-          <th>Qtd.</th>
-          <th>Preço</th>
-          <th>Valor</th>
-          <th>IVA</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${taxItems.map(t => `
-          <tr>
-            <td>${t.nome}</td>
-            <td>${t.quantidade}</td>
-            <td>${t.preco}</td>
-            <td>${t.valor}</td>
-            <td>${t.ivaPct}%</td>
-          </tr>
-        `).join('')}
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="3"><strong>Total Taxas &amp; Impostos</strong></td>
-          <td colspan="2"><strong>${totalTaxes} €</strong></td>
-        </tr>
-      </tfoot>
-    </table>
-  </details>
-
-  <div class="tooltip-grand-total">
-    <strong>Total geral: ${totalGeral} €</strong>
-  </div>
-
+      `).join('')}
+      <tr class="total">
+        <td colspan="3"><strong>Taxas e Outros</strong></td>
+        <td><strong>${totalOther}</strong></td>
+      </tr>
+      <tr class="separator"><td colspan="5"></td></tr>
+      <tr>
+        <td colspan="3"><strong>Valor sem IVA</strong></td>
+        <td><strong>${totalSemIVA}</strong></td>
+      </tr>
+      <tr>
+        <td>IVA (23%)</td><td>${base23Str} €</td><td colspan="2">${iva23Str}</td><td></td>
+      </tr>
+      <tr>
+        <td>IVA (6%)</td><td>${base6Str} €</td><td colspan="2">${iva6Str}</td><td></td>
+      </tr>
+      <tr class="total">
+        <td colspan="3"><strong>Valor com IVA</strong></td>
+        <td><strong>${totalComIVA}</strong></td><td></td>
+      </tr>
+    </tbody>
+  </table>
 </div>
-`.trim();
-
-
-
-
-
-
-// dentro do teu loop, em vez de montar só a tabela plana, faz:
-const eletricidadeChildren = `
-  <table class="tooltip-matrix">
-    <tbody>
-      <tr>
-        <td>Potência – ${diasS} dia${diasS>1?'s':''}</td>
-        <td style="text-align:right">${custoPotenciaNum.toFixed(2)}</td>
-      </tr>
-      <tr>
-        <td>Energia – ${consumo} kWh</td>
-        <td style="text-align:right">${custoEnergiaNum.toFixed(2)}</td>
-      </tr>
-    </tbody>
-  </table>`.trim().replace(/\n\s*/g,'');
-
-const taxesChildren = `
-  <table class="tooltip-matrix">
-    <tbody>
-      <tr><td>Contribuição Audiovisual</td><td style="text-align:right">${AudiovisualS.toFixed(2)}</td></tr>
-      <tr><td>DGEG</td><td style="text-align:right">${DGEGS.toFixed(2)}</td></tr>
-      <tr><td>IES</td><td style="text-align:right">${(IESS*consumo).toFixed(2)}</td></tr>
-      <tr><td>IVA</td><td style="text-align:right">${((custoPotenciaNum + custoEnergiaNum) * IVABaseSimples).toFixed(2)}</td></tr>
-    </tbody>
-  </table>`.trim().replace(/\n\s*/g,'');
-
-// monta o HTML
-const hierarchicalTooltip = `
-  <div class="tooltip-hierarchical">
-    <details open>
-      <summary>
-        <span class="label">Eletricidade</span>
-        <span class="value">${custoEletricidade} €</span>
-      </summary>
-      ${eletricidadeChildren}
-    </details>
-    <details>
-      <summary>
-        <span class="label">Taxas & Impostos</span>
-        <span class="value">${custoTaxes} €</span>
-      </summary>
-      ${taxesChildren}
-    </details>
-    <div class="tooltip-total">
-      <span class="label">Total fatura:</span>
-      <span class="value">${totalFatura} €</span>
-    </div>
-  </div>
-`.trim().replace(/\n\s*/g,'');
+`.trim().replace(/'/g,"&apos;");
 
 
 
@@ -1911,7 +1843,8 @@ const hierarchicalTooltip = `
   ${formatDecimal(tarifa.simples,4)}
 </td>
 
-<td class="internop"
+<td class="has-tooltip internop"
+    data-tippy-content='${invoiceTooltip}'
     style='${isMinCusto} background-color:${corCusto}; color:black; border-radius: ${radius};'>
   ${formatDecimal(tarifa.custo,2)}
 </td>
@@ -2170,7 +2103,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // imediatamente depois de carregar o DOM:
 // 2.1) Referência ao <input>
 
-const REPEAT_INTERVAL = 25;  // ms entre incrementos ao manter pressionado
+// const REPEAT_INTERVAL = 25;  // ms entre incrementos ao manter pressionado
+let REPEAT_INTERVAL = DataS ? 5 : 25;  // ms entre incrementos ao manter pressionado
+
 const INITIAL_DELAY   = 200; // ms até começar o auto-repeat
 
 // Seleciona todos os containers .spinner-wrapper
@@ -2388,6 +2323,9 @@ wrappers.forEach(wrapper => {
   
       mesSelecionado.disabled = DataS;
       diasInput.disabled      = DataS;
+      // 3️⃣ REAJUSTA O INTERVALO sempre que DataS mudar
+  REPEAT_INTERVAL = DataS ? 5 : 25;
+  console.log(`🔄 REPEAT_INTERVAL agora é ${REPEAT_INTERVAL} ms (DataS = ${DataS})`);
     }
 
   // estado para o botão Dias
