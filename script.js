@@ -1664,9 +1664,9 @@ taxItems.push({
   valor: DGEGS.toFixed(2).replace('.',','),
   ivaPct: "23"
 });
-// Taxa IEC
+// IEC
 taxItems.push({
-  nome: "Taxa IEC",
+  nome: "IEC",
   quantidade: `${consumo} kWh`,
   preco: IESS.toFixed(3).replace('.',','),
   valor: (IESS * consumo).toFixed(2).replace('.',','),
