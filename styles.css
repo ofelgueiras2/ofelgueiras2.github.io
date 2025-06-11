@@ -957,7 +957,7 @@ html {
 .tippy-box[data-theme~='light-border'] .tooltip-matrix th,
 .tippy-box[data-theme~='light-border'] .tooltip-matrix td {
   padding: 3px 4px;
-  font-size: 0.8rem;            /* mantém o tamanho compacto */
+  font-size: 0.82rem;            /* mantém o tamanho compacto */
 }
 
 
