@@ -782,11 +782,12 @@ if (rawConsumo === "") {
       return (
         nome.startsWith("Goldenergy") ||
         nome.startsWith("Repsol") ||
-        nome === "G9" ||
+        nome.startsWith("G9") ||
         nome.startsWith("Luzboa") ||
         nome === "Ibelectra indexado" ||
-        nome.startsWith("Luzigás Energy 8.8") ||
-        nome === "Coopérnico" ||
+        nome === "Ibelectra: Solução Família" ||
+        nome.startsWith("Luzigás") ||
+        nome.startsWith("Coopérnico") ||
         nome.startsWith("Nossa")
       );
     }
