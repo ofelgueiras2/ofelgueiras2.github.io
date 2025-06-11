@@ -888,6 +888,11 @@ html {
   white-space: nowrap;
 }
 
+.tooltip-invoice table.tooltip-matrix td:nth-child(2) {
+  white-space: nowrap;
+}
+
+
 /* cabeçalho delimitado por linhas */
 .tooltip-matrix thead th {
   text-align: center;
@@ -915,6 +920,47 @@ html {
 /* --- no fim do styles.css --- */
 
 /* No fim do seu styles.css, depois de tudo */
+
+/* Para todos os tooltips */
+.tippy-box {
+  max-width: none !important;
+}
+
+/* 1) Balão escuro fica como está (tão-somente shadow & radius) */
+.tippy-box[data-theme~='light-border'] {
+  /* mantém o background escuro */
+  background-color: #2e2e2e !important;
+  /* garante raio de canto e sombra originais */
+  padding: 4px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+/* 2) Faz o wrapper interno transparente */
+.tippy-box[data-theme~='light-border'] .tooltip-invoice {
+  background: transparent !important;
+  border-radius: inherit;
+  overflow: visible;
+  margin: 0; padding: 0;
+}
+
+/* 3) Dá o fundo claro só à tabela interna */
+.tippy-box[data-theme~='light-border'] .tooltip-matrix {
+  background: #fafafa;            /* fundo da tabela */
+  border-radius: 6px;             /* cantos arredondados */
+  overflow: hidden;               /* para a tabela não vazar */
+  margin: 0;                      /* encaixe total */
+  width: 100%;
+}
+
+/* 4) Ajusta o padding da tabela para não bater no balão */
+.tippy-box[data-theme~='light-border'] .tooltip-matrix th,
+.tippy-box[data-theme~='light-border'] .tooltip-matrix td {
+  padding: 3px 4px;
+  font-size: 0.8rem;            /* mantém o tamanho compacto */
+}
+
+
 
 
 /* 1) Wrapper “apertado” mas com sombra suave */
@@ -977,11 +1023,13 @@ html {
 /* container geral */
 .tooltip-invoice {
   border-collapse: collapse;
-  font-size: 0.9em;
+  font-size: 0.82em;
   background: #fff;
   color: #000;
   width: auto;
 }
+
+
 
 /* cabeçalho */
 .tooltip-invoice th {
@@ -1193,10 +1241,7 @@ body.no-rounded .fixed-tlr {
 
 
 
-/* ===========================================================
-   1) Ocultar as setas nativas do browser DENTRO de .spinner-wrapper
-   =========================================================== */
-   /* ─────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────
    1) Remover spinner nativo do Chrome/Safari (WebKit)
    ───────────────────────────────────────────────────── */
    .spinner-wrapper input[type="number"]::-webkit-inner-spin-button,
@@ -1227,6 +1272,9 @@ body.no-rounded .fixed-tlr {
    .spinner-wrapper input[type="number"]::-moz-number-spin-box {
      display: none;
    }
+   
+
+
    
    /* ===========================================================
       2) Container pai (.spinner-wrapper) – position: relative
@@ -1363,4 +1411,4 @@ body.no-rounded .fixed-tlr {
      color: #636363;
    }
    
-
+   
