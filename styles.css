@@ -1411,9 +1411,24 @@ body.no-rounded .fixed-tlr {
      color: #636363;
    }
 
-/* remove o spinner nativo no Firefox */
+/* 1) Remove o spinner nativo do Chrome/Safari */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+/* 2) Remove o spinner nativo do Firefox por completo */
 input[type=number] {
-  -moz-appearance: textfield;
-  appearance: textfield;
+  -moz-appearance: textfield !important;
+}
+
+/* 3) Remove eventuais pseudo-elementos remanescentes no Firefox */
+input[type=number]::-moz-inner-spin-button,
+input[type=number]::-moz-outer-spin-button,
+input[type=number]::-moz-spin-button {
+  display: none !important;
+  margin: 0 !important;
+  -moz-appearance: none !important;
 }
    
