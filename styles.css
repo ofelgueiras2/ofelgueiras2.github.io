@@ -1410,5 +1410,10 @@ body.no-rounded .fixed-tlr {
    .spinner-btn:active .spinner-arrow-svg {
      color: #636363;
    }
-   
+
+/* remove o spinner nativo no Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
    
