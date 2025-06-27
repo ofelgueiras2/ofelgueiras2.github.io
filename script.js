@@ -31,9 +31,9 @@ const tabelasBasicas = {
     LuzigazFee: { inicio: "Z27", fim: "Z36" },
     TARPotencias: { inicio: "Z6", fim: "Z15" },
     detalheTarifarios: { inicio: "AM5", fim: "AM25" },
-    tarifariosExtra: { inicio: "C68", fim: "C79" },
-    detalheTarifariosExtra: { inicio: "B68", fim: "B79" },
-    preçosSimplesExtra: { inicio: "D68", fim: "W79" },
+    tarifariosExtra: { inicio: "C68", fim: "C80" },
+    detalheTarifariosExtra: { inicio: "B68", fim: "B80" },
+    preçosSimplesExtra: { inicio: "D68", fim: "W80" },
 };
 
 const tabelasGrandes = {
