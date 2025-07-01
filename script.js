@@ -479,8 +479,7 @@ if (rawConsumo === "") {
     let incluirContinente = document.getElementById("incluirContinente").checked;
     let incluirMeo = document.getElementById("incluirMeo").checked;
     let restringir = document.getElementById("restringir").checked;
-    let incluirEDP = document.getElementById("incluirEDP").checked;
-
+    
     const potencias = obterTabela("kVAs")?.map(row => row[0]) || [];
     // idx definido apóes conta potencias em atualizarResultados
     const idx = potencias.indexOf(potenciaSelecionada);
@@ -1025,13 +1024,6 @@ if (!isNaN(omieParseado)) {
         if (nome === "Meo" && incluirMeo) {
             simples -= 0.01;
         }
-
-        // —> só aplica desconto se o usuário marcou EDP e potência ≥ 3,45 kVA
-        let descontoEDP = 0;
-        if (incluirEDP) {
-        if (potenciaNum >= 3.45) {
-        descontoEDP = -10;  // valor original do desconto
-        }
    }
 
         const nomeExibido = mostrarNomesAlternativos && nomesTarifariosDetalhados[i] ? nomesTarifariosDetalhados[i] : nome;
@@ -1087,11 +1079,6 @@ if (!isNaN(omieParseado)) {
 
         custo += encargoTS
 
-    
-
-        if (nome.startsWith("EDP indexado")) {
-            custo += descontoEDP;
-        }
     
         return {
             nome: nomeExibido,
@@ -1448,11 +1435,6 @@ if (!isNaN(omieParseado)) {
 
             // Apenas para “EDP indexado” criamos a tooltipText e a classe
             let cellAttrs = ' class="internop"';
-            if ((tarifa.nome === "EDP indexado" || tarifa.nome.startsWith("EDP: Eletricidade Indexada")) && incluirEDP && potenciaNum >=3.45) {
-                const descontoMsg = "Valor apresentado inclui desconto mensal de 10€ válido nos primeiros 10 meses, para adesões até 30/6/2025";
-                const tooltipText = descontoMsg;
-                cellAttrs = ` class="internop has-tooltip mais-indicator" data-tippy-content="${tooltipText}"`;        
-            }
             if ((tarifa.nome === "Galp Continente" || tarifa.nome.startsWith("Galp: Plano Galp")) && incluirContinente) {
                 const descontoMsg = "Valor apresentado assume desconto de 10% na potência e energia em Cartão Continente";
                 const tooltipText = descontoMsg;
@@ -1706,22 +1688,6 @@ if (enc6 > 0) taxItems.push({
   valor: enc6.toFixed(2).replace('.',','),
   ivaPct: "6"
 });
-
-//  X) Se for EDP indexado e incluído, acrescenta desconto de 10€
-if (
-  (tarifa.nome === "EDP indexado" 
-    || tarifa.nome.startsWith("EDP: Eletricidade Indexada")) 
-  && incluirEDP 
-  && potenciaNum >= 3.45
-) {
-  const descontoEDP = 10;
-  taxItems.push({
-    nome: "Desconto EDP (10€)",
-    quantidade: "1 mês",
-    preco: `-${descontoEDP.toFixed(2).replace('.', ',')}`,
-    valor: `-${descontoEDP.toFixed(2).replace('.', ',')}`,
-    ivaPct: ""  // sem IVA
-  });
 }
 
 
@@ -2033,7 +1999,6 @@ function resetDescontosSociais() {
   { id: "incluirContinente",evt: "change" },
   { id: "incluirMeo",       evt: "change" },
   { id: "restringir",       evt: "change" },
-  { id: "incluirEDP",       evt: "change" },
 ].forEach(({ id, evt }) => {
   document.getElementById(id)
     ?.addEventListener(evt, atualizarResultados);
@@ -2341,7 +2306,6 @@ wrappers.forEach(wrapper => {
   aplicarEsquema(esquemaAtual);
   preencherSelecaoMeses();
   document.getElementById("incluirACP").checked = false;
-  document.getElementById("incluirEDP").checked = true;
   document.getElementById("incluirMeo").checked = true;
   document.getElementById("incluirContinente").checked = true;
   document.body.classList.toggle("no-rounded", !cornersRounded);
