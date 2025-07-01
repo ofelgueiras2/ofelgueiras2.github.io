@@ -1687,7 +1687,7 @@ if (enc6 > 0) taxItems.push({
   valor: enc6.toFixed(2).replace('.',','),
   ivaPct: "6"
 });
-}
+
 
 
 
