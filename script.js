@@ -1024,7 +1024,8 @@ if (!isNaN(omieParseado)) {
         if (nome === "Meo" && incluirMeo) {
             simples -= 0.01;
         }
-   }
+   })    // fecha o callback e o parêntesis do .map
+   .filter(t => t !== null);
 
         const nomeExibido = mostrarNomesAlternativos && nomesTarifariosDetalhados[i] ? nomesTarifariosDetalhados[i] : nome;
         console.log("Potência, IVA, TS:", potenciaSelecionada, IVAFixoS, kVAsTarSocialS)
